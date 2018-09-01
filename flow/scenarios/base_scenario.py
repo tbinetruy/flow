@@ -628,28 +628,29 @@ class Scenario(Serializable):
             return []
 
     def close(self):
-        """Deletes the xml files that were created by the generator class. This
-        is to prevent them from building up in the debug folder."""
-        os.remove(self.generator.net_path + self.generator.nodfn)
-        os.remove(self.generator.net_path + self.generator.edgfn)
-        os.remove(self.generator.net_path + self.generator.cfgfn)
-        os.remove(self.generator.cfg_path + self.generator.addfn)
-        os.remove(self.generator.cfg_path + self.generator.guifn)
-        os.remove(self.generator.cfg_path + self.generator.netfn)
-        os.remove(self.generator.cfg_path + self.generator.roufn)
-        os.remove(self.generator.cfg_path + self.generator.sumfn)
-
-        # the connection file is not always created
-        try:
-            os.remove(self.generator.net_path + self.generator.confn)
-        except OSError:
-            pass
-
-        # neither is the type file
-        try:
-            os.remove(self.generator.net_path + self.generator.typfn)
-        except OSError:
-            pass
+        # """Deletes the xml files that were created by the generator class. This
+        # is to prevent them from building up in the debug folder."""
+        # os.remove(self.generator.net_path + self.generator.nodfn)
+        # os.remove(self.generator.net_path + self.generator.edgfn)
+        # os.remove(self.generator.net_path + self.generator.cfgfn)
+        # os.remove(self.generator.cfg_path + self.generator.addfn)
+        # os.remove(self.generator.cfg_path + self.generator.guifn)
+        # os.remove(self.generator.cfg_path + self.generator.netfn)
+        # os.remove(self.generator.cfg_path + self.generator.roufn)
+        # os.remove(self.generator.cfg_path + self.generator.sumfn)
+        #
+        # # the connection file is not always created
+        # try:
+        #     os.remove(self.generator.net_path + self.generator.confn)
+        # except OSError:
+        #     pass
+        #
+        # # neither is the type file
+        # try:
+        #     os.remove(self.generator.net_path + self.generator.typfn)
+        # except OSError:
+        #     pass
+        pass
 
     def __str__(self):
         return "Scenario " + self.name + " with " + \
