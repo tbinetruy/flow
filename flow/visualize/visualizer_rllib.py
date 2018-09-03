@@ -68,6 +68,12 @@ parser.add_argument(
     '--render',
     action='store_true',
     help='Specifies whether to visualize the results or just run it')
+parser.add_argument(
+    '--num_clients',
+    type=int,
+    default=1,
+    help="How many clients will try to connect to the sumo instance"
+)
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -121,7 +127,7 @@ if __name__ == "__main__":
     else:
         sumo_params.sumo_binary = "sumo"
     sumo_params.emission_path = "./test_time_rollout/"
-    sumo_params.num_clients = 2
+    sumo_params.num_clients = args.num_clients
 
     env = env_class(
         env_params=env_params, sumo_params=sumo_params, scenario=scenario)
