@@ -10,7 +10,7 @@ by Mania et. al
 import json
 
 import ray
-import ray.rllib.ars as ars
+import ray.rllib.agents.ars as ars
 from ray.tune import run_experiments, grid_search
 from ray.tune.registry import register_env
 

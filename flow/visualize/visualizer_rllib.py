@@ -64,6 +64,10 @@ parser.add_argument(
     action='store_true',
     help='Specifies whether to convert the emission file '
     'created by sumo into a csv file')
+parser.add_argument(
+    '--render',
+    action='store_true',
+    help='Specifies whether to visualize the results or just run it')
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -112,7 +116,10 @@ if __name__ == "__main__":
     env_class = getattr(module, flow_params["env_name"])
     env_params = flow_params['env']
     sumo_params = flow_params['sumo']
-    sumo_params.sumo_binary = "sumo-gui"
+    if args.render:
+        sumo_params.sumo_binary = "sumo-gui"
+    else:
+        sumo_params.sumo_binary = "sumo"
     sumo_params.emission_path = "./test_time_rollout/"
     sumo_params.num_clients = 2
 
