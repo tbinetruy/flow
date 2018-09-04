@@ -18,9 +18,9 @@ from flow.utils.rllib import FlowParamsEncoder
 from flow.benchmarks.figureeight0 import flow_params
 
 # number of rollouts per training iteration
-N_ROLLOUTS = 20
+N_ROLLOUTS = 36
 # number of parallel workers
-N_CPUS = 2
+N_CPUS = 36
 
 if __name__ == "__main__":
     # get the env name and a creator for the environment
@@ -52,6 +52,6 @@ if __name__ == "__main__":
             "max_failures": 999,
             "stop": {"training_iteration": 500},
             "num_samples": 3,
-            # "upload_dir": "s3://bucket"
+            "upload_dir": "s3://bucket"
         },
     })
