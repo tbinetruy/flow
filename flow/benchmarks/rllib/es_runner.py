@@ -50,8 +50,8 @@ if __name__ == "__main__":
             },
             "checkpoint_freq": 5,
             "max_failures": 999,
-            "stop": {"training_iteration": 500},
-            "num_samples": 3,
+            "stop": {"training_iteration": 20},
+            "num_samples": 1,
             "upload_dir": "s3://bucket"
         },
     })
