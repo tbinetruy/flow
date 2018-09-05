@@ -18,7 +18,7 @@ from flow.core.vehicles import Vehicles
 from flow.controllers import RLController, IDMController, ContinuousRouter
 
 # time horizon of a single rollout
-HORIZON = 600
+HORIZON = 300
 # number of rollouts per training iteration
 N_ROLLOUTS = 36
 # number of parallel workers
@@ -54,7 +54,7 @@ flow_params = dict(
 
     # sumo-related parameters (see flow.core.params.SumoParams)
     sumo=SumoParams(
-        sim_step=0.3,
+        sim_step=0.6,
         sumo_binary="sumo",
     ),
 
@@ -116,7 +116,7 @@ if __name__ == "__main__":
             "config": {
                 **config
             },
-            "checkpoint_freq": 10,
+            "checkpoint_freq": 5,
             "max_failures": 999,
             "stop": {
                 "training_iteration": 50,
