@@ -151,7 +151,7 @@ class WaveAttenuationEnv(Env):
         steps are performed with the rl vehicle acting as a human vehicle.
         """
         # update the scenario
-        initial_config = InitialConfig(bunching=50, min_gap=0)
+        initial_config = InitialConfig(bunching=20, min_gap=0)
         additional_net_params = {
             "length":
             random.randint(
