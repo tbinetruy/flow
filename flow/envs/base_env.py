@@ -180,6 +180,7 @@ class Env(gym.Env, Serializable):
                         # 1.0 for consistency w/ above
                         time.sleep(1.0 * int(time_stamp[-6:]) / 1e6)
                         port = sumolib.miscutils.getFreeSocketPort()
+                        self.sumo_params.port = port
 
                 # command used to start sumo
                 sumo_call = [
