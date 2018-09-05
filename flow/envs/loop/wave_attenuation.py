@@ -193,9 +193,6 @@ class WaveAttenuationEnv(Env):
         print("v_max:", v_eq_max)
         print('-----------------------')
 
-        time_stamp = ''.join(str(time.time()).split('.'))
-        # 1.0 for consistency w/ above
-        time.sleep(2.0 * int(time_stamp[-6:]) / 1e6)
         # restart the sumo instance
         self.restart_sumo(
             sumo_params=self.sumo_params,
