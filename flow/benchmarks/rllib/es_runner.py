@@ -33,7 +33,7 @@ if __name__ == "__main__":
     config = es.DEFAULT_CONFIG.copy()
     config["episodes_per_batch"] = N_ROLLOUTS
     config["num_workers"] = N_CPUS
-    config["eval_prob"] = 0.05
+    config["eval_prob"] = 0.2
     config["noise_stdev"] = grid_search([0.01, 0.02])
     config["stepsize"] = grid_search([.01, .05, .001])
     # save the flow params for replay
