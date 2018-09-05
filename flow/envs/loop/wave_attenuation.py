@@ -17,7 +17,8 @@ from gym.spaces.tuple_space import Tuple
 import random
 import numpy as np
 from scipy.optimize import fsolve
-import time
+import os
+import glob
 
 ADDITIONAL_ENV_PARAMS = {
     # maximum acceleration of autonomous vehicles
@@ -163,10 +164,20 @@ class WaveAttenuationEnv(Env):
             "resolution":
             40
         }
-        net_params = NetParams(additional_params=additional_net_params)
 
         for _ in range(100):
             try:
+                # delete the cfg and net files
+                net_path = self.scenario.generator.net_path
+                net_name = net_path + self.scenario.generator.name
+                cfg_path = self.scenario.generator.cfg_path
+                cfg_name = cfg_path + self.scenario.generator.name
+                for f in glob.glob(net_name + '*'):
+                    os.remove(f)
+                for f in glob.glob(cfg_name + '*'):
+                    os.remove(f)
+
+                net_params = NetParams(additional_params=additional_net_params)
                 self.scenario = self.scenario.__class__(
                     self.scenario.orig_name, self.scenario.generator_class,
                     self.scenario.vehicles, net_params, initial_config)
