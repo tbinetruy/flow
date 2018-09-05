@@ -64,7 +64,7 @@ class Scenario(Serializable):
             Serializable.quick_init(self, locals())
 
         self.orig_name = name  # To avoid repeated concatenation upon reset
-        self.name = name + time.strftime("_%Y%m%d-%H%M%S_"+str(random.randint(0, 1e20)))
+        self.name = name + str(time.time())#name + time.strftime("_%Y%m%d-%H%M%S_"+str(random.randint(0, 1e20)))
 
 
         self.generator_class = generator_class
