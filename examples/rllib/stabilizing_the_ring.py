@@ -97,6 +97,7 @@ if __name__ == "__main__":
     config["deltas_used"] = N_CPUS
     config["policy_type"] = "MLPPolicy"
     config["fcnet_hiddens"] = [4, 4]
+    config["eval_prob"] = 0.2
 
     # save the flow params for replay
     flow_json = json.dumps(
@@ -109,16 +110,16 @@ if __name__ == "__main__":
     register_env(env_name, create_env)
 
     trials = run_experiments({
-        flow_params["exp_tag"]: {
+        "rllib_tutorial": {
             "run": "ARS",
             "env": env_name,
             "config": {
                 **config
             },
-            "checkpoint_freq": 20,
+            "checkpoint_freq": 10,
             "max_failures": 999,
             "stop": {
-                "training_iteration": 500,
+                "training_iteration": 50,
             },
         },
     })
