@@ -18,11 +18,11 @@ from flow.core.vehicles import Vehicles
 from flow.controllers import RLController, IDMController, ContinuousRouter
 
 # time horizon of a single rollout
-HORIZON = 3000
+HORIZON = 600
 # number of rollouts per training iteration
-N_ROLLOUTS = 20
+N_ROLLOUTS = 36
 # number of parallel workers
-N_CPUS = 2
+N_CPUS = 36
 
 # We place one autonomous vehicle and 22 human-driven vehicles in the network
 vehicles = Vehicles()
@@ -54,18 +54,18 @@ flow_params = dict(
 
     # sumo-related parameters (see flow.core.params.SumoParams)
     sumo=SumoParams(
-        sim_step=0.1,
+        sim_step=0.5,
         sumo_binary="sumo",
     ),
 
     # environment related parameters (see flow.core.params.EnvParams)
     env=EnvParams(
         horizon=HORIZON,
-        warmup_steps=750,
+        warmup_steps=0,
         additional_params={
             "max_accel": 1,
             "max_decel": 1,
-            "ring_length": [220, 270],
+            "ring_length": [220, 221],
         },
     ),
 
@@ -123,7 +123,7 @@ if __name__ == "__main__":
             "checkpoint_freq": 20,
             "max_failures": 999,
             "stop": {
-                "training_iteration": 500,
+                "training_iteration": 60,
             },
         },
     })
