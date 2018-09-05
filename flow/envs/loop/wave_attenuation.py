@@ -165,39 +165,51 @@ class WaveAttenuationEnv(Env):
         }
         net_params = NetParams(additional_params=additional_net_params)
 
-        self.scenario = self.scenario.__class__(
-            self.scenario.orig_name, self.scenario.generator_class,
-            self.scenario.vehicles, net_params, initial_config)
+        for _ in range(100):
+            try:
+                self.scenario = self.scenario.__class__(
+                    self.scenario.orig_name, self.scenario.generator_class,
+                    self.scenario.vehicles, net_params, initial_config)
 
-        # solve for the velocity upper bound of the ring
-        def v_eq_max_function(v):
-            num_veh = self.vehicles.num_vehicles - 1
-            # maximum gap in the presence of one rl vehicle
-            s_eq_max = (self.scenario.length -
-                        self.vehicles.num_vehicles * 5) / num_veh
+                # solve for the velocity upper bound of the ring
+                def v_eq_max_function(v):
+                    num_veh = self.vehicles.num_vehicles - 1
+                    # maximum gap in the presence of one rl vehicle
+                    s_eq_max = (self.scenario.length -
+                                self.vehicles.num_vehicles * 5) / num_veh
 
-            v0 = 30
-            s0 = 2
-            T = 1
-            gamma = 4
+                    v0 = 30
+                    s0 = 2
+                    T = 1
+                    gamma = 4
 
-            error = s_eq_max - (s0 + v * T) * (1 - (v / v0)**gamma)**-0.5
+                    error = s_eq_max - (s0 + v * T) * (1 - (v / v0)**gamma)**-0.5
 
-            return error
+                    return error
 
-        v_guess = 4.
-        v_eq_max = fsolve(v_eq_max_function, v_guess)[0]
+                v_guess = 4.
+                v_eq_max = fsolve(v_eq_max_function, v_guess)[0]
 
-        print('\n-----------------------')
-        print('ring length:', net_params.additional_params["length"])
-        print("v_max:", v_eq_max)
-        print('-----------------------')
+                print('\n-----------------------')
+                print('ring length:', net_params.additional_params["length"])
+                print("v_max:", v_eq_max)
+                print('-----------------------')
 
-        # restart the sumo instance
-        self.restart_sumo(
-            sumo_params=self.sumo_params,
-            sumo_binary=self.sumo_params.sumo_binary)
+                # restart the sumo instance
+                self.restart_sumo(
+                    sumo_params=self.sumo_params,
+                    sumo_binary=self.sumo_params.sumo_binary)
 
+                # perform the generic reset function
+                observation = super().reset()
+
+                # reset the timer to zero
+                self.time_counter = 0
+
+                return observation
+            except Exception as e:
+                print('error on reset ', e)
+        # perform the generic reset function
         # perform the generic reset function
         observation = super().reset()
 
