@@ -125,5 +125,6 @@ if __name__ == "__main__":
             "stop": {
                 "training_iteration": 60,
             },
+            "upload_dir": "s3://public.flow.results"
         },
     })
