@@ -121,19 +121,27 @@ if __name__ == "__main__":
     # Run the environment in the presence of the pre-trained RL agent for the
     # requested number of time steps / rollouts
     rets = []
+    mean_vels = []
+    vel_tot = []
     for i in range(args.num_rollouts):
         state = env.reset()
+        vel = np.zeros(env_params.horizon)
         done = False
         ret = 0
-        for _ in range(env_params.horizon):
+        for j in range(env_params.horizon):
             action = agent.compute_action(state)
             state, reward, done, _ = env.step(action)
             ret += reward
+            vel[j] = np.mean(vehicles.get_speed(vehicles.get_ids()))
+            vel_tot.append(vel[j])
             if done:
                 break
         rets.append(ret)
+        mean_vels += [np.mean(vel)]
         print("Return:", ret)
     print("Average, std return: {}, {}".format(np.mean(rets), np.std(rets)))
+    print("Average speed: {}".format(np.mean(mean_vels)))
+    print("Final speed: {}".format(vel_tot[-1]))
 
     # terminate the environment
     env.terminate()

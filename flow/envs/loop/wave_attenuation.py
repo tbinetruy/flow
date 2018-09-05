@@ -118,13 +118,13 @@ class WaveAttenuationEnv(Env):
         eta_2 = 4.
         reward = eta_2 * np.mean(vel) / 20
 
-        # punish accelerations (should lead to reduced stop-and-go waves)
-        eta = 8  # 0.25
-        rl_actions = np.array(rl_actions)
-        accel_threshold = 0
-
-        if np.mean(np.abs(rl_actions)) > accel_threshold:
-            reward += eta * (accel_threshold - np.mean(np.abs(rl_actions)))
+        # # punish accelerations (should lead to reduced stop-and-go waves)
+        # eta = 8  # 0.25
+        # rl_actions = np.array(rl_actions)
+        # accel_threshold = 0
+        #
+        # if np.mean(np.abs(rl_actions)) > accel_threshold:
+        #     reward += eta * (accel_threshold - np.mean(np.abs(rl_actions)))
 
         return float(reward)
 
