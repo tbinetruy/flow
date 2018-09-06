@@ -188,6 +188,15 @@ e. Ray/RLlib (optional)
 =======================
 RLlib is another RL library that has been extensively tested on the Flow
 repository. 
+
+**If you aren't intending to develop RL algorithms in Rllib**, simply run
+
+::
+
+    pip install ray==0.5.2
+    
+**If you are intending to develop RL algorithms in RLlib and want to install from source**
+
 First visit <https://github.com/eugenevinitsky/ray/blob/master/doc/source/installation.rst> and
 install the required packages. Do NOT `pip install ray`.
 
