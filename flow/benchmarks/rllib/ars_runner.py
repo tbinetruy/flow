@@ -23,7 +23,7 @@ from flow.benchmarks.grid0 import flow_params
 # number of rollouts per training iteration
 N_ROLLOUTS = 30
 # number of parallel workers
-N_CPUS = 2
+N_CPUS = 60
 
 if __name__ == "__main__":
     # get the env name and a creator for the environment
