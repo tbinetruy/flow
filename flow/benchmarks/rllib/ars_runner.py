@@ -60,6 +60,6 @@ if __name__ == "__main__":
             "max_failures": 999,
             "stop": {"training_iteration": 5},
             "num_samples": 1,
-            "upload_dir": "s3://public.flow.results/corl_exps"
+            "upload_dir": "https://s3-us-west-1.amazonaws.com/public.flow.results/corl_exps"
         },
     })
