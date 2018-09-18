@@ -21,7 +21,7 @@ from flow.utils.rllib import FlowParamsEncoder
 from flow.benchmarks.grid0 import flow_params
 
 # number of rollouts per training iteration
-N_ROLLOUTS = 20
+N_ROLLOUTS = 30
 # number of parallel workers
 N_CPUS = 2
 
@@ -39,7 +39,7 @@ if __name__ == "__main__":
     config["stepsize"] = grid_search([.01, .02])
     config["noise_stdev"] = grid_search([.01, .02])
     config['policy_type'] = 'LinearPolicy'
-    config['eval_prob'] = 0.05
+    config['eval_prob'] = 0.1
 
     # save the flow params for replay
     flow_json = json.dumps(
@@ -50,7 +50,7 @@ if __name__ == "__main__":
     register_env(env_name, create_env)
 
     trials = run_experiments({
-        "this_is_a_test": {
+        flow_params["exp_tag"]: {
             "run": "ARS",
             "env": env_name,
             "config": {
@@ -58,7 +58,7 @@ if __name__ == "__main__":
             },
             "checkpoint_freq": 5,
             "max_failures": 999,
-            "stop": {"training_iteration": 5},
+            "stop": {"training_iteration": 500},
             "num_samples": 1,
             "upload_dir": "s3://public.flow.results/corl_exps/"
         },
