@@ -30,7 +30,7 @@ if __name__ == "__main__":
     create_env, env_name = make_create_env(params=flow_params, version=0)
 
     # initialize a ray instance
-    ray.init(redirect_output=True)
+    ray.init(redis_address="localhost:6379", redirect_output=True)
 
     config = ars.DEFAULT_CONFIG.copy()
     config["num_workers"] = N_CPUS
@@ -50,7 +50,7 @@ if __name__ == "__main__":
     register_env(env_name, create_env)
 
     trials = run_experiments({
-        flow_params["exp_tag"]: {
+        "this_is_a_test": {
             "run": "ARS",
             "env": env_name,
             "config": {
@@ -58,8 +58,8 @@ if __name__ == "__main__":
             },
             "checkpoint_freq": 5,
             "max_failures": 999,
-            "stop": {"training_iteration": 300},
+            "stop": {"training_iteration": 5},
             "num_samples": 1,
-            "upload_dir": "s3://public.flow.result/corl_exps"
+            "upload_dir": "s3://public.flow.results/corl_exps"
         },
     })
