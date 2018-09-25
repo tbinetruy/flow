@@ -40,7 +40,7 @@ auth:
 # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
 head_node:
     InstanceType: m4.16xlarge #c4.4xlarge
-    ImageId: ami-05500069fc7846ec2 # Flow AMI (Ubuntu)
+    ImageId: ami-059a97b61ab36e620 # Flow AMI (Ubuntu)
     InstanceMarketOptions:
         MarketType: spot
          #Additional options can be found in the boto docs, e.g.
@@ -55,7 +55,7 @@ head_node:
 # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
 worker_nodes:
     InstanceType: m4.16xlarge #c4.4xlarge
-    ImageId: ami-05500069fc7846ec2 # Flow AMI (Ubuntu)
+    ImageId: ami-059a97b61ab36e620 # Flow AMI (Ubuntu)
 
     #Run workers on spot by default. Comment this out to use on-demand.
     InstanceMarketOptions:
@@ -68,12 +68,12 @@ worker_nodes:
 
 file_mounts: {
 # path to your repo and the desired branch name
-"/tmp/path": "<PATH TO FLOW>/.git/refs/heads/<BRANCH NAME>",
+#"/tmp/path": "<PATH TO FLOW>/.git/refs/heads/<BRANCH NAME>",
 }
 
 setup_commands:
     # checkout your desired branch on all worker nodes
-    - cd flow && git fetch && git checkout `cat /tmp/path`
+#    - cd flow && git fetch && git checkout `cat /tmp/path`
     - echo 'export PATH="/home/ubuntu/anaconda3/bin:$PATH"' >> ~/.bashrc
 # Custom commands that will be run on the head node after common setup.
 head_setup_commands:
