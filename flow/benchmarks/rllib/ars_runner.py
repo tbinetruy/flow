@@ -21,7 +21,7 @@ from flow.utils.rllib import FlowParamsEncoder
 from flow.benchmarks.merge2 import flow_params
 
 # number of rollouts per training iteration
-N_ROLLOUTS = 15
+N_ROLLOUTS = 20
 # number of parallel workers
 N_CPUS = 60
 
@@ -40,6 +40,7 @@ if __name__ == "__main__":
     config["noise_stdev"] = grid_search([.01, .02])
     config['policy_type'] = 'LinearPolicy'
     config['eval_prob'] = 0.05
+    config['observation_filter'] = "NoFilter"
 
     # save the flow params for replay
     flow_json = json.dumps(

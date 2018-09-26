@@ -21,7 +21,7 @@ from flow.utils.rllib import FlowParamsEncoder
 from flow.benchmarks.merge2 import flow_params
 
 # number of rollouts per training iteration
-N_ROLLOUTS = 30
+N_ROLLOUTS = 20
 # number of parallel workers
 N_CPUS = 60
 
