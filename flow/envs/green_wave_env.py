@@ -572,7 +572,7 @@ class PO_TrafficLightGridEnv(TrafficLightGridEnv):
             return - rewards.min_delay_unscaled(self)
         else:
             return (- rewards.min_delay_unscaled(self) +
-                    rewards.penalize_standstill(self, gain=0.2))
+                    rewards.penalize_standstill(self, gain=0.05))
 
     def additional_command(self):
         """See class definition."""
