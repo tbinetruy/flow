@@ -16,7 +16,7 @@ from flow.utils.rllib import FlowParamsEncoder
 from ray.tune import grid_search
 
 # use this to specify the environment to run
-from flow.benchmarks.grid1 import flow_params
+from flow.benchmarks.merge0 import flow_params
 
 # number of rollouts per training iteration
 N_ROLLOUTS = 20
@@ -56,7 +56,7 @@ if __name__ == "__main__":
             "checkpoint_freq": 25,
             "max_failures": 999,
             "stop": {"training_iteration": 500},
-            "num_samples": 1,
+            "num_samples": 3,
             "upload_dir": "s3://public.flow.results/corl_exps/public_results/es"
         },
     })
