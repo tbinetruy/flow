@@ -133,6 +133,7 @@ class Env(gym.Env, Serializable):
         self.setup_initial_state()
 
         self.renderer = Renderer(self.traci_connection)
+        self.frame = self.renderer.frame()
 
     def restart_sumo(self, sumo_params, render=None):
         """Restart an already initialized sumo instance.
@@ -457,7 +458,7 @@ class Env(gym.Env, Serializable):
             if crash:
                 break
 
-            self.renderer.render()
+            self.frame = self.renderer.render()
 
         # collect information of the state of the network based on the
         # environment class used
@@ -469,7 +470,7 @@ class Env(gym.Env, Serializable):
         # compute the reward
         reward = self.compute_reward(self.state, rl_actions, fail=crash)
 
-        return next_observation, reward, crash, {}
+        return self.frame, reward, crash, {}
 
     def reset(self):
         """Reset the environment.

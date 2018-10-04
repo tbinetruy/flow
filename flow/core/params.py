@@ -27,7 +27,8 @@ class SumoParams:
                  restart_instance=False,
                  print_warnings=True,
                  teleport_time=-1,
-                 sumo_binary=None):
+                 sumo_binary=None,
+                 save_frame=False):
         """Instantiate SumoParams.
 
         Attributes
@@ -81,6 +82,7 @@ class SumoParams:
         self.restart_instance = restart_instance
         self.print_warnings = print_warnings
         self.teleport_time = teleport_time
+        self.save_frame = save_frame
         if sumo_binary is not None:
             warnings.simplefilter("always", PendingDeprecationWarning)
             warnings.warn(

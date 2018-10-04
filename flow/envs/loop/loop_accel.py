@@ -112,3 +112,29 @@ class AccelEnv(Env):
         if self.vehicles.num_rl_vehicles > 0:
             for veh_id in self.vehicles.get_human_ids():
                 self.vehicles.set_observed(veh_id)
+
+class imageAccelEnv(AccelEnv):
+    @property
+    def action_space(self):
+        """See class definition."""
+        return Box(
+            low=-abs(self.env_params.additional_params["max_decel"]),
+            high=self.env_params.additional_params["max_accel"],
+            shape=(self.vehicles.num_rl_vehicles,),
+            dtype=np.float32)
+
+    @property
+    def observation_space(self):
+        """See class definition."""
+        self.obs_var_labels = ["Velocity", "Absolute_pos"]
+        speed = Box(
+            low=0,
+            high=1,
+            shape=(self.vehicles.num_vehicles,),
+            dtype=np.float32)
+        pos = Box(
+            low=0.,
+            high=1,
+            shape=(self.vehicles.num_vehicles,),
+            dtype=np.float32)
+        return Tuple((speed, pos))

@@ -6,7 +6,7 @@ import os
 
 class PygletRenderer():
 
-    def __init__(self, kernel, save_frame=False, save_dir=None):
+    def __init__(self, kernel, save_frame=False, save_dir="./"):
         self.kernel = kernel
         self.batch = pyglet.graphics.Batch()
         self.save_frame = save_frame

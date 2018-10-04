@@ -150,17 +150,26 @@ class WaveAttenuationEnv(Env):
         """
         # update the scenario
         initial_config = InitialConfig(bunching=50, min_gap=0)
+        # additional_net_params = {
+        #     "length":
+        #     random.randint(
+        #         self.env_params.additional_params["ring_length"][0],
+        #         self.env_params.additional_params["ring_length"][1]),
+        #     "lanes":
+        #     1,
+        #     "speed_limit":
+        #     30,
+        #     "resolution":
+        #     40
+        # }
         additional_net_params = {
-            "length":
-            random.randint(
-                self.env_params.additional_params["ring_length"][0],
-                self.env_params.additional_params["ring_length"][1]),
+            "length": 220,
             "lanes":
-            1,
+                1,
             "speed_limit":
-            30,
+                30,
             "resolution":
-            40
+                40
         }
         net_params = NetParams(additional_params=additional_net_params)
 
@@ -264,3 +273,11 @@ class WaveAttenuationPOEnv(WaveAttenuationEnv):
         rl_id = self.vehicles.get_rl_ids()[0]
         lead_id = self.vehicles.get_leader(rl_id) or rl_id
         self.vehicles.set_observed(lead_id)
+
+
+class imageWaveAttenuationPOEnv(WaveAttenuationPOEnv):
+    @property
+    def observation_space(self):
+        height = self.frame.shape[0]
+        width = self.frame.shape[1]
+        return Box(0, 255, [height, width, 1])

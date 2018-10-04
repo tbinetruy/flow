@@ -29,7 +29,7 @@ def sugiyama_example(render=None):
         A non-rl experiment demonstrating the performance of human-driven
         vehicles on a ring road.
     """
-    sumo_params = SumoParams(sim_step=0.1, render=True)
+    sumo_params = SumoParams(sim_step=0.1, render=False)
 
     if render is not None:
         sumo_params.render = render

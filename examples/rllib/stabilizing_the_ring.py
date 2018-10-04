@@ -16,11 +16,12 @@ from flow.utils.rllib import FlowParamsEncoder
 from flow.core.params import SumoParams, EnvParams, InitialConfig, NetParams
 from flow.core.vehicles import Vehicles
 from flow.controllers import RLController, IDMController, ContinuousRouter
+from ray.rllib.models import ModelCatalog, Model
 
 # time horizon of a single rollout
 HORIZON = 3000
 # number of rollouts per training iteration
-N_ROLLOUTS = 20
+N_ROLLOUTS = 4
 # number of parallel workers
 N_CPUS = 2
 
@@ -56,6 +57,7 @@ flow_params = dict(
     sumo=SumoParams(
         sim_step=0.1,
         render=False,
+        save_frame=True
     ),
 
     # environment related parameters (see flow.core.params.EnvParams)
@@ -91,17 +93,28 @@ flow_params = dict(
 if __name__ == "__main__":
     ray.init(num_cpus=N_CPUS + 1, redirect_output=True)
 
+
+    class MyModelClass(Model):
+        def _build_layers(self, inputs, num_outputs, options):
+            layer1 = slim.fully_connected(inputs, 64, ...)
+            layer2 = slim.fully_connected(inputs, 64, ...)
+            ...
+            return layerN, layerN_minus_1
+
+
+    ModelCatalog.register_custom_model("my_model", MyModelClass)
+
     config = ppo.DEFAULT_CONFIG.copy()
     config["num_workers"] = N_CPUS
-    config["timesteps_per_batch"] = HORIZON * N_ROLLOUTS
+    config["train_batch_size"] = HORIZON * N_ROLLOUTS
     config["gamma"] = 0.999  # discount rate
     config["model"].update({"fcnet_hiddens": [16, 16]})
     config["use_gae"] = True
     config["lambda"] = 0.97
-    config["sgd_batchsize"] = min(16 * 1024, config["timesteps_per_batch"])
     config["kl_target"] = 0.02
     config["num_sgd_iter"] = 10
     config["horizon"] = HORIZON
+    config["model"] = {"custom_model": "cnn"}
 
     # save the flow params for replay
     flow_json = json.dumps(
@@ -123,7 +136,7 @@ if __name__ == "__main__":
             "checkpoint_freq": 20,
             "max_failures": 999,
             "stop": {
-                "training_iteration": 500,
+                "training_iteration": 1,
             },
         },
     })
