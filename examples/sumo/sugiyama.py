@@ -3,7 +3,7 @@
 This example consists of 22 IDM cars on a ring creating shockwaves.
 """
 
-from flow.controllers import IDMController, ContinuousRouter
+from flow.controllers import RLController, IDMController, ContinuousRouter
 from flow.core.experiment import SumoExperiment
 from flow.core.params import SumoParams, EnvParams, \
     InitialConfig, NetParams
@@ -39,7 +39,13 @@ def sugiyama_example(render=None):
         veh_id="idm",
         acceleration_controller=(IDMController, {}),
         routing_controller=(ContinuousRouter, {}),
-        num_vehicles=22)
+        num_vehicles=21)
+    vehicles.add(
+        veh_id="rl",
+        acceleration_controller=(RLController, {}),
+        routing_controller=(ContinuousRouter, {}),
+        num_vehicles=1)
+
 
     env_params = EnvParams(additional_params=ADDITIONAL_ENV_PARAMS)
 
@@ -62,7 +68,7 @@ def sugiyama_example(render=None):
 
 if __name__ == "__main__":
     # import the experiment variable
-    exp = sugiyama_example()
+    exp = sugiyama_example(render=False)
 
     # run for a set number of rollouts / time steps
     exp.run(1, 1500)

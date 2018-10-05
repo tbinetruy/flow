@@ -109,5 +109,5 @@ def bottleneck_example(flow_rate, horizon, render=None):
 if __name__ == "__main__":
     # import the experiment variable
     # inflow, number of steps, binary
-    exp = bottleneck_example(INFLOW, 1000, render=True)
+    exp = bottleneck_example(INFLOW, 1000, render=False)
     exp.run(5, 1000)
