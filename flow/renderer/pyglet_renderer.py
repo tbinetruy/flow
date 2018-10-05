@@ -10,7 +10,7 @@ class PygletRenderer():
         self.kernel = kernel
         self.batch = pyglet.graphics.Batch()
         self.save_frame = save_frame
-        self.pxpm = 3 # Pixel per meter
+        self.pxpm = 1 # Pixel per meter
         if self.save_frame:
             self.save_dir = save_dir
 
@@ -44,37 +44,37 @@ class PygletRenderer():
         image_data = buffer.get_image_data()
         frame = np.fromstring(image_data.data, dtype=np.uint8, sep='')
         frame = frame.reshape(buffer.height, buffer.width, 4)
-        self.frame = frame[::-1,:,0:3]#; print(self.frame.shape)
+        self.frame = frame[::-1,:,0:3]
         print("Frame dimension:", (self.width, self.height))
 
 
     def render(self):
-        try:
-            glClearColor(0,0,0,1)
-            self.window.clear()
-            self.window.switch_to()
-            self.window.dispatch_events()
+        #try:
+        glClearColor(0,0,0,1)
+        self.window.clear()
+        self.window.switch_to()
+        self.window.dispatch_events()
 
-            self.batch = pyglet.graphics.Batch()
-            self.add_lane_polys()
-            self.add_vehicle_polys()
-            self.batch.draw()
-            #print(self.kernel.simulation.getCurrentTime())
+        self.batch = pyglet.graphics.Batch()
+        self.add_lane_polys()
+        self.add_vehicle_polys()
+        self.batch.draw()
+        #print(self.kernel.simulation.getCurrentTime())
 
-            buffer = pyglet.image.get_buffer_manager().get_color_buffer()
-            if self.save_frame:
-                t = self.kernel.simulation.getCurrentTime()
-                buffer.save("%s/frame%06d.png" % (self.save_dir, t))
-            image_data = buffer.get_image_data()
-            frame = np.fromstring(image_data.data, dtype=np.uint8, sep='')
-            frame = frame.reshape(buffer.height, buffer.width, 4)
-            self.frame = frame[::-1,:,0:3]
+        buffer = pyglet.image.get_buffer_manager().get_color_buffer()
+        if self.save_frame:
+            t = self.kernel.simulation.getCurrentTime()
+            buffer.save("%s/frame%06d.png" % (self.save_dir, t))
+        image_data = buffer.get_image_data()
+        frame = np.fromstring(image_data.data, dtype=np.uint8, sep='')
+        frame = frame.reshape(buffer.height, buffer.width, 4)
+        self.frame = frame[::-1,:,0:3]
 
-            self.window.flip()
-            return self.frame
-        except:
-            self.close()
-            return self.frame
+        self.window.flip()
+        return self.frame
+        #except:
+        #    self.close()
+        #    return self.frame
 
 
     def close(self):
