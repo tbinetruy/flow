@@ -8,7 +8,7 @@ import json
 
 import ray
 import ray.rllib.agents.ppo as ppo
-from ray.tune import run_experiments
+from ray.tune import run_experiments, grid_search
 from ray.tune.registry import register_env
 from ray.rllib.models import ModelCatalog, Model
 from ray.rllib.models.misc import get_activation_fn, flatten
@@ -29,7 +29,7 @@ class PixelFlowNetwork(Model):
         # Convolutional Layer #1 and Pooling Layer #1
         conv1 = tf.layers.conv2d(
           inputs=inputs,
-          filters=16,
+          filters=4,
           kernel_size=[4, 4],
           padding="same",
           activation=tf.nn.relu)
@@ -37,23 +37,12 @@ class PixelFlowNetwork(Model):
           inputs=conv1,
           pool_size=[2, 2],
           strides=2)
-        # Convolutional Layer #2 and Pooling Layer #2
-        conv2 = tf.layers.conv2d(
-          inputs=pool1,
-          filters=16,
-          kernel_size=[4, 4],
-          padding="same",
-          activation=tf.nn.relu)
-        pool2 = tf.layers.max_pooling2d(
-          inputs=conv2,
-          pool_size=[2, 2],
-          strides=2)
         # Dense Layer
-        pool2_flat = tf.contrib.layers.flatten(pool2)
+        pool1_flat = tf.contrib.layers.flatten(pool1)
         fc1 = tf.layers.dense(
-          inputs=pool2_flat,
-          units=128,
-          activation=tf.nn.relu)
+          inputs=pool1_flat,
+          units=8,
+          activation=tf.nn.sigmoid)
         fc2 = tf.layers.dense(
           inputs=fc1,
           units=num_outputs,
@@ -65,11 +54,11 @@ ModelCatalog.register_custom_model("pixel_flow_network", PixelFlowNetwork)
 
 
 # time horizon of a single rollout
-HORIZON = 1000
+HORIZON = int(3000/5)
 # number of rollouts per training iteration
 N_ROLLOUTS = 20
 # number of parallel workers
-N_CPUS = 2
+N_CPUS = 60
 
 # We place one autonomous vehicle and 22 human-driven vehicles in the network
 vehicles = Vehicles()
@@ -108,11 +97,11 @@ flow_params = dict(
     # environment related parameters (see flow.core.params.EnvParams)
     env=EnvParams(
         horizon=HORIZON,
-        warmup_steps=250,
+        warmup_steps=int(750/5),
         additional_params={
             "max_accel": 1,
             "max_decel": 1,
-            "ring_length": [220, 270], # Random raod length between 220 and 270.
+            "ring_length": [260, 260], 
         },
     ),
 
@@ -149,7 +138,8 @@ if __name__ == "__main__":
     #config["sgd_minibatch_size"] = min(16 * 1024, config["train_batch_size"])
     config["kl_target"] = 0.02
     config["num_sgd_iter"] = 10
-    config["horizon"] = HORIZON # Test
+    config["horizon"] = HORIZON
+    #config["lr"] = grid_search([5e-6, 5e-5, 5e-4])
 
     # save the flow params for replay
     flow_json = json.dumps(
@@ -168,7 +158,7 @@ if __name__ == "__main__":
             "config": {
                 **config
             },
-            "checkpoint_freq": 5,
+            "checkpoint_freq": 20,
             "max_failures": 999,
             "stop": {
                 "training_iteration": 100,

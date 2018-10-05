@@ -297,11 +297,16 @@ class WaveAttenuationPixelEnv(WaveAttenuationEnv):
         """See class definition."""
         height = self.frame.shape[0]
         width = self.frame.shape[1]
-        return Box(0, 255, [height, width, 1])
+        return Box(-1., 1., [height, width, 1])
 
     def get_state(self, **kwargs):
         """See class definition."""
-        return self.frame.mean(axis=-1,keepdims=True)
+        #np.set_printoptions(threshold=np.nan)
+        frame = self.frame.mean(axis=-1,keepdims=True)
+        frame = (frame - 128)/128.
+        #print("get_state() frame shape:", frame.shape)
+        #print("get_state() frame:", frame.copy().flatten())
+        return frame 
 
     def additional_command(self):
         """Define which vehicles are observed for visualization purposes."""
