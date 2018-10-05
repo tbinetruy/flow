@@ -264,3 +264,48 @@ class WaveAttenuationPOEnv(WaveAttenuationEnv):
         rl_id = self.vehicles.get_rl_ids()[0]
         lead_id = self.vehicles.get_leader(rl_id) or rl_id
         self.vehicles.set_observed(lead_id)
+
+class WaveAttenuationPixelEnv(WaveAttenuationEnv):
+    """Pixel version of WaveAttenuationEnv.
+
+    Note that this environment only works when there is one autonomous vehicle
+    on the network.
+
+    Required from env_params:
+
+    * max_accel: maximum acceleration of autonomous vehicles
+    * max_decel: maximum deceleration of autonomous vehicles
+    * ring_length: bounds on the ranges of ring road lengths the autonomous
+      vehicle is trained on
+
+    States
+        The state consists of the pixel frame generated from the renderer.
+
+    Actions
+        See parent class
+
+    Rewards
+        See parent class
+
+    Termination
+        See parent class
+
+    """
+
+    @property
+    def observation_space(self):
+        """See class definition."""
+        height = self.frame.shape[0]
+        width = self.frame.shape[1]
+        return Box(0, 255, [height, width, 1])
+
+    def get_state(self, **kwargs):
+        """See class definition."""
+        return self.frame.mean(axis=-1,keepdims=True)
+
+    def additional_command(self):
+        """Define which vehicles are observed for visualization purposes."""
+        # specify observed vehicles
+        rl_id = self.vehicles.get_rl_ids()[0]
+        lead_id = self.vehicles.get_leader(rl_id) or rl_id
+        self.vehicles.set_observed(lead_id)

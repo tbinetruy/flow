@@ -10,7 +10,7 @@ class PygletRenderer():
         self.kernel = kernel
         self.batch = pyglet.graphics.Batch()
         self.save_frame = save_frame
-        self.dpm = 3 # Dots per meter
+        self.dpm = 1 # Dots per meter
         if self.save_frame:
             self.save_dir = save_dir
 
