@@ -10,7 +10,7 @@ class PygletRenderer():
         self.kernel = kernel
         self.batch = pyglet.graphics.Batch()
         self.save_frame = save_frame
-        self.dpm = 1 # Dots per meter
+        self.dpm = 3 # Dots per meter
         if self.save_frame:
             self.save_dir = save_dir
 
@@ -112,6 +112,7 @@ class PygletRenderer():
 
 
     def _add_vehicle_poly_triangle(self, center, angle, size, color):
+        color = list(color[:3])
         cx, cy = center
         #print(angle)
         ang = np.radians(angle)
@@ -127,7 +128,7 @@ class PygletRenderer():
         vertex_color = []
         for point in [pt1, pt2, pt3]:
             vertex_list += point
-            vertex_color += [255, 0, 0]
+            vertex_color += color#[255, 0, 0]
         index = [x for x in range(3)]
         group = pyglet.graphics.Group()
         self.batch.add_indexed(3, GL_POLYGON,

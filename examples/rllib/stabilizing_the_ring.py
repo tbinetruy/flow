@@ -93,15 +93,16 @@ if __name__ == "__main__":
 
     config = ppo.DEFAULT_CONFIG.copy()
     config["num_workers"] = N_CPUS
-    config["timesteps_per_batch"] = HORIZON * N_ROLLOUTS
+    config["train_batch_size"] = HORIZON * N_ROLLOUTS
     config["gamma"] = 0.999  # discount rate
-    config["model"].update({"fcnet_hiddens": [16, 16]})
+    #config["model"] = {"custom_model": "pixel_flow_network",
+    #                   "custom_options": {},}
     config["use_gae"] = True
     config["lambda"] = 0.97
-    config["sgd_batchsize"] = min(16 * 1024, config["timesteps_per_batch"])
+    #config["sgd_minibatch_size"] = min(16 * 1024, config["train_batch_size"])
     config["kl_target"] = 0.02
     config["num_sgd_iter"] = 10
-    config["horizon"] = HORIZON
+    config["horizon"] = HORIZON # Test
 
     # save the flow params for replay
     flow_json = json.dumps(
