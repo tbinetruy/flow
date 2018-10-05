@@ -105,14 +105,17 @@ class PygletRenderer():
             x = (x*self.dpm-self.x_shift)*self.x_scale
             y = (y*self.dpm-self.y_shift)*self.y_scale
             ang = self.kernel.vehicle.getAngle(veh_id)
-            c = self.kernel.vehicle.getColor(veh_id)
+            #c = self.kernel.vehicle.getColor(veh_id)
+            if "rl" in veh_id:
+                c = [255,20,147] # Deeppink
+            else:
+                c = [0,139,139] # Darkcyan
             sc = self.kernel.vehicle.getShapeClass(veh_id)
             self._add_vehicle_poly_triangle((x, y), ang, 4.5, c)
             #self._add_vehicle_poly_circle((x, y), 3, c)
 
 
     def _add_vehicle_poly_triangle(self, center, angle, size, color):
-        color = list(color[:3])
         cx, cy = center
         #print(angle)
         ang = np.radians(angle)

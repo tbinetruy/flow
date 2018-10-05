@@ -7,7 +7,7 @@ vehicles in a variable length ring road.
 import json
 
 import ray
-import ray.rllib.agents.ppo as ppo
+import ray.rllib.agents.a3c as a3c
 from ray.tune import run_experiments, grid_search
 from ray.tune.registry import register_env
 from ray.rllib.models import ModelCatalog, Model
@@ -127,19 +127,17 @@ flow_params = dict(
 if __name__ == "__main__":
     ray.init(num_cpus=N_CPUS + 1, redirect_output=True)
 
-    config = ppo.DEFAULT_CONFIG.copy()
+    config = a3c.DEFAULT_CONFIG.copy()
     config["num_workers"] = N_CPUS
     config["train_batch_size"] = HORIZON * N_ROLLOUTS
     config["gamma"] = 0.999  # discount rate
     config["model"] = {"custom_model": "pixel_flow_network",
                        "custom_options": {},}
-    config["use_gae"] = True
-    config["lambda"] = 0.97
-    #config["sgd_minibatch_size"] = min(16 * 1024, config["train_batch_size"])
-    config["kl_target"] = 0.02
-    config["num_sgd_iter"] = 10
-    config["horizon"] = HORIZON
-    #config["lr"] = grid_search([5e-6, 5e-5, 5e-4])
+    #config["use_gae"] = True
+    #config["lambda"] = 0.97
+    #config["num_sgd_iter"] = 10
+    #config["horizon"] = HORIZON
+    config["lr"] = grid_search([5e-6, 5e-5, 5e-4])
 
     # save the flow params for replay
     flow_json = json.dumps(
@@ -153,7 +151,7 @@ if __name__ == "__main__":
 
     trials = run_experiments({
         flow_params["exp_tag"]: {
-            "run": "PPO",
+            "run": "A3C",
             "env": env_name,
             "config": {
                 **config

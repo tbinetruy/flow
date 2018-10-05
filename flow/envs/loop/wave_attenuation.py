@@ -301,11 +301,11 @@ class WaveAttenuationPixelEnv(WaveAttenuationEnv):
 
     def get_state(self, **kwargs):
         """See class definition."""
-        #np.set_printoptions(threshold=np.nan)
         frame = self.frame.mean(axis=-1,keepdims=True)
         frame = (frame - 128)/128.
+        #np.set_printoptions(threshold=np.nan)
         #print("get_state() frame shape:", frame.shape)
-        #print("get_state() frame:", frame.copy().flatten())
+        #print("get_state() frame:", np.unique(frame.copy().flatten()))
         return frame 
 
     def additional_command(self):
