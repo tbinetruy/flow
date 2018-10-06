@@ -106,7 +106,7 @@ class EnvParams:
                  horizon=500,
                  sort_vehicles=False,
                  warmup_steps=0,
-                 sims_per_step=5,
+                 sims_per_step=1,
                  evaluate=False):
         """Instantiate EnvParams.
 

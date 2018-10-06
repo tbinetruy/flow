@@ -54,11 +54,11 @@ ModelCatalog.register_custom_model("pixel_flow_network", PixelFlowNetwork)
 
 
 # time horizon of a single rollout
-HORIZON = int(3000/5)
+HORIZON = 3000
 # number of rollouts per training iteration
 N_ROLLOUTS = 20
 # number of parallel workers
-N_CPUS = 60
+N_CPUS = 4
 
 # We place one autonomous vehicle and 22 human-driven vehicles in the network
 vehicles = Vehicles()
@@ -97,7 +97,7 @@ flow_params = dict(
     # environment related parameters (see flow.core.params.EnvParams)
     env=EnvParams(
         horizon=HORIZON,
-        warmup_steps=int(750/5),
+        warmup_steps=750,
         additional_params={
             "max_accel": 1,
             "max_decel": 1,
@@ -137,7 +137,7 @@ if __name__ == "__main__":
     #config["lambda"] = 0.97
     #config["num_sgd_iter"] = 10
     #config["horizon"] = HORIZON
-    config["lr"] = grid_search([5e-6, 5e-5, 5e-4])
+    #config["lr"] = grid_search([5e-6, 5e-5, 5e-4])
 
     # save the flow params for replay
     flow_json = json.dumps(
