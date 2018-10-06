@@ -9,7 +9,7 @@ import time
 import traceback
 import numpy as np
 import random
-from flow.renderer.pyglet_renderer import PygletRenderer as Renderer
+from flow.renderer.sumo_renderer import SUMORenderer as Renderer
 #from flow.renderer.glfw_renderer import GLFWRenderer as Renderer
 
 import traci
@@ -19,6 +19,7 @@ import gym
 from gym.spaces import Box
 
 import sumolib
+
 
 try:
     # Import serializable if rllab is installed
