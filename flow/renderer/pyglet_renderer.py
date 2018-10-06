@@ -15,28 +15,38 @@ class PygletRenderer():
             self.save_dir = save_dir
 
         self.lane_polys = []
+        lane_polys_flat = []
         for lane_id in self.kernel.lane.getIDList():
             _lane_poly = self.kernel.lane.getShape(lane_id)
-            lane_poly = [i for pt in _lane_poly for i in pt ]
-            self.lane_polys += lane_poly
+            lane_poly = [i for pt in _lane_poly for i in pt]
+            self.lane_polys.append(lane_poly)
+            lane_polys_flat += lane_poly
 
-        polys_x = np.asarray(self.lane_polys[::2])
+        polys_x = np.asarray(lane_polys_flat[::2])
         width = int(polys_x.max() - polys_x.min())
         shift = polys_x.min() - 2
         scale = (width - 4) / width
         self.width = width * self.pxpm
-        self.lane_polys[::2] = [(x-shift)*scale for x in polys_x]
         self.x_shift = shift
         self.x_scale = scale
 
-        polys_y = np.asarray(self.lane_polys[1::2])
+        polys_y = np.asarray(lane_polys_flat[1::2])
         height = int(polys_y.max() - polys_y.min())
         shift = polys_y.min() - 2
         scale = (height - 4) / height
         self.height = height * self.pxpm
-        self.lane_polys[1::2] = [(y-shift)*scale for y in polys_y]
         self.y_shift = shift
         self.y_scale = scale
+
+        self.lane_colors = []
+        for lane_poly in self.lane_polys:
+            lane_poly[::2] = [(x-self.x_shift)*self.x_scale*self.pxpm
+                              for x in lane_poly[::2]]
+            lane_poly[1::2] = [(y-self.y_shift)*self.y_scale*self.pxpm
+                               for y in lane_poly[1::2]]
+            color = [c for _ in range(int(len(lane_poly)/2))
+                     for c in [250, 250, 210]]
+            self.lane_colors.append(color)
 
         self.window = pyglet.window.Window(width=self.width,
                                            height=self.height)
@@ -48,8 +58,7 @@ class PygletRenderer():
         print("Rendering with Pyglet with frame:", (self.width, self.height))
 
 
-    def render(self):
-        #try:
+    def render(self, human_orientations, machine_orientations):
         glClearColor(0,0,0,1)
         self.window.clear()
         self.window.switch_to()
@@ -57,9 +66,9 @@ class PygletRenderer():
 
         self.batch = pyglet.graphics.Batch()
         self.add_lane_polys()
-        self.add_vehicle_polys()
+        self.add_vehicle_polys(human_orientations, [0,139,139])
+        self.add_vehicle_polys(machine_orientations, [255,20,147])
         self.batch.draw()
-        #print(self.kernel.simulation.getCurrentTime())
 
         buffer = pyglet.image.get_buffer_manager().get_color_buffer()
         if self.save_frame:
@@ -72,9 +81,6 @@ class PygletRenderer():
 
         self.window.flip()
         return self.frame
-        #except:
-        #    self.close()
-        #    return self.frame
 
 
     def close(self):
@@ -82,38 +88,24 @@ class PygletRenderer():
 
 
     def add_lane_polys(self):
-        for lane_id in self.kernel.lane.getIDList():
-            _polys = self.kernel.lane.getShape(lane_id)
-            polys = [i for pt in _polys for i in pt]
-            polys[::2] = [(x-self.x_shift)*self.x_scale*self.pxpm
-                          for x in polys[::2]]
-            polys[1::2] = [(y-self.y_shift)*self.y_scale*self.pxpm
-                           for y in polys[1::2]]
-            colors = [c for _ in _polys for c in [255, 255, 0]]
-            self._add_lane_poly(polys, colors)
+        for lane_poly, lane_color in zip(self.lane_polys, self.lane_colors):
+            self._add_lane_poly(lane_poly, lane_color)
 
 
-    def _add_lane_poly(self, polys, colors):
-        num = int(len(polys)/2)
+    def _add_lane_poly(self, lane_poly, lane_color):
+        num = int(len(lane_poly)/2)
         index = [x for x in range(num)]
         group = pyglet.graphics.Group()
         self.batch.add_indexed(num, GL_LINE_STRIP, group, index,
-                               ("v2f", polys), ("c3B", colors))
+                               ("v2f", lane_poly), ("c3B", lane_color))
 
 
-    def add_vehicle_polys(self):
-        for veh_id in self.kernel.vehicle.getIDList():
-            x, y = self.kernel.vehicle.getPosition(veh_id)
+    def add_vehicle_polys(self, orientations, color):
+        for orientation in orientations:
+            x, y, ang = orientation
             x = (x-self.x_shift)*self.x_scale*self.pxpm
             y = (y-self.y_shift)*self.y_scale*self.pxpm
-            ang = self.kernel.vehicle.getAngle(veh_id)
-            #c = self.kernel.vehicle.getColor(veh_id)
-            if "rl" in veh_id:
-                c = [255,20,147] # Deeppink
-            else:
-                c = [0,139,139] # Darkcyan
-            sc = self.kernel.vehicle.getShapeClass(veh_id)
-            self._add_vehicle_poly_triangle((x, y), ang, 5, c)
+            self._add_vehicle_poly_triangle((x, y), ang, 5, color)
             #self._add_vehicle_poly_circle((x, y), 3, c)
 
 

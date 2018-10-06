@@ -354,6 +354,9 @@ class Vehicles:
 
         # update the "headway", "leader", and "follower" variables
         for veh_id in self.__ids:
+            _position = vehicle_obs[veh_id][tc.VAR_POSITION]
+            _angle = vehicle_obs[veh_id][tc.VAR_ANGLE]
+            self.__vehicles[veh_id]["orientation"] = list(_position) + [_angle]
             headway = vehicle_obs.get(veh_id, {}).get(tc.VAR_LEADER, None)
             # check for a collided vehicle or a vehicle with no leader
             if headway is None:
@@ -440,7 +443,7 @@ class Vehicles:
         # subscribe the new vehicle
         env.traci_connection.vehicle.subscribe(veh_id, [
             tc.VAR_LANE_INDEX, tc.VAR_LANEPOSITION, tc.VAR_ROAD_ID,
-            tc.VAR_SPEED, tc.VAR_EDGES
+            tc.VAR_SPEED, tc.VAR_EDGES, tc.VAR_POSITION, tc.VAR_ANGLE
         ])
         env.traci_connection.vehicle.subscribeLeader(veh_id, 2000)
 
@@ -530,6 +533,11 @@ class Vehicles:
     def set_headway(self, veh_id, headway):
         """Set the headway of the specified vehicle."""
         self.__vehicles[veh_id]["headway"] = headway
+
+
+    def get_orientation(self, veh_id):
+        return self.__vehicles[veh_id]["orientation"]
+
 
     def get_ids(self):
         """Return the names of all vehicles currently in the network."""

@@ -134,7 +134,16 @@ class Env(gym.Env, Serializable):
         self.setup_initial_state()
 
         self.renderer = Renderer(self.traci_connection)
-        self.frame = self.renderer.render()
+        human_idlist = self.vehicles.get_human_ids()
+        human_orientations = []
+        for id in human_idlist:
+            human_orientations.append(self.vehicles.get_orientation(id))
+        machine_idlist = self.vehicles.get_rl_ids()
+        machine_orientations = []
+        for id in machine_idlist:
+            machine_orientations.append(self.vehicles.get_orientation(id))
+        self.frame = self.renderer.render(human_orientations,
+                                          machine_orientations)
         #print(self.frame.shape)
 
 
@@ -300,7 +309,7 @@ class Env(gym.Env, Serializable):
         for veh_id in self.vehicles.get_ids():
             self.traci_connection.vehicle.subscribe(veh_id, [
                 tc.VAR_LANE_INDEX, tc.VAR_LANEPOSITION, tc.VAR_ROAD_ID,
-                tc.VAR_SPEED, tc.VAR_EDGES
+                tc.VAR_SPEED, tc.VAR_EDGES, tc.VAR_POSITION, tc.VAR_ANGLE
             ])
             self.traci_connection.vehicle.subscribeLeader(veh_id, 2000)
 
@@ -359,7 +368,7 @@ class Env(gym.Env, Serializable):
         self.traffic_lights.update(tls_obs)
 
         # store the network observations in the vehicles class
-        self.vehicles.update(vehicle_obs, id_lists, self)
+        #self.vehicles.update(vehicle_obs, id_lists, self)
 
     def step(self, rl_actions):
         """Advance the environment by one step.
@@ -461,7 +470,16 @@ class Env(gym.Env, Serializable):
             if crash:
                 break
 
-            self.frame = self.renderer.render()
+            human_idlist = self.vehicles.get_human_ids()
+            human_orientations = []
+            for id in human_idlist:
+                human_orientations.append(self.vehicles.get_orientation(id))
+            machine_idlist = self.vehicles.get_rl_ids()
+            machine_orientations = []
+            for id in machine_idlist:
+                machine_orientations.append(self.vehicles.get_orientation(id))
+            self.frame = self.renderer.render(human_orientations,
+                                              machine_orientations)
 
         # collect information of the state of the network based on the
         # environment class used
@@ -922,6 +940,7 @@ class Env(gym.Env, Serializable):
     def _close(self):
         self.traci_connection.close()
         self.scenario.close()
+        self.renderer.close()
 
     def teardown_sumo(self):
         """Kill the sumo subprocess instance."""
