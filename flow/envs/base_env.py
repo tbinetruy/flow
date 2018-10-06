@@ -144,6 +144,7 @@ class Env(gym.Env, Serializable):
             machine_orientations.append(self.vehicles.get_orientation(id))
         self.frame = self.renderer.render(human_orientations,
                                           machine_orientations)
+        self.prev_frame = self.frame.copy()
         #print(self.frame.shape)
 
 
@@ -478,6 +479,7 @@ class Env(gym.Env, Serializable):
             machine_orientations = []
             for id in machine_idlist:
                 machine_orientations.append(self.vehicles.get_orientation(id))
+            self.prev_frame = self.frame.copy()
             self.frame = self.renderer.render(human_orientations,
                                               machine_orientations)
 

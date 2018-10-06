@@ -10,7 +10,7 @@ class PygletRenderer():
         self.kernel = kernel
         self.batch = pyglet.graphics.Batch()
         self.save_frame = save_frame
-        self.pxpm = 1 # Pixel per meter
+        self.pxpm = 2 # Pixel per meter
         if self.save_frame:
             self.save_dir = save_dir
 
@@ -65,9 +65,9 @@ class PygletRenderer():
         self.window.dispatch_events()
 
         self.batch = pyglet.graphics.Batch()
-        self.add_lane_polys()
-        self.add_vehicle_polys(human_orientations, [0,139,139])
-        self.add_vehicle_polys(machine_orientations, [255,20,147])
+        #self.add_lane_polys()
+        self.add_vehicle_polys(human_orientations, [0, 255, 0])#[0,139,139])
+        self.add_vehicle_polys(machine_orientations, [255, 255, 255])#[255,20,147])
         self.batch.draw()
 
         buffer = pyglet.image.get_buffer_manager().get_color_buffer()
