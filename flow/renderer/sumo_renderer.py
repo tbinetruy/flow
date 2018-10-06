@@ -1,6 +1,7 @@
 import numpy as np
 import os
-import scipy
+import scipy.misc
+import traci
 
 class SUMORenderer():
 
@@ -12,10 +13,8 @@ class SUMORenderer():
 
 
     def render(self):
-        self.kernel.gui.screenshot("View #0",
-                                   "frame.png",
-                                   width=self.width,
-                                   height=self.height)
+        print(self.kernel.gui.getIDList())
+        traci.gui.screenshot("View #0", "frame.png")
         return scipy.misc.imread("frame.png", flatten=False, mode="RGB")
 
 
