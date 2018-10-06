@@ -14,7 +14,7 @@ class SUMORenderer():
 
     def render(self):
         print(self.kernel.gui.getIDList())
-        traci.gui.screenshot("View #0", "frame.png")
+        self.kernel.gui.screenshot("View #0", "frame.png")
         return scipy.misc.imread("frame.png", flatten=False, mode="RGB")
 
 
