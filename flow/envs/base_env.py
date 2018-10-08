@@ -310,7 +310,8 @@ class Env(gym.Env, Serializable):
         for veh_id in self.vehicles.get_ids():
             self.traci_connection.vehicle.subscribe(veh_id, [
                 tc.VAR_LANE_INDEX, tc.VAR_LANEPOSITION, tc.VAR_ROAD_ID,
-                tc.VAR_SPEED, tc.VAR_EDGES, tc.VAR_POSITION, tc.VAR_ANGLE
+                tc.VAR_SPEED, tc.VAR_EDGES, tc.VAR_POSITION, tc.VAR_ANGLE,
+                tc.VAR_SPEED_WITHOUT_TRACI
             ])
             self.traci_connection.vehicle.subscribeLeader(veh_id, 2000)
 
@@ -715,8 +716,9 @@ class Env(gym.Env, Serializable):
         """
         for i, vid in enumerate(veh_ids):
             if acc[i] is not None:
-                this_vel = self.vehicles.get_speed(vid)
-                next_vel = max([this_vel + acc[i] * self.sim_step, 0])
+                #this_vel = self.vehicles.get_speed(vid)
+                default_next_vel = self.vehicles.get_default_speed(vid)
+                next_vel = max([default_next_vel + acc[i] * self.sim_step, 0])
                 self.traci_connection.vehicle.slowDown(vid, next_vel, 1)
 
     def apply_lane_change(self, veh_ids, direction):
