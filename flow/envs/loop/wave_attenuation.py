@@ -302,8 +302,8 @@ class WaveAttenuationPixelEnv(WaveAttenuationEnv):
     def get_state(self, **kwargs):
         """See class definition."""
         frame = self.frame.mean(axis=-1,keepdims=True)
-        prev_frame = self.prev_frame.mean(axis=-1,keepdims=True)
-        frame_diff = np.abs(frame - prev_frame)
+        #prev_frame = self.prev_frame.mean(axis=-1,keepdims=True)
+        #frame_diff = np.abs(frame - prev_frame)
         #np.set_printoptions(threshold=np.nan)
         #print("get_state() frame shape:", frame.shape)
         #print("get_state() frame:", np.unique(frame.copy().flatten()))
@@ -312,7 +312,7 @@ class WaveAttenuationPixelEnv(WaveAttenuationEnv):
         #                  self.frame.mean(axis=-1).astype(np.uint8))
         #scipy.misc.imsave("/tmp/%d.png" % self.step_counter,
         #                  np.squeeze(frame_diff).astype(np.uint8))
-        return frame_diff / 255.
+        return frame / 255.
 
     def additional_command(self):
         """Define which vehicles are observed for visualization purposes."""

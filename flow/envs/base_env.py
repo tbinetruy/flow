@@ -719,6 +719,7 @@ class Env(gym.Env, Serializable):
                 #this_vel = self.vehicles.get_speed(vid)
                 default_next_vel = self.vehicles.get_default_speed(vid)
                 next_vel = max([default_next_vel + acc[i] * self.sim_step, 0])
+                #print("%s acc = %f" % (vid, acc[i]))
                 self.traci_connection.vehicle.slowDown(vid, next_vel, 1)
 
     def apply_lane_change(self, veh_ids, direction):
