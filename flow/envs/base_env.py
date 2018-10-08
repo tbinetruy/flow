@@ -10,6 +10,8 @@ import traceback
 import numpy as np
 import random
 from flow.renderer.pyglet_renderer import PygletRenderer as Renderer
+from flow.controllers import IDMController
+from flow.core.params import SumoCarFollowingParams
 #from flow.renderer.glfw_renderer import GLFWRenderer as Renderer
 
 import traci
@@ -716,10 +718,16 @@ class Env(gym.Env, Serializable):
         """
         for i, vid in enumerate(veh_ids):
             if acc[i] is not None:
-                #this_vel = self.vehicles.get_speed(vid)
-                default_next_vel = self.vehicles.get_default_speed(vid)
-                next_vel = max([default_next_vel + acc[i] * self.sim_step, 0])
-                #print("%s acc = %f" % (vid, acc[i]))
+                this_vel = self.vehicles.get_speed(vid)
+                if "rl" in vid:
+                    default_controller = \
+                        IDMController(vid, sumo_cf_params= \
+                                      SumoCarFollowingParams())
+                    default_acc = default_controller.get_accel(self)
+                    acc[i] += default_acc
+                next_vel = max([this_vel + acc[i] * self.sim_step, 0])
+                print("%s this_vel = %f next_vel = %f acc = %f" %
+                      (vid, this_vel, next_vel, acc[i]))
                 self.traci_connection.vehicle.slowDown(vid, next_vel, 1)
 
     def apply_lane_change(self, veh_ids, direction):

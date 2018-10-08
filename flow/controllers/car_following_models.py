@@ -324,6 +324,7 @@ class IDMController(BaseController):
 
     def __init__(self,
                  veh_id,
+                 sumo_cf_params=None,
                  v0=30,
                  T=1,
                  a=1,
@@ -333,8 +334,7 @@ class IDMController(BaseController):
                  time_delay=0.0,
                  dt=0.1,
                  noise=0,
-                 fail_safe=None,
-                 sumo_cf_params=None):
+                 fail_safe=None):
         """Instantiate an IDM controller.
 
         Attributes
