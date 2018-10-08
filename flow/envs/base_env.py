@@ -136,6 +136,7 @@ class Env(gym.Env, Serializable):
         self.setup_initial_state()
 
         self.renderer = Renderer(self.traci_connection)
+        self.sight_radius = 25 # 50 m
         human_idlist = self.vehicles.get_human_ids()
         human_orientations = []
         for id in human_idlist:
@@ -146,8 +147,13 @@ class Env(gym.Env, Serializable):
             machine_orientations.append(self.vehicles.get_orientation(id))
         self.frame = self.renderer.render(human_orientations,
                                           machine_orientations)
-        self.prev_frame = self.frame.copy()
-        #print(self.frame.shape)
+        self.sights = []
+        for id in machine_idlist:
+            orientation = self.vehicles.get_orientation(id)
+            sight = self.renderer.get_sight(orientation, self.sight_radius)
+            self.sights.append(sight)
+        self.frame_buffer = [self.frame.copy() for _ in range(5)]
+        self.sights_buffer = [self.sights.copy() for _ in range(5)]
 
 
     def restart_sumo(self, sumo_params, render=None):
@@ -482,9 +488,19 @@ class Env(gym.Env, Serializable):
             machine_orientations = []
             for id in machine_idlist:
                 machine_orientations.append(self.vehicles.get_orientation(id))
-            self.prev_frame = self.frame.copy()
             self.frame = self.renderer.render(human_orientations,
                                               machine_orientations)
+            self.sights = []
+            for id in machine_idlist:
+                orientation = self.vehicles.get_orientation(id)
+                sight = self.renderer.get_sight(orientation, self.sight_radius)
+                self.sights.append(sight)
+            if self.step_counter % 10 == 0:
+                self.frame_buffer.append(self.frame.copy())
+                self.sights_buffer.append(self.sights.copy())
+            if len(self.frame_buffer) > 5:
+                self.frame_buffer.pop(0)
+                self.sights_buffer.pop(0)
 
         # collect information of the state of the network based on the
         # environment class used
@@ -660,7 +676,7 @@ class Env(gym.Env, Serializable):
 
         # collect information of the state of the network based on the
         # environment class used
-        self.state = np.asarray(self.get_state()).T
+        self.state = np.asarray(self.get_state())#.T
 
         # observation associated with the reset (no warm-up steps)
         observation = np.copy(self.state)
@@ -668,6 +684,24 @@ class Env(gym.Env, Serializable):
         # perform (optional) warm-up steps before training
         for _ in range(self.env_params.warmup_steps):
             observation, _, _, _ = self.step(rl_actions=None)
+
+        human_idlist = self.vehicles.get_human_ids()
+        human_orientations = []
+        for id in human_idlist:
+            human_orientations.append(self.vehicles.get_orientation(id))
+        machine_idlist = self.vehicles.get_rl_ids()
+        machine_orientations = []
+        for id in machine_idlist:
+            machine_orientations.append(self.vehicles.get_orientation(id))
+        self.frame = self.renderer.render(human_orientations,
+                                          machine_orientations)
+        self.sights = []
+        for id in machine_idlist:
+            orientation = self.vehicles.get_orientation(id)
+            sight = self.renderer.get_sight(orientation, self.sight_radius)
+            self.sights.append(sight)
+        self.frame_buffer = [self.frame.copy() for _ in range(5)]
+        self.sights_buffer = [self.sights.copy() for _ in range(5)]
 
         return observation
 
