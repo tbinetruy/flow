@@ -7,7 +7,7 @@ vehicles in a variable length ring road.
 import json
 
 import ray
-import ray.rllib.agents.a3c as a3c
+import ray.rllib.agents.ddpg as ddpg
 from ray.tune import run_experiments, grid_search
 from ray.tune.registry import register_env
 from ray.rllib.models import ModelCatalog, Model
@@ -97,7 +97,7 @@ flow_params = dict(
     # environment related parameters (see flow.core.params.EnvParams)
     env=EnvParams(
         horizon=HORIZON,
-        warmup_steps=150,
+        warmup_steps=750,
         additional_params={
             "max_accel": 0.25,
             "max_decel": -0.25,
@@ -127,7 +127,7 @@ flow_params = dict(
 if __name__ == "__main__":
     ray.init(num_cpus=N_CPUS + 1, redirect_output=True)
 
-    config = a3c.DEFAULT_CONFIG.copy()
+    config = ddpg.DEFAULT_CONFIG.copy()
     config["num_workers"] = N_CPUS
     config["train_batch_size"] = HORIZON * N_ROLLOUTS
     config["gamma"] = 0.999  # discount rate
@@ -137,7 +137,8 @@ if __name__ == "__main__":
     #config["lambda"] = 0.97
     #config["num_sgd_iter"] = 10
     #config["horizon"] = HORIZON
-    #config["lr"] = grid_search([5e-6, 5e-5, 5e-4])
+    #config["lr"] = grid_search([5e-5, 5e-4, 5e-3])
+    #config["lr"] = 5e-5
 
     # save the flow params for replay
     flow_json = json.dumps(
@@ -151,15 +152,15 @@ if __name__ == "__main__":
 
     trials = run_experiments({
         flow_params["exp_tag"]: {
-            "run": "A3C",
+            "run": "DDPG",
             "env": env_name,
             "config": {
                 **config
             },
-            "checkpoint_freq": 50,
+            "checkpoint_freq": 100,
             "max_failures": 999,
             "stop": {
-                "training_iteration": 1000,
+                "training_iteration": 5000,
             },
         },
     })
