@@ -77,10 +77,10 @@ vehicles.add(
 
 flow_params = dict(
     # name of the experiment
-    exp_tag="circle",
+    exp_tag="circle_local",
 
     # name of the flow environment the experiment is running on
-    env_name="WaveAttenuationPixelEnv",
+    env_name="WaveAttenuationLocalPixelEnv",
 
     # name of the scenario class the experiment is running on
     scenario="LoopScenario",

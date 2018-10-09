@@ -56,7 +56,7 @@ ModelCatalog.register_custom_model("pixel_flow_network", PixelFlowNetwork)
 # time horizon of a single rollout
 HORIZON = int(2000)
 # number of rollouts per training iteration
-N_ROLLOUTS = 12
+N_ROLLOUTS = 18
 # number of parallel workers
 N_CPUS = 6
 
@@ -99,9 +99,9 @@ flow_params = dict(
         horizon=HORIZON,
         warmup_steps=750,
         additional_params={
-            "max_accel": 1,
-            "max_decel": 1,
-            "ring_length": [260, 260], 
+            "max_accel": 0.25,
+            "max_decel": -0.25,
+            "ring_length": [260, 260],
         },
     ),
 
@@ -138,7 +138,7 @@ if __name__ == "__main__":
     config["kl_target"] = 0.02
     config["num_sgd_iter"] = 10
     config["horizon"] = HORIZON
-    config["lr"] = grid_search([5e-6, 5e-5, 5e-4])
+    #config["lr"] = grid_search([5e-6, 5e-5, 5e-4])
 
     # save the flow params for replay
     flow_json = json.dumps(

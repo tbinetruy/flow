@@ -7,7 +7,7 @@ vehicles in a variable length ring road.
 import json
 
 import ray
-import ray.rllib.agents.dqn as dqn
+import ray.rllib.agents.ppo as ppo
 from ray.tune import run_experiments, grid_search
 from ray.tune.registry import register_env
 from ray.rllib.models import ModelCatalog, Model
@@ -54,11 +54,11 @@ ModelCatalog.register_custom_model("pixel_flow_network", PixelFlowNetwork)
 
 
 # time horizon of a single rollout
-HORIZON = int(3000/5)
+HORIZON = int(2000)
 # number of rollouts per training iteration
-N_ROLLOUTS = 20
+N_ROLLOUTS = 18
 # number of parallel workers
-N_CPUS = 60
+N_CPUS = 6
 
 # We place one autonomous vehicle and 22 human-driven vehicles in the network
 vehicles = Vehicles()
@@ -77,10 +77,10 @@ vehicles.add(
 
 flow_params = dict(
     # name of the experiment
-    exp_tag="circle",
+    exp_tag="circle_local",
 
     # name of the flow environment the experiment is running on
-    env_name="WaveAttenuationPixelEnv",
+    env_name="WaveAttenuationLocalPixelEnv",
 
     # name of the scenario class the experiment is running on
     scenario="LoopScenario",
@@ -97,11 +97,11 @@ flow_params = dict(
     # environment related parameters (see flow.core.params.EnvParams)
     env=EnvParams(
         horizon=HORIZON,
-        warmup_steps=int(750/5),
+        warmup_steps=750,
         additional_params={
-            "max_accel": 1,
-            "max_decel": 1,
-            "ring_length": [260, 260], 
+            "max_accel": 0.25,
+            "max_decel": -0.25,
+            "ring_length": [260, 260],
         },
     ),
 
@@ -127,17 +127,18 @@ flow_params = dict(
 if __name__ == "__main__":
     ray.init(num_cpus=N_CPUS + 1, redirect_output=True)
 
-    config = dqn.DEFAULT_CONFIG.copy()
+    config = ppo.DEFAULT_CONFIG.copy()
     config["num_workers"] = N_CPUS
     config["train_batch_size"] = HORIZON * N_ROLLOUTS
     config["gamma"] = 0.999  # discount rate
     config["model"] = {"custom_model": "pixel_flow_network",
                        "custom_options": {},}
-    #config["use_gae"] = True
-    #config["lambda"] = 0.97
-    #config["num_sgd_iter"] = 10
-    #config["horizon"] = HORIZON
-    config["lr"] = grid_search([5e-6, 5e-5, 5e-4])
+    config["use_gae"] = True
+    config["lambda"] = 0.97
+    config["kl_target"] = 0.02
+    config["num_sgd_iter"] = 10
+    config["horizon"] = HORIZON
+    #config["lr"] = grid_search([5e-6, 5e-5, 5e-4])
 
     # save the flow params for replay
     flow_json = json.dumps(
@@ -151,7 +152,7 @@ if __name__ == "__main__":
 
     trials = run_experiments({
         flow_params["exp_tag"]: {
-            "run": "DQN",
+            "run": "PPO",
             "env": env_name,
             "config": {
                 **config
