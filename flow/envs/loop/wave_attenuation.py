@@ -278,6 +278,6 @@ class WaveAttenuationPOEnv(WaveAttenuationEnv):
 class imageWaveAttenuationPOEnv(WaveAttenuationPOEnv):
     @property
     def observation_space(self):
-        height = self.frame.shape[0]
-        width = self.frame.shape[1]
-        return Box(0, 255, [height, width, 1])
+        add_params = self.env_params.additional_params
+        obs_size = add_params["latent_size"] + add_params["hidden_size"]
+        return Box(-10000, 10000, [obs_size])

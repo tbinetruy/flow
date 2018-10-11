@@ -135,6 +135,9 @@ class Env(gym.Env, Serializable):
         self.renderer = Renderer(self.traci_connection)
         self.frame = self.renderer.frame()
 
+        if self.sumo_params.use_vae:
+            self.vae = instantiate_vae()
+
     def restart_sumo(self, sumo_params, render=None):
         """Restart an already initialized sumo instance.
 

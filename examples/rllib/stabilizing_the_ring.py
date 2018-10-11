@@ -68,6 +68,8 @@ flow_params = dict(
             "max_accel": 1,
             "max_decel": 1,
             "ring_length": [220, 270],
+            "latent_size": 50,
+            "hidden_size": 50
         },
     ),
 
@@ -93,17 +95,6 @@ flow_params = dict(
 if __name__ == "__main__":
     ray.init(num_cpus=N_CPUS + 1, redirect_output=True)
 
-
-    class MyModelClass(Model):
-        def _build_layers(self, inputs, num_outputs, options):
-            layer1 = slim.fully_connected(inputs, 64, ...)
-            layer2 = slim.fully_connected(inputs, 64, ...)
-            ...
-            return layerN, layerN_minus_1
-
-
-    ModelCatalog.register_custom_model("my_model", MyModelClass)
-
     config = ppo.DEFAULT_CONFIG.copy()
     config["num_workers"] = N_CPUS
     config["train_batch_size"] = HORIZON * N_ROLLOUTS
@@ -114,7 +105,7 @@ if __name__ == "__main__":
     config["kl_target"] = 0.02
     config["num_sgd_iter"] = 10
     config["horizon"] = HORIZON
-    config["model"] = {"custom_model": "cnn"}
+    config["model"]["fcnet_hiddens"] = []
 
     # save the flow params for replay
     flow_json = json.dumps(
