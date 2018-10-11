@@ -274,8 +274,130 @@ class WaveAttenuationPOEnv(WaveAttenuationEnv):
         lead_id = self.vehicles.get_leader(rl_id) or rl_id
         self.vehicles.set_observed(lead_id)
 
+class WaveAttenuationPixelEnv(WaveAttenuationEnv):
+    """Pixel version of WaveAttenuationEnv.
 
-class imageWaveAttenuationPOEnv(WaveAttenuationPOEnv):
+    Note that this environment only works when there is one autonomous vehicle
+    on the network.
+
+    Required from env_params:
+
+    * max_accel: maximum acceleration of autonomous vehicles
+    * max_decel: maximum deceleration of autonomous vehicles
+    * ring_length: bounds on the ranges of ring road lengths the autonomous
+      vehicle is trained on
+
+    States
+        The state consists of the pixel frame generated from the renderer.
+
+    Actions
+        See parent class
+
+    Rewards
+        See parent class
+
+    Termination
+        See parent class
+
+    """
+
+    @property
+    def observation_space(self):
+        """See class definition."""
+        height = self.frame.shape[0]
+        width = self.frame.shape[1]
+        return Box(0., 1., [height, width, 1])
+
+    def get_state(self, **kwargs):
+        """See class definition."""
+        #np.set_printoptions(threshold=np.nan)
+        #print("get_state() frame shape:", self.frame.shape)
+        #print("get_state() frame buffer length:", len(self.frame_buffer))
+        #print("get_state() sights 0 shape:", self.sights[0].shape)
+        #print("get_state() sights buffer length:", len(self.sights_buffer))
+        #np.save("/tmp/frame_buffer%d.npy" % self.step_counter,
+        #        self.frame_buffer)
+        #np.save("/tmp/sights_buffer%d.npy" % self.step_counter,
+        #        self.sights_buffer)
+        if False:
+            import matplotlib.pyplot as plt
+            import matplotlib
+            matplotlib.rc("font", family="FreeSans", size=12)
+            fig = plt.figure()
+            ax1 = fig.add_subplot(1,2,1)
+            ax1.imshow(np.squeeze(self.frame), cmap="gray", vmin=0, vmax=255)
+            ax1.set_title("Global State")
+            ax2 = fig.add_subplot(1,2,2)
+            ax2.imshow(np.squeeze(self.sights[0]), cmap="gray", vmin=0, vmax=255)
+            ax2.set_title("Local Observation")
+            plt.tight_layout()
+            #plt.show()
+            plt.savefig("/tmp/all_%d.png" % self.step_counter, bbox_inches="tight")
+            plt.close()
+            import cv2
+            cv2.imwrite("/tmp/obs_%d.png" % self.step_counter, self.sights[0])
+        return self.frame / 255.
+
+    def additional_command(self):
+        """Define which vehicles are observed for visualization purposes."""
+        # specify observed vehicles
+        rl_id = self.vehicles.get_rl_ids()[0]
+        lead_id = self.vehicles.get_leader(rl_id) or rl_id
+        self.vehicles.set_observed(lead_id)
+
+class WaveAttenuationLocalPixelEnv(WaveAttenuationEnv):
+    """Local pixel version of WaveAttenuationEnv.
+
+    Note that this environment only works when there is one autonomous vehicle
+    on the network.
+
+    Required from env_params:
+
+    * max_accel: maximum acceleration of autonomous vehicles
+    * max_decel: maximum deceleration of autonomous vehicles
+    * ring_length: bounds on the ranges of ring road lengths the autonomous
+      vehicle is trained on
+
+    States
+        The state consists of the pixel frame generated from the renderer.
+
+    Actions
+        See parent class
+
+    Rewards
+        See parent class
+
+    Termination
+        See parent class
+
+    """
+
+    @property
+    def observation_space(self):
+        """See class definition."""
+        height = self.sights[0].shape[0]
+        width = self.sights[0].shape[1]
+        return Box(0., 1., [height, width, 5])
+
+    def get_state(self, **kwargs):
+        """See class definition."""
+        #print("get_state() frame shape:", self.frame.shape)
+        #print("get_state() frame buffer length:", len(self.frame_buffer))
+        #print("get_state() sights 0 shape:", self.sights[0].shape)
+        #print("get_state() sights buffer length:", len(self.sights_buffer))
+        sights_buffer = np.squeeze(np.array(self.sights_buffer))
+        sights_buffer = np.moveaxis(sights_buffer, 0, -1)
+        #print(sights_buffer.shape)
+        return sights_buffer / 255.
+
+    def additional_command(self):
+        """Define which vehicles are observed for visualization purposes."""
+        # specify observed vehicles
+        rl_id = self.vehicles.get_rl_ids()[0]
+        lead_id = self.vehicles.get_leader(rl_id) or rl_id
+        self.vehicles.set_observed(lead_id)
+
+class imageWaveAttenuationPOEnv(WaveAttenuationPixelEnv):
     @property
     def observation_space(self):
         add_params = self.env_params.additional_params
