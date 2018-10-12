@@ -7,9 +7,11 @@ make -f Makefile.cvs
 ./configure
 make -j4
 cd ~
+rm -rf ray
 git clone https://github.com/eugenevinitsky/ray.git
 cd ray/python
 python setup.py develop
+cd ~
 sudo apt-get install -y \
     xorg-dev \
     libglu1-mesa libgl1-mesa-dev \
