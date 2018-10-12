@@ -1,6 +1,6 @@
 """Example of ring road with larger merging ring."""
 
-from flow.controllers import IDMController, SumoLaneChangeController, \
+from flow.controllers import RLController, IDMController, SumoLaneChangeController, \
     ContinuousRouter
 from flow.core.experiment import SumoExperiment
 from flow.core.params import SumoParams, EnvParams, InitialConfig, NetParams, \
@@ -41,9 +41,19 @@ def loop_merge_example(render=None):
         acceleration_controller=(IDMController, {}),
         lane_change_controller=(SumoLaneChangeController, {}),
         routing_controller=(ContinuousRouter, {}),
-        num_vehicles=7,
+        num_vehicles=6,
         speed_mode="no_collide",
         sumo_car_following_params=SumoCarFollowingParams(minGap=0.0, tau=0.5),
+        sumo_lc_params=SumoLaneChangeParams())
+    # A single learning agent in the inner ring
+    vehicles.add(
+        veh_id="rl",
+        acceleration_controller=(RLController, {}),
+        lane_change_controller=(SumoLaneChangeController, {}),
+        routing_controller=(ContinuousRouter, {}),
+        speed_mode="no_collide",
+        num_vehicles=1,
+        sumo_car_following_params=SumoCarFollowingParams(minGap=0.01, tau=0.5),
         sumo_lc_params=SumoLaneChangeParams())
     vehicles.add(
         veh_id="merge-idm",

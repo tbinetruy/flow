@@ -4,7 +4,8 @@ Right-of-way dynamics near the intersection causes vehicles to queue up on
 either side of the intersection, leading to a significant reduction in the
 average speed of vehicles in the network.
 """
-from flow.controllers import IDMController, StaticLaneChanger, ContinuousRouter
+from flow.controllers import IDMController, StaticLaneChanger, \
+    ContinuousRouter, RLController
 from flow.core.experiment import SumoExperiment
 from flow.core.params import SumoParams, EnvParams, NetParams
 from flow.core.vehicles import Vehicles
@@ -41,8 +42,13 @@ def figure_eight_example(render=None):
         lane_change_controller=(StaticLaneChanger, {}),
         routing_controller=(ContinuousRouter, {}),
         speed_mode="no_collide",
-        initial_speed=0,
-        num_vehicles=14)
+        num_vehicles=13)
+    vehicles.add(
+        veh_id="rl",
+        acceleration_controller=(RLController, {}),
+        routing_controller=(ContinuousRouter, {}),
+        speed_mode="no_collide",
+        num_vehicles=1)
 
     env_params = EnvParams(additional_params=ADDITIONAL_ENV_PARAMS)
 

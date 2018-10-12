@@ -53,7 +53,7 @@ class PygletRenderer():
         image_data = buffer.get_image_data()
         frame = np.fromstring(image_data.data, dtype=np.uint8, sep='')
         frame = frame.reshape(buffer.height, buffer.width, 4)
-        self.frame = frame[::-1,:,0:3]
+        self.frame = frame[::-1,:,0:3].mean(axis=-1,keepdims=True)
         print("Rendering with Pyglet with frame:", (self.width, self.height))
 
 
@@ -67,7 +67,7 @@ class PygletRenderer():
         self.add_lane_polys()
         self.lane_batch.draw()
         self.vehicle_batch = pyglet.graphics.Batch()
-        self.add_vehicle_polys(human_orientations, [0, 255, 0])#[0,139,139])
+        self.add_vehicle_polys(human_orientations, [0, 128, 128])#[0,139,139])
         self.add_vehicle_polys(machine_orientations, [255, 255, 255])#[255,20,147])
         self.vehicle_batch.draw()
 
@@ -79,6 +79,11 @@ class PygletRenderer():
         frame = np.fromstring(image_data.data, dtype=np.uint8, sep='')
         frame = frame.reshape(buffer.height, buffer.width, 4)
         self.frame = frame[::-1,:,0:3].mean(axis=-1,keepdims=True)
+        if False:
+            # A hacky way to save the first frame.
+            import cv2
+            cv2.imwrite("init_frame.png", self.frame)#frame[::-1,:,0:3][...,::-1])
+            raise NotImplementedError
 
         self.window.flip()
         return self.frame
