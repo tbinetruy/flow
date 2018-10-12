@@ -138,11 +138,14 @@ class Env(gym.Env, Serializable):
         self.renderer = Renderer(self.traci_connection)
         self.sight_radius = 25 # 50 m
         human_idlist = self.vehicles.get_human_ids()
-        human_orientations = []
-        for id in human_idlist:
-            human_orientations.append(self.vehicles.get_orientation(id))
         machine_idlist = self.vehicles.get_rl_ids()
+        human_orientations = []
         machine_orientations = []
+        for id in human_idlist:
+            if "rl" in id:
+                machine_orientations.append(self.vehicles.get_orientation(id))
+            else:
+                human_orientations.append(self.vehicles.get_orientation(id))
         for id in machine_idlist:
             machine_orientations.append(self.vehicles.get_orientation(id))
         self.frame = self.renderer.render(human_orientations,
@@ -481,11 +484,14 @@ class Env(gym.Env, Serializable):
                 break
 
             human_idlist = self.vehicles.get_human_ids()
-            human_orientations = []
-            for id in human_idlist:
-                human_orientations.append(self.vehicles.get_orientation(id))
             machine_idlist = self.vehicles.get_rl_ids()
+            human_orientations = []
             machine_orientations = []
+            for id in human_idlist:
+                if "rl" in id:
+                    machine_orientations.append(self.vehicles.get_orientation(id))
+                else:
+                    human_orientations.append(self.vehicles.get_orientation(id))
             for id in machine_idlist:
                 machine_orientations.append(self.vehicles.get_orientation(id))
             self.frame = self.renderer.render(human_orientations,
@@ -686,11 +692,14 @@ class Env(gym.Env, Serializable):
             observation, _, _, _ = self.step(rl_actions=None)
 
         human_idlist = self.vehicles.get_human_ids()
-        human_orientations = []
-        for id in human_idlist:
-            human_orientations.append(self.vehicles.get_orientation(id))
         machine_idlist = self.vehicles.get_rl_ids()
+        human_orientations = []
         machine_orientations = []
+        for id in human_idlist:
+            if "rl" in id:
+                machine_orientations.append(self.vehicles.get_orientation(id))
+            else:
+                human_orientations.append(self.vehicles.get_orientation(id))
         for id in machine_idlist:
             machine_orientations.append(self.vehicles.get_orientation(id))
         self.frame = self.renderer.render(human_orientations,
