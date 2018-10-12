@@ -7,11 +7,9 @@ vehicles in a variable length ring road.
 import json
 
 import ray
-import ray.rllib.agents.ppo as ppo
-from ray.tune import run_experiments, grid_search
+import ray.rllib.agents.a3c as a3c
+from ray.tune import run_experiments
 from ray.tune.registry import register_env
-from ray.rllib.models import ModelCatalog, Model
-from ray.rllib.models.misc import get_activation_fn, flatten
 
 from flow.utils.registry import make_create_env
 from flow.utils.rllib import FlowParamsEncoder
@@ -19,42 +17,8 @@ from flow.core.params import SumoParams, EnvParams, InitialConfig, NetParams
 from flow.core.vehicles import Vehicles
 from flow.controllers import RLController, IDMController, ContinuousRouter
 
-import tensorflow as tf
-import tensorflow.contrib.slim as slim
-
-
-class PixelFlowNetwork(Model):
-    def _build_layers(self, inputs, num_outputs, options):
-        print(inputs)
-        # Convolutional Layer #1 and Pooling Layer #1
-        conv1 = tf.layers.conv2d(
-          inputs=inputs,
-          filters=4,
-          kernel_size=[4, 4],
-          padding="same",
-          activation=tf.nn.relu)
-        pool1 = tf.layers.max_pooling2d(
-          inputs=conv1,
-          pool_size=[2, 2],
-          strides=2)
-        # Dense Layer
-        pool1_flat = tf.contrib.layers.flatten(pool1)
-        fc1 = tf.layers.dense(
-          inputs=pool1_flat,
-          units=8,
-          activation=tf.nn.sigmoid)
-        fc2 = tf.layers.dense(
-          inputs=fc1,
-          units=num_outputs,
-          activation=None)
-        return fc2, fc1
-
-
-ModelCatalog.register_custom_model("pixel_flow_network", PixelFlowNetwork)
-
-
 # time horizon of a single rollout
-HORIZON = int(2000)
+HORIZON = 3000
 # number of rollouts per training iteration
 N_ROLLOUTS = 18
 # number of parallel workers
@@ -77,10 +41,10 @@ vehicles.add(
 
 flow_params = dict(
     # name of the experiment
-    exp_tag="circle_local",
+    exp_tag="circle_mlp",
 
     # name of the flow environment the experiment is running on
-    env_name="WaveAttenuationLocalPixelEnv",
+    env_name="WaveAttenuationPOEnv",
 
     # name of the scenario class the experiment is running on
     scenario="LoopScenario",
@@ -99,8 +63,8 @@ flow_params = dict(
         horizon=HORIZON,
         warmup_steps=750,
         additional_params={
-            "max_accel": 0.25,
-            "max_decel": -0.25,
+            "max_accel": 1,
+            "max_decel": 1,
             "ring_length": [260, 260],
         },
     ),
@@ -109,7 +73,7 @@ flow_params = dict(
     # scenario's documentation or ADDITIONAL_NET_PARAMS component)
     net=NetParams(
         additional_params={
-            "length": 260, # This is only for initialization.
+            "length": 260,
             "lanes": 1,
             "speed_limit": 30,
             "resolution": 40,
@@ -127,18 +91,11 @@ flow_params = dict(
 if __name__ == "__main__":
     ray.init(num_cpus=N_CPUS + 1, redirect_output=True)
 
-    config = ppo.DEFAULT_CONFIG.copy()
+    config = a3c.DEFAULT_CONFIG.copy()
     config["num_workers"] = N_CPUS
     config["train_batch_size"] = HORIZON * N_ROLLOUTS
-    config["gamma"] = 0.999  # discount rate
-    config["model"] = {"custom_model": "pixel_flow_network",
-                       "custom_options": {},}
-    config["use_gae"] = True
-    config["lambda"] = 0.97
-    config["kl_target"] = 0.02
-    config["num_sgd_iter"] = 10
+    config["gamma"] = 0.999
     config["horizon"] = HORIZON
-    #config["lr"] = grid_search([5e-6, 5e-5, 5e-4])
 
     # save the flow params for replay
     flow_json = json.dumps(
@@ -152,15 +109,16 @@ if __name__ == "__main__":
 
     trials = run_experiments({
         flow_params["exp_tag"]: {
-            "run": "PPO",
+            "run": "A3C",
             "env": env_name,
             "config": {
                 **config
             },
-            "checkpoint_freq": 20,
+            "checkpoint_freq": 50,
             "max_failures": 999,
             "stop": {
-                "training_iteration": 100,
+                "training_iteration": 1000,
             },
+            "repeat": 3,
         },
     })

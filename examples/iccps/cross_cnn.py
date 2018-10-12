@@ -1,23 +1,19 @@
-"""Ring road example.
-
-Trains a single autonomous vehicle to stabilize the flow of 21 human-driven
-vehicles in a variable length ring road.
-"""
+"""Figure eight example."""
 
 import json
 
 import ray
-import ray.rllib.agents.ddpg as ddpg
-from ray.tune import run_experiments, grid_search
+import ray.rllib.agents.a3c as a3c
+from ray.tune import run_experiments
 from ray.tune.registry import register_env
 from ray.rllib.models import ModelCatalog, Model
-from ray.rllib.models.misc import get_activation_fn, flatten
 
 from flow.utils.registry import make_create_env
 from flow.utils.rllib import FlowParamsEncoder
 from flow.core.params import SumoParams, EnvParams, InitialConfig, NetParams
 from flow.core.vehicles import Vehicles
-from flow.controllers import RLController, IDMController, ContinuousRouter
+from flow.controllers import IDMController, ContinuousRouter, RLController
+from flow.scenarios.figure8.figure8_scenario import ADDITIONAL_NET_PARAMS
 
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
@@ -54,13 +50,13 @@ ModelCatalog.register_custom_model("pixel_flow_network", PixelFlowNetwork)
 
 
 # time horizon of a single rollout
-HORIZON = 3000
+HORIZON = 1500
 # number of rollouts per training iteration
 N_ROLLOUTS = 18
 # number of parallel workers
 N_CPUS = 6
 
-# We place one autonomous vehicle and 22 human-driven vehicles in the network
+# We place one autonomous vehicle and 13 human-driven vehicles in the network
 vehicles = Vehicles()
 vehicles.add(
     veh_id="human",
@@ -68,25 +64,27 @@ vehicles.add(
         "noise": 0.2
     }),
     routing_controller=(ContinuousRouter, {}),
-    num_vehicles=21)
+    speed_mode="no_collide",
+    num_vehicles=13)
 vehicles.add(
     veh_id="rl",
     acceleration_controller=(RLController, {}),
     routing_controller=(ContinuousRouter, {}),
+    speed_mode="no_collide",
     num_vehicles=1)
 
 flow_params = dict(
     # name of the experiment
-    exp_tag="circle",
+    exp_tag="cross_cnn",
 
     # name of the flow environment the experiment is running on
-    env_name="WaveAttenuationPixelEnv",
+    env_name="AccelCNNEnv",
 
     # name of the scenario class the experiment is running on
-    scenario="LoopScenario",
+    scenario="Figure8Scenario",
 
     # name of the generator used to create/modify network configuration files
-    generator="CircleGenerator",
+    generator="Figure8Generator",
 
     # sumo-related parameters (see flow.core.params.SumoParams)
     sumo=SumoParams(
@@ -97,23 +95,19 @@ flow_params = dict(
     # environment related parameters (see flow.core.params.EnvParams)
     env=EnvParams(
         horizon=HORIZON,
-        warmup_steps=750,
         additional_params={
-            "max_accel": 0.25,
-            "max_decel": -0.25,
-            "ring_length": [260, 260],
+            "target_velocity": 20,
+            "max_accel": 3,
+            "max_decel": 3,
         },
     ),
 
     # network-related parameters (see flow.core.params.NetParams and the
     # scenario's documentation or ADDITIONAL_NET_PARAMS component)
     net=NetParams(
-        additional_params={
-            "length": 260, # This is only for initialization.
-            "lanes": 1,
-            "speed_limit": 30,
-            "resolution": 40,
-        }, ),
+        no_internal_links=False,
+        additional_params=ADDITIONAL_NET_PARAMS,
+    ),
 
     # vehicles to be placed in the network at the start of a rollout (see
     # flow.core.vehicles.Vehicles)
@@ -125,20 +119,15 @@ flow_params = dict(
 )
 
 if __name__ == "__main__":
-    ray.init(num_cpus=N_CPUS + 1, redirect_output=True)
+    ray.init(num_cpus=N_CPUS+1, redirect_output=False)
 
-    config = ddpg.DEFAULT_CONFIG.copy()
+    config = a3c.DEFAULT_CONFIG.copy()
     config["num_workers"] = N_CPUS
-    config["train_batch_size"] = HORIZON * N_ROLLOUTS
-    config["gamma"] = 0.999  # discount rate
+    config["timesteps_per_batch"] = HORIZON * N_ROLLOUTS
+    config["gamma"] = 0.999
+    config["horizon"] = HORIZON
     config["model"] = {"custom_model": "pixel_flow_network",
                        "custom_options": {},}
-    #config["use_gae"] = True
-    #config["lambda"] = 0.97
-    #config["num_sgd_iter"] = 10
-    #config["horizon"] = HORIZON
-    #config["lr"] = grid_search([5e-5, 5e-4, 5e-3])
-    #config["lr"] = 5e-5
 
     # save the flow params for replay
     flow_json = json.dumps(
@@ -152,15 +141,16 @@ if __name__ == "__main__":
 
     trials = run_experiments({
         flow_params["exp_tag"]: {
-            "run": "DDPG",
+            "run": "A3C",
             "env": env_name,
             "config": {
                 **config
             },
-            "checkpoint_freq": 100,
+            "checkpoint_freq": 50,
             "max_failures": 999,
             "stop": {
-                "training_iteration": 5000,
+                "training_iteration": 1000
             },
+            "repeat": 3,
         },
     })
