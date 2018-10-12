@@ -2,6 +2,8 @@
 
 from flow.envs.base_env import Env
 from flow.core import rewards
+from flow.core.params import InitialConfig, NetParams, SumoCarFollowingParams
+from flow.controllers import IDMController, PISaturation
 
 from gym.spaces.box import Box
 from gym.spaces.tuple_space import Tuple
@@ -235,3 +237,45 @@ class TwoLoopsMergePOEnv(Env):
         sorted_separated_ids = sorted_human_ids + sorted_rl_ids
 
         return sorted_separated_ids, sorted_ids
+
+class TwoLoopsMergeCNNEnv(TwoLoopsMergePOEnv):
+    @property
+    def observation_space(self):
+        """See class definition."""
+        height = self.sights[0].shape[0]
+        width = self.sights[0].shape[1]
+        return Box(0., 1., [height, width, 5])
+
+    def get_state(self, **kwargs):
+        """See class definition."""
+        sights_buffer = np.squeeze(np.array(self.sights_buffer))
+        sights_buffer = np.moveaxis(sights_buffer, 0, -1)
+        return sights_buffer / 255.
+
+class TwoLoopsMergeCNNIDMEnv(TwoLoopsMergeCNNEnv):
+    def apply_acceleration(self, veh_ids, acc):
+        for i, vid in enumerate(veh_ids):
+            if acc[i] is not None:
+                this_vel = self.vehicles.get_speed(vid)
+                if "rl" in vid:
+                    default_controller = \
+                        IDMController(vid, sumo_cf_params= \
+                                      SumoCarFollowingParams())
+                    default_acc = default_controller.get_accel(self)
+                    acc[i] += default_acc
+                next_vel = max([this_vel + acc[i] * self.sim_step, 0])
+                self.traci_connection.vehicle.slowDown(vid, next_vel, 1)
+
+class TwoLoopsMergeCNNPIEnv(TwoLoopsMergeCNNEnv):
+    def apply_acceleration(self, veh_ids, acc):
+        for i, vid in enumerate(veh_ids):
+            if acc[i] is not None:
+                this_vel = self.vehicles.get_speed(vid)
+                if "rl" in vid:
+                    default_controller = \
+                        PISaturation(vid, sumo_cf_params= \
+                                     SumoCarFollowingParams())
+                    default_acc = default_controller.get_accel(self)
+                    acc[i] += default_acc
+                next_vel = max([this_vel + acc[i] * self.sim_step, 0])
+                self.traci_connection.vehicle.slowDown(vid, next_vel, 1)

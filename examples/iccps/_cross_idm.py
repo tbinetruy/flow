@@ -5,7 +5,7 @@ either side of the intersection, leading to a significant reduction in the
 average speed of vehicles in the network.
 """
 from flow.controllers import IDMController, StaticLaneChanger, \
-    ContinuousRouter, RLController
+    ContinuousRouter, RLController, PISaturation
 from flow.core.experiment import SumoExperiment
 from flow.core.params import SumoParams, EnvParams, NetParams
 from flow.core.vehicles import Vehicles

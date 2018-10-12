@@ -98,7 +98,7 @@ flow_params = dict(
         additional_params={
             "target_velocity": 20,
             "max_accel": 3,
-            "max_decel": 3,
+            "max_decel": -3,
         },
     ),
 
@@ -123,7 +123,7 @@ if __name__ == "__main__":
 
     config = a3c.DEFAULT_CONFIG.copy()
     config["num_workers"] = N_CPUS
-    config["timesteps_per_batch"] = HORIZON * N_ROLLOUTS
+    config["train_batch_size"] = HORIZON * N_ROLLOUTS
     config["gamma"] = 0.999
     config["horizon"] = HORIZON
     config["model"] = {"custom_model": "pixel_flow_network",

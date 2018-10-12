@@ -26,7 +26,7 @@ ADDITIONAL_ENV_PARAMS = {
     "max_decel": 1,
     # bounds on the ranges of ring road lengths the autonomous vehicle is
     # trained on
-    "ring_length": [220, 270],
+    "ring_length": [260, 260],
 }
 
 
@@ -267,32 +267,6 @@ class WaveAttenuationPOEnv(WaveAttenuationEnv):
         self.vehicles.set_observed(lead_id)
 
 class WaveAttenuationCNNDebugEnv(WaveAttenuationEnv):
-    """Pixel version of WaveAttenuationEnv.
-
-    Note that this environment only works when there is one autonomous vehicle
-    on the network.
-
-    Required from env_params:
-
-    * max_accel: maximum acceleration of autonomous vehicles
-    * max_decel: maximum deceleration of autonomous vehicles
-    * ring_length: bounds on the ranges of ring road lengths the autonomous
-      vehicle is trained on
-
-    States
-        The state consists of the pixel frame generated from the renderer.
-
-    Actions
-        See parent class
-
-    Rewards
-        See parent class
-
-    Termination
-        See parent class
-
-    """
-
     @property
     def observation_space(self):
         """See class definition."""
@@ -338,32 +312,6 @@ class WaveAttenuationCNNDebugEnv(WaveAttenuationEnv):
         self.vehicles.set_observed(lead_id)
 
 class WaveAttenuationCNNEnv(WaveAttenuationEnv):
-    """Local pixel version of WaveAttenuationEnv.
-
-    Note that this environment only works when there is one autonomous vehicle
-    on the network.
-
-    Required from env_params:
-
-    * max_accel: maximum acceleration of autonomous vehicles
-    * max_decel: maximum deceleration of autonomous vehicles
-    * ring_length: bounds on the ranges of ring road lengths the autonomous
-      vehicle is trained on
-
-    States
-        The state consists of the pixel frame generated from the renderer.
-
-    Actions
-        See parent class
-
-    Rewards
-        See parent class
-
-    Termination
-        See parent class
-
-    """
-
     @property
     def observation_space(self):
         """See class definition."""
@@ -385,46 +333,7 @@ class WaveAttenuationCNNEnv(WaveAttenuationEnv):
         self.vehicles.set_observed(lead_id)
 
 class WaveAttenuationCNNIDMEnv(WaveAttenuationCNNEnv):
-    """Local pixel version of WaveAttenuationEnv with IDM augmentation.
-
-    Note that this environment only works when there is one autonomous vehicle
-    on the network.
-
-    Required from env_params:
-
-    * max_accel: maximum acceleration of autonomous vehicles
-    * max_decel: maximum deceleration of autonomous vehicles
-    * ring_length: bounds on the ranges of ring road lengths the autonomous
-      vehicle is trained on
-
-    States
-        The state consists of the pixel frame generated from the renderer.
-
-    Actions
-        See parent class
-
-    Rewards
-        See parent class
-
-    Termination
-        See parent class
-
-    """
-
     def apply_acceleration(self, veh_ids, acc):
-        """Apply the acceleration requested by a vehicle in sumo.
-
-        Note that, if the sumo-specified speed mode of the vehicle is not
-        "aggressive", the acceleration may be clipped by some safety velocity
-        or maximum possible acceleration.
-
-        Parameters
-        ----------
-        veh_ids: list of str
-            vehicles IDs associated with the requested accelerations
-        acc: numpy ndarray or list of float
-            requested accelerations from the vehicles
-        """
         for i, vid in enumerate(veh_ids):
             if acc[i] is not None:
                 this_vel = self.vehicles.get_speed(vid)
@@ -438,46 +347,7 @@ class WaveAttenuationCNNIDMEnv(WaveAttenuationCNNEnv):
                 self.traci_connection.vehicle.slowDown(vid, next_vel, 1)
 
 class WaveAttenuationCNNPIEnv(WaveAttenuationCNNEnv):
-    """Local pixel version of WaveAttenuationEnv with PI augmentation.
-
-    Note that this environment only works when there is one autonomous vehicle
-    on the network.
-
-    Required from env_params:
-
-    * max_accel: maximum acceleration of autonomous vehicles
-    * max_decel: maximum deceleration of autonomous vehicles
-    * ring_length: bounds on the ranges of ring road lengths the autonomous
-      vehicle is trained on
-
-    States
-        The state consists of the pixel frame generated from the renderer.
-
-    Actions
-        See parent class
-
-    Rewards
-        See parent class
-
-    Termination
-        See parent class
-
-    """
-
     def apply_acceleration(self, veh_ids, acc):
-        """Apply the acceleration requested by a vehicle in sumo.
-
-        Note that, if the sumo-specified speed mode of the vehicle is not
-        "aggressive", the acceleration may be clipped by some safety velocity
-        or maximum possible acceleration.
-
-        Parameters
-        ----------
-        veh_ids: list of str
-            vehicles IDs associated with the requested accelerations
-        acc: numpy ndarray or list of float
-            requested accelerations from the vehicles
-        """
         for i, vid in enumerate(veh_ids):
             if acc[i] is not None:
                 this_vel = self.vehicles.get_speed(vid)

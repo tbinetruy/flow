@@ -61,10 +61,10 @@ flow_params = dict(
     # environment related parameters (see flow.core.params.EnvParams)
     env=EnvParams(
         horizon=HORIZON,
-        warmup_steps=750,
+        warmup_steps=150,
         additional_params={
             "max_accel": 1,
-            "max_decel": 1,
+            "max_decel": -1,
             "ring_length": [260, 260],
         },
     ),

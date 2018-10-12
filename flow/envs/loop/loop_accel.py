@@ -2,6 +2,8 @@
 
 from flow.envs.base_env import Env
 from flow.core import rewards
+from flow.core.params import InitialConfig, NetParams, SumoCarFollowingParams
+from flow.controllers import IDMController, PISaturation
 
 from gym.spaces.box import Box
 from gym.spaces.tuple_space import Tuple
@@ -69,17 +71,12 @@ class AccelEnv(Env):
     def observation_space(self):
         """See class definition."""
         self.obs_var_labels = ["Velocity", "Absolute_pos"]
-        speed = Box(
+        obs_space = Box(
             low=0,
             high=1,
-            shape=(self.vehicles.num_vehicles, ),
+            shape=(self.vehicles.num_vehicles*2, ),
             dtype=np.float32)
-        pos = Box(
-            low=0.,
-            high=1,
-            shape=(self.vehicles.num_vehicles, ),
-            dtype=np.float32)
-        return Tuple((speed, pos))
+        return obs_space
 
     def _apply_rl_actions(self, rl_actions):
         """See class definition."""
@@ -104,7 +101,7 @@ class AccelEnv(Env):
         return np.array([[
             self.vehicles.get_speed(veh_id) / max_speed,
             self.get_x_by_id(veh_id) / self.scenario.length
-        ] for veh_id in self.sorted_ids])
+        ] for veh_id in self.sorted_ids]).flatten()
 
     def additional_command(self):
         """Define which vehicles are observed for visualization purposes."""
@@ -112,3 +109,52 @@ class AccelEnv(Env):
         if self.vehicles.num_rl_vehicles > 0:
             for veh_id in self.vehicles.get_human_ids():
                 self.vehicles.set_observed(veh_id)
+
+class AccelCNNEnv(AccelEnv):
+    @property
+    def observation_space(self):
+        """See class definition."""
+        height = self.sights[0].shape[0]
+        width = self.sights[0].shape[1]
+        return Box(0., 1., [height, width, 5])
+
+    def get_state(self, **kwargs):
+        """See class definition."""
+        sights_buffer = np.squeeze(np.array(self.sights_buffer))
+        sights_buffer = np.moveaxis(sights_buffer, 0, -1)
+        return sights_buffer / 255.
+
+    def additional_command(self):
+        """Define which vehicles are observed for visualization purposes."""
+        # specify observed vehicles
+        if self.vehicles.num_rl_vehicles > 0:
+            for veh_id in self.vehicles.get_human_ids():
+                self.vehicles.set_observed(veh_id)
+
+class AccelCNNIDMEnv(AccelCNNEnv):
+    def apply_acceleration(self, veh_ids, acc):
+        for i, vid in enumerate(veh_ids):
+            if acc[i] is not None:
+                this_vel = self.vehicles.get_speed(vid)
+                if "rl" in vid:
+                    default_controller = \
+                        IDMController(vid, sumo_cf_params= \
+                                      SumoCarFollowingParams())
+                    default_acc = default_controller.get_accel(self)
+                    acc[i] += default_acc
+                next_vel = max([this_vel + acc[i] * self.sim_step, 0])
+                self.traci_connection.vehicle.slowDown(vid, next_vel, 1)
+
+class AccelCNNPIEnv(AccelCNNEnv):
+    def apply_acceleration(self, veh_ids, acc):
+        for i, vid in enumerate(veh_ids):
+            if acc[i] is not None:
+                this_vel = self.vehicles.get_speed(vid)
+                if "rl" in vid:
+                    default_controller = \
+                        PISaturation(vid, sumo_cf_params= \
+                                     SumoCarFollowingParams())
+                    default_acc = default_controller.get_accel(self)
+                    acc[i] += default_acc
+                next_vel = max([this_vel + acc[i] * self.sim_step, 0])
+                self.traci_connection.vehicle.slowDown(vid, next_vel, 1)
