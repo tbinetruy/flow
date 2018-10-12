@@ -3,7 +3,7 @@
 from flow.core.generator import Generator
 from numpy import linspace, pi, sin, cos
 
-SCALING = 100
+SCALING = 50
 
 
 class MiniCityGenerator(Generator):
@@ -37,18 +37,18 @@ class MiniCityGenerator(Generator):
                  {"id": "n_b4", "x": 3.05, "y": 4.20},
                  {"id": "n_b5", "x": 4.10, "y": 2.75},
                  {"id": "n_b6", "x": 4.55, "y": 2.75},
-                 {"id": "n_m1", "x": 1.75, "y": 0.55},
+                 {"id": "n_m1", "x": 1.83, "y": 0.40},
                  {"id": "n_m2", "x": 1.96, "y": 2.75},
                  {"id": "n_m3", "x": 2.18, "y": 4.90},
-                 {"id": "n_m4", "x": 2.30, "y": 0.54},
+                 {"id": "n_m4", "x": 2.30, "y": 0.40},
                  {"id": "n_m5", "x": 4.20, "y": 4.90},
                  {"id": "n_s1", "x": 0.66, "y": 1.80},
                  {"id": "n_s2", "x": 1.35, "y": 4.07},
                  {"id": "n_s3", "x": 1.67, "y": 4.52},
                  {"id": "n_s4", "x": 2.34, "y": 1.14},
                  {"id": "n_s5", "x": 2.34, "y": 1.98},
-                 {"id": "n_s6", "x": 3.05, "y": 1.30},
-                 {"id": "n_s7", "x": 3.85, "y": 0.53},
+                 {"id": "n_s6", "x": 3.05, "y": 1.15},
+                 {"id": "n_s7", "x": 3.85, "y": 0.40},
                  {"id": "n_s8", "x": 4.20, "y": 4.30},
                  {"id": "n_s9", "x": 5.07, "y": 2.22},
                  {"id": "n_s10", "x": 5.63, "y": 4.30},
@@ -69,6 +69,8 @@ class MiniCityGenerator(Generator):
 
         edges = [{"id": "e_1", "from": "n_s1", "to": "n_r1", "length": None,
                   "numLanes": 2, "type": "edgeType",
+                  "shape": [(-0.36 + 1.03 * cos(t), 1.80 + 1.03 * sin(t))
+                            for t in linspace(2 * pi, 2 * pi - 0.56 / 1.03, resolution)]
                   },
                  {"id": "e_2", "from": "n_i1", "to": "n_s1", "length": None,
                   "numLanes": 2, "type": "edgeType"},
@@ -81,15 +83,24 @@ class MiniCityGenerator(Generator):
                  {"id": "e_6", "from": "n_s12", "to": "n_i2", "length": None,
                   "numLanes": 1, "type": "edgeType"},
                  {"id": "e_7", "from": "n_r1", "to": "n_r2", "length": None,
-                  "numLanes": 2, "type": "edgeType"},
+                  "numLanes": 2, "type": "edgeType",
+                  "shape": [(0.90 + 0.53 * cos(t), 0.93 + 0.53 * sin(t))
+                            for t in linspace(3 * pi / 2 - 1.16 / 0.53, 3 * pi / 2, resolution)]
+                  },
                  {"id": "e_8", "from": "n_r2", "to": "n_r4", "length": None,
-                  "numLanes": 2, "type": "edgeType"},
+                  "numLanes": 2, "type": "edgeType",
+                  "shape": [(0.90 + 0.53 * cos(t), 0.93 + 0.53 * sin(t))
+                            for t in linspace(3 * pi / 2, 3 * pi / 2 + 1.16 / 0.53, resolution)]
+                  },
                  {"id": "e_9", "from": "n_r4", "to": "n_r3", "length": None,
-                  "numLanes": 2, "type": "edgeType"},
+                  "numLanes": 2, "type": "edgeType",
+                  "shape": [(0.90 + 0.53 * cos(t), 0.93 + 0.53 * sin(t))
+                            for t in linspace(3 * pi / 2 + 1.16 / 0.53, 3 * pi / 2 + 1.46 / 0.53, resolution)]
+                  },
                  {"id": "e_10", "from": "n_r3", "to": "n_s1", "length": None,
                   "numLanes": 2, "type": "edgeType",
-                  "shape": [(0.91 + 0.35 * cos(t), 1.80 + 0.35 * sin(t))
-                            for t in reversed(linspace(pi, pi + 0.41 / 0.35, resolution))]
+                  "shape": [(1.09 + 0.43 * cos(t) + 0.03, 1.65 + 0.43 * sin(t) + 0.23)
+                            for t in reversed(linspace(pi, pi + 0.50 / 0.43, resolution))]
                   },
                  {"id": "e_11", "from": "n_s1", "to": "n_i1", "length": None,
                   "numLanes": 2, "type": "edgeType"},
@@ -122,8 +133,8 @@ class MiniCityGenerator(Generator):
                   "numLanes": 1, "type": "edgeType"},
                  {"id": "e_21", "from": "n_m1", "to": "n_r4", "length": None,
                   "numLanes": 2, "type": "edgeType",
-                  "shape": [(2.13 + 0.46 * cos(t), 1.16 + 0.61 * sin(t))
-                            for t in reversed(linspace(pi / 2, pi, resolution))]
+                  "shape": [(1.89 + 0.61 * cos(t), 0.94 + 0.61 * sin(t))
+                            for t in reversed(linspace(1.13 * pi, 3 * pi / 2, resolution))]
                   },
                  {"id": "e_22", "from": "n_i2", "to": "n_m3", "length": None,
                   "numLanes": 1, "type": "edgeType"},
@@ -156,7 +167,7 @@ class MiniCityGenerator(Generator):
                   "numLanes": 1, "type": "edgeType"},
                  {"id": "e_32", "from": "n_s4", "to": "n_m1", "length": None,
                   "numLanes": 1, "type": "edgeType",
-                  "shape": [(1.88 + 0.46 * cos(t), 1.01 + 0.46 * sin(t))
+                  "shape": [(1.88 + 0.46 * cos(t), 0.86 + 0.46 * sin(t))
                             for t in reversed(linspace(3 * pi / 2, 2 * pi, resolution))]
                   },
                  {"id": "e_33", "from": "n_m3", "to": "n_i4", "length": None,
@@ -169,7 +180,7 @@ class MiniCityGenerator(Generator):
                   "numLanes": 2, "type": "edgeType"},
                  {"id": "e_37", "from": "n_s6", "to": "n_m4", "length": None,
                   "numLanes": 2, "type": "edgeType",
-                  "shape": [(2.59 + 0.46 * cos(t), 1.00 + 0.46 * sin(t))
+                  "shape": [(2.59 + 0.46 * cos(t), 0.85 + 0.46 * sin(t))
                             for t in reversed(linspace(3 * pi / 2, 2 * pi, resolution))]
                   },
                  {"id": "e_38", "from": "n_s6", "to": "n_i3", "length": None,
@@ -202,11 +213,14 @@ class MiniCityGenerator(Generator):
                   "numLanes": 2, "type": "edgeType"},
                  {"id": "e_52", "from": "n_s7", "to": "n_s6", "length": None,
                   "numLanes": 2, "type": "edgeType",
-                  "shape": [(3.51 + 0.46 * cos(t), 0.99 + 0.46 * sin(t))
+                  "shape": [(3.51 + 0.46 * cos(t), 0.84 + 0.46 * sin(t))
                             for t in reversed(linspace(pi, 3 * pi / 2, resolution))]
                   },
                  {"id": "e_53", "from": "n_s7", "to": "n_r7", "length": None,
-                  "numLanes": 2, "type": "edgeType"},
+                  "numLanes": 2, "type": "edgeType",
+                  "shape": [(3.85 + 3.84 * cos(t), 4.37 + 3.84 * sin(t) - 0.15)
+                            for t in linspace(3 * pi / 2, 3 * pi / 2 + 1.40 / 3.84, resolution)]
+                  },
                  {"id": "e_54", "from": "n_b5", "to": "n_i3", "length": None,
                   "numLanes": 2, "type": "edgeType"},
                  {"id": "e_55", "from": "n_m5", "to": "n_s8", "length": None,
@@ -232,17 +246,35 @@ class MiniCityGenerator(Generator):
                             for t in linspace(0, pi / 2, resolution)]
                   },
                  {"id": "e_63", "from": "n_r5", "to": "n_s7", "length": None,
-                  "numLanes": 2, "type": "edgeType"},
+                  "numLanes": 2, "type": "edgeType",
+                  "shape": [(3.85 + 0.63 * cos(t), 1.01 + 0.63 * sin(t))
+                            for t in reversed(linspace(3 * pi / 2, 2 * pi, resolution))]
+                  },
                  {"id": "e_64", "from": "n_r7", "to": "n_r8", "length": None,
-                  "numLanes": 2, "type": "edgeType"},
+                  "numLanes": 2, "type": "edgeType",
+                  "shape": [(5.08 + 0.58 * cos(t), 1.17 + 0.58 * sin(t))
+                            for t in linspace(pi + 1.28 / 0.58, pi + 2.58 / 0.58, resolution)]
+                  },
                  {"id": "e_65", "from": "n_r8", "to": "n_r6", "length": None,
-                  "numLanes": 2, "type": "edgeType"},
+                  "numLanes": 2, "type": "edgeType",
+                  "shape": [(5.08 + 0.58 * cos(t), 1.17 + 0.58 * sin(t))
+                            for t in linspace(pi + 2.58 / 0.58, 1.4 * pi + 2.58 / 0.58, resolution)]
+                  },
                  {"id": "e_66", "from": "n_r6", "to": "n_r5", "length": None,
-                  "numLanes": 2, "type": "edgeType"},
+                  "numLanes": 2, "type": "edgeType",
+                  "shape": [(5.08 + 0.58 * cos(t), 1.17 + 0.58 * sin(t))
+                            for t in linspace(1.4 * pi + 2.58 / 0.58, 1.66 * pi + 2.58 / 0.58, resolution)]
+                  },
                  {"id": "e_67", "from": "n_r8", "to": "n_s9", "length": None,
-                  "numLanes": 1, "type": "edgeType"},
+                  "numLanes": 1, "type": "edgeType",
+                  "shape": [(5.74 + 0.67 * cos(t), 2.22 + 0.67 * sin(t))
+                            for t in reversed(linspace(pi, pi + 0.64 / 0.67, resolution))]
+                  },
                  {"id": "e_68", "from": "n_s9", "to": "n_r6", "length": None,
-                  "numLanes": 1, "type": "edgeType"},
+                  "numLanes": 1, "type": "edgeType",
+                  "shape": [(4.40 + 0.67 * cos(t), 2.21 + 0.67 * sin(t))
+                            for t in reversed(linspace(- 0.64 / 0.67, 0, resolution))]
+                  },
                  {"id": "e_69", "from": "n_b6", "to": "n_i6", "length": None,
                   "numLanes": 1, "type": "edgeType"},
                  {"id": "e_70", "from": "n_i6", "to": "n_b6", "length": None,
@@ -287,7 +319,7 @@ class MiniCityGenerator(Generator):
                  {"id": "e_85", "from": "n_s10", "to": "n_i7", "length": None,
                   "numLanes": 1, "type": "edgeType",
                   "shape": [(5.08 + 0.54 * cos(t), 4.29 - 0.54 * sin(t))
-                            for t in linspace(0, pi / 2, resolution)],
+                            for t in linspace(0, pi / 2, resolution)]
                   },
                  {"id": "e_86", "from": "n_i8", "to": "n_m5", "length": None,
                   "numLanes": 1, "type": "edgeType"},
@@ -300,9 +332,14 @@ class MiniCityGenerator(Generator):
                  {"id": "e_90", "from": "n_i7", "to": "n_s14", "length": None,
                   "numLanes": 1, "type": "edgeType"},
                  {"id": "e_91", "from": "n_r5", "to": "n_r7", "length": None,
-                  "numLanes": 2, "type": "edgeType"},
+                  "numLanes": 2, "type": "edgeType",
+                   "shape": [(5.08 + 0.58 * cos(t), 1.17 + 0.58 * sin(t))
+                            for t in linspace(1.66 * pi + 2.58 / 0.58, 2.33 * pi + 2.58 / 0.58, resolution)]
+                  },
                  {"id": "e_92", "from": "n_r3", "to": "n_r1", "length": None,
                   "numLanes": 2, "type": "edgeType",
+                  "shape": [(0.90 + 0.53 * cos(t), 0.93 + 0.53 * sin(t))
+                            for t in linspace(3 * pi / 2 + 1.46 / 0.53, 3.46 * pi / 2 + 1.46 / 0.53, resolution)]
                   }
                  ]
 

@@ -9,9 +9,9 @@ from flow.core.experiment import SumoExperiment
 from flow.core.params import SumoParams, EnvParams, NetParams
 from flow.core.vehicles import Vehicles
 from flow.envs.loop.loop_accel import AccelEnv, ADDITIONAL_ENV_PARAMS
-from flow.scenarios.figure8.figure8_scenario import Figure8Scenario, \
+from flow.scenarios.minicity.scenario import MiniCityScenario, \
     ADDITIONAL_NET_PARAMS
-from flow.scenarios.figure8.gen import Figure8Generator
+from flow.scenarios.minicity.gen import MiniCityGenerator
 
 
 def figure_eight_example(render=None):
@@ -50,9 +50,9 @@ def figure_eight_example(render=None):
     net_params = NetParams(
         no_internal_links=False, additional_params=additional_net_params)
 
-    scenario = Figure8Scenario(
+    scenario = MiniCityScenario(
         name="figure8",
-        generator_class=Figure8Generator,
+        generator_class=MiniCityGenerator,
         vehicles=vehicles,
         net_params=net_params)
 

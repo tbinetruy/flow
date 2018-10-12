@@ -7,7 +7,7 @@ from flow.scenarios.base_scenario import Scenario
 ADDITIONAL_NET_PARAMS = {}
 
 
-class MiniCityScenario(Scenario):
+class RoundAboutScenario(Scenario):
     """Scenario class for bottleneck simulations."""
 
     def __init__(self,
