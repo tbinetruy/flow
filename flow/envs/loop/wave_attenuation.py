@@ -9,7 +9,8 @@ abs/1710.05465, 2017. [Online]. Available: https://arxiv.org/abs/1710.05465
 """
 
 from flow.envs.base_env import Env
-from flow.core.params import InitialConfig, NetParams
+from flow.core.params import InitialConfig, NetParams, SumoCarFollowingParams
+from flow.controllers import IDMController, PISaturation
 
 from gym.spaces.box import Box
 from gym.spaces.tuple_space import Tuple
@@ -265,7 +266,7 @@ class WaveAttenuationPOEnv(WaveAttenuationEnv):
         lead_id = self.vehicles.get_leader(rl_id) or rl_id
         self.vehicles.set_observed(lead_id)
 
-class WaveAttenuationPixelEnv(WaveAttenuationEnv):
+class WaveAttenuationCNNDebugEnv(WaveAttenuationEnv):
     """Pixel version of WaveAttenuationEnv.
 
     Note that this environment only works when there is one autonomous vehicle
@@ -301,18 +302,18 @@ class WaveAttenuationPixelEnv(WaveAttenuationEnv):
 
     def get_state(self, **kwargs):
         """See class definition."""
-        #np.set_printoptions(threshold=np.nan)
-        #print("get_state() frame shape:", self.frame.shape)
-        #print("get_state() frame buffer length:", len(self.frame_buffer))
-        #print("get_state() sights 0 shape:", self.sights[0].shape)
-        #print("get_state() sights buffer length:", len(self.sights_buffer))
-        #np.save("/tmp/frame_buffer%d.npy" % self.step_counter,
-        #        self.frame_buffer)
-        #np.save("/tmp/sights_buffer%d.npy" % self.step_counter,
-        #        self.sights_buffer)
         if False:
             import matplotlib.pyplot as plt
             import matplotlib
+            np.set_printoptions(threshold=np.nan)
+            print("get_state() frame shape:", self.frame.shape)
+            print("get_state() frame buffer length:", len(self.frame_buffer))
+            print("get_state() sights 0 shape:", self.sights[0].shape)
+            print("get_state() sights buffer length:", len(self.sights_buffer))
+            #np.save("/tmp/frame_buffer%d.npy" % self.step_counter,
+            #        self.frame_buffer)
+            #np.save("/tmp/sights_buffer%d.npy" % self.step_counter,
+            #        self.sights_buffer)
             matplotlib.rc("font", family="FreeSans", size=12)
             fig = plt.figure()
             ax1 = fig.add_subplot(1,2,1)
@@ -336,7 +337,7 @@ class WaveAttenuationPixelEnv(WaveAttenuationEnv):
         lead_id = self.vehicles.get_leader(rl_id) or rl_id
         self.vehicles.set_observed(lead_id)
 
-class WaveAttenuationLocalPixelEnv(WaveAttenuationEnv):
+class WaveAttenuationCNNEnv(WaveAttenuationEnv):
     """Local pixel version of WaveAttenuationEnv.
 
     Note that this environment only works when there is one autonomous vehicle
@@ -372,13 +373,8 @@ class WaveAttenuationLocalPixelEnv(WaveAttenuationEnv):
 
     def get_state(self, **kwargs):
         """See class definition."""
-        #print("get_state() frame shape:", self.frame.shape)
-        #print("get_state() frame buffer length:", len(self.frame_buffer))
-        #print("get_state() sights 0 shape:", self.sights[0].shape)
-        #print("get_state() sights buffer length:", len(self.sights_buffer))
         sights_buffer = np.squeeze(np.array(self.sights_buffer))
         sights_buffer = np.moveaxis(sights_buffer, 0, -1)
-        #print(sights_buffer.shape)
         return sights_buffer / 255.
 
     def additional_command(self):
@@ -387,3 +383,109 @@ class WaveAttenuationLocalPixelEnv(WaveAttenuationEnv):
         rl_id = self.vehicles.get_rl_ids()[0]
         lead_id = self.vehicles.get_leader(rl_id) or rl_id
         self.vehicles.set_observed(lead_id)
+
+class WaveAttenuationCNNIDMEnv(WaveAttenuationCNNEnv):
+    """Local pixel version of WaveAttenuationEnv with IDM augmentation.
+
+    Note that this environment only works when there is one autonomous vehicle
+    on the network.
+
+    Required from env_params:
+
+    * max_accel: maximum acceleration of autonomous vehicles
+    * max_decel: maximum deceleration of autonomous vehicles
+    * ring_length: bounds on the ranges of ring road lengths the autonomous
+      vehicle is trained on
+
+    States
+        The state consists of the pixel frame generated from the renderer.
+
+    Actions
+        See parent class
+
+    Rewards
+        See parent class
+
+    Termination
+        See parent class
+
+    """
+
+    def apply_acceleration(self, veh_ids, acc):
+        """Apply the acceleration requested by a vehicle in sumo.
+
+        Note that, if the sumo-specified speed mode of the vehicle is not
+        "aggressive", the acceleration may be clipped by some safety velocity
+        or maximum possible acceleration.
+
+        Parameters
+        ----------
+        veh_ids: list of str
+            vehicles IDs associated with the requested accelerations
+        acc: numpy ndarray or list of float
+            requested accelerations from the vehicles
+        """
+        for i, vid in enumerate(veh_ids):
+            if acc[i] is not None:
+                this_vel = self.vehicles.get_speed(vid)
+                if "rl" in vid:
+                    default_controller = \
+                        IDMController(vid, sumo_cf_params= \
+                                      SumoCarFollowingParams())
+                    default_acc = default_controller.get_accel(self)
+                    acc[i] += default_acc
+                next_vel = max([this_vel + acc[i] * self.sim_step, 0])
+                self.traci_connection.vehicle.slowDown(vid, next_vel, 1)
+
+class WaveAttenuationCNNPIEnv(WaveAttenuationCNNEnv):
+    """Local pixel version of WaveAttenuationEnv with PI augmentation.
+
+    Note that this environment only works when there is one autonomous vehicle
+    on the network.
+
+    Required from env_params:
+
+    * max_accel: maximum acceleration of autonomous vehicles
+    * max_decel: maximum deceleration of autonomous vehicles
+    * ring_length: bounds on the ranges of ring road lengths the autonomous
+      vehicle is trained on
+
+    States
+        The state consists of the pixel frame generated from the renderer.
+
+    Actions
+        See parent class
+
+    Rewards
+        See parent class
+
+    Termination
+        See parent class
+
+    """
+
+    def apply_acceleration(self, veh_ids, acc):
+        """Apply the acceleration requested by a vehicle in sumo.
+
+        Note that, if the sumo-specified speed mode of the vehicle is not
+        "aggressive", the acceleration may be clipped by some safety velocity
+        or maximum possible acceleration.
+
+        Parameters
+        ----------
+        veh_ids: list of str
+            vehicles IDs associated with the requested accelerations
+        acc: numpy ndarray or list of float
+            requested accelerations from the vehicles
+        """
+        for i, vid in enumerate(veh_ids):
+            if acc[i] is not None:
+                this_vel = self.vehicles.get_speed(vid)
+                if "rl" in vid:
+                    default_controller = \
+                        PISaturation(vid, sumo_cf_params= \
+                                     SumoCarFollowingParams())
+                    default_acc = default_controller.get_accel(self)
+                    acc[i] += default_acc
+                next_vel = max([this_vel + acc[i] * self.sim_step, 0])
+                self.traci_connection.vehicle.slowDown(vid, next_vel, 1)

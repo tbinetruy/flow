@@ -54,7 +54,7 @@ class PygletRenderer():
         frame = np.fromstring(image_data.data, dtype=np.uint8, sep='')
         frame = frame.reshape(buffer.height, buffer.width, 4)
         self.frame = frame[::-1,:,0:3].mean(axis=-1,keepdims=True)
-        print("Rendering with Pyglet with frame:", (self.width, self.height))
+        print("Rendering with Pyglet with frame size", (self.width, self.height))
 
 
     def render(self, human_orientations, machine_orientations):

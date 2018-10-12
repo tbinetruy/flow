@@ -22,11 +22,11 @@ from flow.utils.rllib import FlowParamsEncoder
 from flow.core.vehicles import Vehicles
 
 # time horizon of a single rollout
-HORIZON = 100
+HORIZON = 1500
 # number of rollouts per training iteration
 N_ROLLOUTS = 18
 # number of parallel workers
-N_CPUS = 6
+N_CPUS = 2
 
 RING_RADIUS = 50
 NUM_MERGE_HUMANS = 10
@@ -160,6 +160,6 @@ if __name__ == "__main__":
             "stop": {
                 "training_iteration": 1000,
             },
-            "repeat": 3,
+            "num_samples": 3,
         }
     })

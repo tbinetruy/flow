@@ -54,7 +54,7 @@ HORIZON = 1500
 # number of rollouts per training iteration
 N_ROLLOUTS = 18
 # number of parallel workers
-N_CPUS = 6
+N_CPUS = 2
 
 # We place one autonomous vehicle and 13 human-driven vehicles in the network
 vehicles = Vehicles()
@@ -151,6 +151,6 @@ if __name__ == "__main__":
             "stop": {
                 "training_iteration": 1000
             },
-            "repeat": 3,
+            "num_samples": 3,
         },
     })

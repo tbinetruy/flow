@@ -95,4 +95,4 @@ if __name__ == "__main__":
     exp = loop_merge_example(render=False)
 
     # run for a set number of rollouts / time steps
-    exp.run(1, 1500, convert_to_csv=True)
+    exp.run(1, 1500)
