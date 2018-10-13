@@ -107,7 +107,7 @@ vehicles.add(
 
 flow_params = dict(
     # name of the experiment
-    exp_tag="merge_cnn",
+    exp_tag="merge_cnnpi",
 
     # name of the flow environment the experiment is running on
     env_name="TwoLoopsMergeCNNPIEnv",
