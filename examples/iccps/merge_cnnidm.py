@@ -78,6 +78,7 @@ vehicles.add(
     }),
     lane_change_controller=(SumoLaneChangeController, {}),
     routing_controller=(ContinuousRouter, {}),
+    speed_mode="no_collide",
     num_vehicles=6,
     sumo_car_following_params=SumoCarFollowingParams(minGap=0.0, tau=0.5),
     sumo_lc_params=SumoLaneChangeParams())
@@ -99,6 +100,7 @@ vehicles.add(
     }),
     lane_change_controller=(SumoLaneChangeController, {}),
     routing_controller=(ContinuousRouter, {}),
+    speed_mode="no_collide",
     num_vehicles=NUM_MERGE_HUMANS,
     sumo_car_following_params=SumoCarFollowingParams(minGap=0.0, tau=0.5),
     sumo_lc_params=SumoLaneChangeParams())

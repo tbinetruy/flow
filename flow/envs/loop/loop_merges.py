@@ -253,29 +253,35 @@ class TwoLoopsMergeCNNEnv(TwoLoopsMergePOEnv):
         return sights_buffer / 255.
 
 class TwoLoopsMergeCNNIDMEnv(TwoLoopsMergeCNNEnv):
+    def __init__(self, env_params, sumo_params, scenario):
+       TwoLoopsMergePOEnv.__init__(self, env_params, sumo_params, scenario)
+       self.default_controller = [
+           IDMController(vid, sumo_cf_params= SumoCarFollowingParams())
+           for vid in self.vehicles.get_rl_ids()]
+
     def apply_acceleration(self, veh_ids, acc):
-        for i, vid in enumerate(veh_ids):
-            if acc[i] is not None:
-                this_vel = self.vehicles.get_speed(vid)
-                if "rl" in vid:
-                    default_controller = \
-                        IDMController(vid, sumo_cf_params= \
-                                      SumoCarFollowingParams())
-                    default_acc = default_controller.get_accel(self)
-                    acc[i] += default_acc
-                next_vel = max([this_vel + acc[i] * self.sim_step, 0])
-                self.traci_connection.vehicle.slowDown(vid, next_vel, 1)
+       for i, vid in enumerate(veh_ids):
+           if acc[i] is not None:
+               this_vel = self.vehicles.get_speed(vid)
+               if "rl" in vid:
+                   default_acc = self.default_controller[i].get_accel(self)
+                   acc[i] += default_acc
+               next_vel = max([this_vel + acc[i] * self.sim_step, 0])
+               self.traci_connection.vehicle.slowDown(vid, next_vel, 1)
 
 class TwoLoopsMergeCNNPIEnv(TwoLoopsMergeCNNEnv):
+    def __init__(self, env_params, sumo_params, scenario):
+       TwoLoopsMergePOEnv.__init__(self, env_params, sumo_params, scenario)
+       self.default_controller = [
+           PISaturation(vid, sumo_cf_params= SumoCarFollowingParams())
+           for vid in self.vehicles.get_rl_ids()]
+
     def apply_acceleration(self, veh_ids, acc):
-        for i, vid in enumerate(veh_ids):
-            if acc[i] is not None:
-                this_vel = self.vehicles.get_speed(vid)
-                if "rl" in vid:
-                    default_controller = \
-                        PISaturation(vid, sumo_cf_params= \
-                                     SumoCarFollowingParams())
-                    default_acc = default_controller.get_accel(self)
-                    acc[i] += default_acc
-                next_vel = max([this_vel + acc[i] * self.sim_step, 0])
-                self.traci_connection.vehicle.slowDown(vid, next_vel, 1)
+       for i, vid in enumerate(veh_ids):
+           if acc[i] is not None:
+               this_vel = self.vehicles.get_speed(vid)
+               if "rl" in vid:
+                   default_acc = self.default_controller[i].get_accel(self)
+                   acc[i] += default_acc
+               next_vel = max([this_vel + acc[i] * self.sim_step, 0])
+               self.traci_connection.vehicle.slowDown(vid, next_vel, 1)
