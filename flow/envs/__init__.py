@@ -14,7 +14,7 @@ from flow.envs.loop.loop_merges import TwoLoopsMergePOEnv, TwoLoopsMergeCNNEnv, 
     TwoLoopsMergeCNNIDMEnv, TwoLoopsMergeCNNPIEnv
 from flow.envs.loop.wave_attenuation import WaveAttenuationEnv, \
     WaveAttenuationPOEnv, WaveAttenuationCNNEnv, WaveAttenuationCNNIDMEnv, \
-    WaveAttenuationCNNPIEnv
+    WaveAttenuationCNNPIEnv, WaveAttenuationIDMEnv, WaveAttenuationPIEnv
 from flow.envs.merge import WaveAttenuationMergePOEnv
 from flow.envs.test import TestEnv
 
@@ -25,6 +25,7 @@ __all__ = [
     "WaveAttenuationEnv", "WaveAttenuationPOEnv", "TrafficLightGridEnv",
     "PO_TrafficLightGridEnv", "DesiredVelocityEnv", "TestEnv", "BayBridgeEnv",
     "WaveAttenuationCNNEnv", "WaveAttenuationCNNIDMEnv",
-    "WaveAttenuationCNNPIEnv", "AccelCNNEnv", "AccelCNNIDMEnv", "AccelCNNPIEnv",\
+    "WaveAttenuationCNNPIEnv", "WaveAttenuationIDMEnv", "WaveAttenuationPIEnv",
+    "AccelCNNEnv", "AccelCNNIDMEnv", "AccelCNNPIEnv",
     "TwoLoopsMergeCNNEnv", "TwoLoopsMergeCNNIDMEnv", "TwoLoopsMergeCNNPIEnv"
 ]

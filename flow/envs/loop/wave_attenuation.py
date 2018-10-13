@@ -349,6 +349,85 @@ class WaveAttenuationCNNIDMEnv(WaveAttenuationCNNEnv):
                next_vel = max([this_vel + acc[i] * self.sim_step, 0])
                self.traci_connection.vehicle.slowDown(vid, next_vel, 1)
 
+    def compute_reward(self, state, rl_actions, **kwargs):
+        """See class definition."""
+        # in the warmup steps
+        if rl_actions is None:
+            return 0
+
+        vel = np.array([
+            self.vehicles.get_speed(veh_id)
+            for veh_id in self.vehicles.get_ids()
+        ])
+
+        if any(vel < -100) or kwargs["fail"]:
+            return 0.
+
+        # reward average velocity
+        eta_2 = 4.
+        reward = eta_2 * np.mean(vel) / 20
+
+        # punish accelerations (should lead to reduced stop-and-go waves)
+        eta = 8  # 0.25
+        # CAUTION: This assumes that rl_actions are passed in the same order
+        # as default_actions.
+        default_actions = [self.default_controller[idx].get_accel(self)
+                           for idx in range(len(self.vehicles.get_rl_ids()))]
+        default_actions = np.array(default_actions)
+        rl_actions = np.array(rl_actions) + default_actions
+        accel_threshold = 0
+
+        if np.mean(np.abs(rl_actions)) > accel_threshold:
+            reward += eta * (accel_threshold - np.mean(np.abs(rl_actions)))
+
+        return float(reward)
+
+
+class WaveAttenuationIDMEnv(WaveAttenuationCNNIDMEnv):
+    def apply_acceleration(self, veh_ids, acc):
+       for i, vid in enumerate(veh_ids):
+           if acc[i] is not None:
+               this_vel = self.vehicles.get_speed(vid)
+               if "rl" in vid:
+                   default_acc = self.default_controller[i].get_accel(self)
+                   acc[i] = default_acc
+               next_vel = max([this_vel + acc[i] * self.sim_step, 0])
+               self.traci_connection.vehicle.slowDown(vid, next_vel, 1)
+
+    def compute_reward(self, state, rl_actions, **kwargs):
+        """See class definition."""
+        # in the warmup steps
+        if rl_actions is None:
+            return 0
+
+        vel = np.array([
+            self.vehicles.get_speed(veh_id)
+            for veh_id in self.vehicles.get_ids()
+        ])
+
+        if any(vel < -100) or kwargs["fail"]:
+            return 0.
+
+        # reward average velocity
+        eta_2 = 4.
+        reward = eta_2 * np.mean(vel) / 20
+
+        # punish accelerations (should lead to reduced stop-and-go waves)
+        eta = 8  # 0.25
+        # CAUTION: This assumes that rl_actions are passed in the same order
+        # as default_actions.
+        default_actions = [self.default_controller[idx].get_accel(self)
+                           for idx in range(len(self.vehicles.get_rl_ids()))]
+        default_actions = np.array(default_actions)
+        rl_actions = default_actions
+        accel_threshold = 0
+
+        if np.mean(np.abs(rl_actions)) > accel_threshold:
+            reward += eta * (accel_threshold - np.mean(np.abs(rl_actions)))
+
+        return float(reward)
+
+
 class WaveAttenuationCNNPIEnv(WaveAttenuationCNNEnv):
     def __init__(self, env_params, sumo_params, scenario):
        WaveAttenuationEnv.__init__(self, env_params, sumo_params, scenario)
@@ -365,3 +444,81 @@ class WaveAttenuationCNNPIEnv(WaveAttenuationCNNEnv):
                    acc[i] += default_acc
                next_vel = max([this_vel + acc[i] * self.sim_step, 0])
                self.traci_connection.vehicle.slowDown(vid, next_vel, 1)
+
+    def compute_reward(self, state, rl_actions, **kwargs):
+        """See class definition."""
+        # in the warmup steps
+        if rl_actions is None:
+            return 0
+
+        vel = np.array([
+            self.vehicles.get_speed(veh_id)
+            for veh_id in self.vehicles.get_ids()
+        ])
+
+        if any(vel < -100) or kwargs["fail"]:
+            return 0.
+
+        # reward average velocity
+        eta_2 = 4.
+        reward = eta_2 * np.mean(vel) / 20
+
+        # punish accelerations (should lead to reduced stop-and-go waves)
+        eta = 8  # 0.25
+        default_actions = [self.default_controller[idx].get_accel(self)
+                           for idx in range(len(self.vehicles.get_rl_ids()))]
+        default_actions = np.array(default_actions)
+        # CAUTION: This assumes that rl_actions are passed in the same order
+        # as default_actions.
+        rl_actions = np.array(rl_actions) + default_actions
+        accel_threshold = 0
+
+        if np.mean(np.abs(rl_actions)) > accel_threshold:
+            reward += eta * (accel_threshold - np.mean(np.abs(rl_actions)))
+
+        return float(reward)
+
+
+class WaveAttenuationPIEnv(WaveAttenuationCNNPIEnv):
+    def apply_acceleration(self, veh_ids, acc):
+       for i, vid in enumerate(veh_ids):
+           if acc[i] is not None:
+               this_vel = self.vehicles.get_speed(vid)
+               if "rl" in vid:
+                   default_acc = self.default_controller[i].get_accel(self)
+                   acc[i] = default_acc
+               next_vel = max([this_vel + acc[i] * self.sim_step, 0])
+               self.traci_connection.vehicle.slowDown(vid, next_vel, 1)
+
+    def compute_reward(self, state, rl_actions, **kwargs):
+        """See class definition."""
+        # in the warmup steps
+        if rl_actions is None:
+            return 0
+
+        vel = np.array([
+            self.vehicles.get_speed(veh_id)
+            for veh_id in self.vehicles.get_ids()
+        ])
+
+        if any(vel < -100) or kwargs["fail"]:
+            return 0.
+
+        # reward average velocity
+        eta_2 = 4.
+        reward = eta_2 * np.mean(vel) / 20
+
+        # punish accelerations (should lead to reduced stop-and-go waves)
+        eta = 8  # 0.25
+        # CAUTION: This assumes that rl_actions are passed in the same order
+        # as default_actions.
+        default_actions = [self.default_controller[idx].get_accel(self)
+                           for idx in range(len(self.vehicles.get_rl_ids()))]
+        default_actions = np.array(default_actions)
+        rl_actions = default_actions
+        accel_threshold = 0
+
+        if np.mean(np.abs(rl_actions)) > accel_threshold:
+            reward += eta * (accel_threshold - np.mean(np.abs(rl_actions)))
+
+        return float(reward)
