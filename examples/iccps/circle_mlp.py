@@ -32,11 +32,13 @@ vehicles.add(
         "noise": 0.2
     }),
     routing_controller=(ContinuousRouter, {}),
+    speed_mode="no_collide",
     num_vehicles=21)
 vehicles.add(
     veh_id="rl",
     acceleration_controller=(RLController, {}),
     routing_controller=(ContinuousRouter, {}),
+    speed_mode="no_collide",
     num_vehicles=1)
 
 flow_params = dict(

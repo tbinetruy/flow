@@ -39,11 +39,13 @@ def sugiyama_example(render=None):
         veh_id="idm",
         acceleration_controller=(IDMController, {}),
         routing_controller=(ContinuousRouter, {}),
+        speed_mode="no_collide",
         num_vehicles=21)
     vehicles.add(
         veh_id="rl",
         acceleration_controller=(RLController, {}),
         routing_controller=(ContinuousRouter, {}),
+        speed_mode="no_collide",
         num_vehicles=1)
 
 

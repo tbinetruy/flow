@@ -128,8 +128,8 @@ flow_params = dict(
     env=EnvParams(
         horizon=HORIZON,
         additional_params={
-            "max_accel": 3,
-            "max_decel": 3,
+            "max_accel": 0.5,
+            "max_decel": -0.5,
             "target_velocity": 10,
             "n_preceding": 2,
             "n_following": 2,

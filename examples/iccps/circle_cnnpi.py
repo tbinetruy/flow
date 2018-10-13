@@ -67,11 +67,13 @@ vehicles.add(
         "noise": 0.2
     }),
     routing_controller=(ContinuousRouter, {}),
+    speed_mode="no_collide",
     num_vehicles=21)
 vehicles.add(
     veh_id="rl",
     acceleration_controller=(RLController, {}),
     routing_controller=(ContinuousRouter, {}),
+    speed_mode="no_collide",
     num_vehicles=1)
 
 flow_params = dict(
@@ -98,8 +100,8 @@ flow_params = dict(
         horizon=HORIZON,
         warmup_steps=150,
         additional_params={
-            "max_accel": 1,
-            "max_decel": -1,
+            "max_accel": 0.5,
+            "max_decel": -0.5,
             "ring_length": [260, 260],
         },
     ),
