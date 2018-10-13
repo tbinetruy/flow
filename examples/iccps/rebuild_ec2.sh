@@ -9,6 +9,7 @@ sudo apt-get install -y \
     libglu1-mesa libgl1-mesa-dev \
     xvfb \
     libxinerama1 libxcursor1
+pip install imutils
 cd ~/flow/examples/iccps/
 # Running script in the background.
 nohup xvfb-run -a -s \
