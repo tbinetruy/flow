@@ -12,6 +12,6 @@ sudo apt-get install -y \
 pip install imutils
 cd ~/flow/examples/iccps/
 # Running script in the background.
-nohup xvfb-run -a -s \
-    "-screen 0 1400x900x24 +extension RANDR"\
-     -- python script.py > script.out 2>&1 &
+#nohup xvfb-run -a -s \
+#    "-screen 0 1400x900x24 +extension RANDR"\
+#     -- python script.py > script.out 2>&1 &
