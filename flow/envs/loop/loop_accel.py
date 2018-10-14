@@ -9,6 +9,7 @@ from gym.spaces.box import Box
 from gym.spaces.tuple_space import Tuple
 
 import numpy as np
+import collections
 
 ADDITIONAL_ENV_PARAMS = {
     # maximum acceleration for autonomous vehicles, in m/s^2
@@ -109,6 +110,122 @@ class AccelEnv(Env):
         if self.vehicles.num_rl_vehicles > 0:
             for veh_id in self.vehicles.get_human_ids():
                 self.vehicles.set_observed(veh_id)
+
+class AccelMLPGlobalEnv(AccelEnv):
+    @property
+    def observation_space(self):
+        """See class definition."""
+        self.obs_var_labels = ["Velocity", "Absolute_pos"]
+        obs_space = Box(
+            low=0,
+            high=1,
+            shape=(self.vehicles.num_vehicles*2, ),
+            dtype=np.float32)
+        return obs_space
+
+    def get_state(self, **kwargs):
+        """See class definition."""
+        # speed normalizer
+        max_speed = self.scenario.max_speed
+
+        return np.array([[
+            self.vehicles.get_speed(veh_id) / max_speed,
+            self.get_x_by_id(veh_id) / self.scenario.length
+        ] for veh_id in self.vehicles.get_ids()]).flatten()
+
+class AccelMLPLocalEnv(AccelEnv):
+    def __init__(self, env_params, sumo_params, scenario):
+        # maximum number of controlled vehicles
+        self.num_rl = 1
+        # queue of rl vehicles waiting to be controlled
+        self.rl_queue = collections.deque()
+        # names of the rl vehicles controlled at any step
+        self.rl_veh = []
+        # used for visualization
+        self.leader = []
+        self.follower = []
+        super().__init__(env_params, sumo_params, scenario)
+
+    @property
+    def observation_space(self):
+        """See class definition."""
+        return Box(low=0, high=1, shape=(5 * self.num_rl, ), dtype=np.float32)
+
+    def get_state(self, rl_id=None, **kwargs):
+        """See class definition."""
+        self.leader = []
+        self.follower = []
+
+        # normalizing constants
+        max_speed = self.scenario.max_speed
+        max_length = self.scenario.length
+
+        observation = [0 for _ in range(5 * self.num_rl)]
+        for i, rl_id in enumerate(self.rl_veh):
+            this_speed = self.vehicles.get_speed(rl_id)
+            lead_id = self.vehicles.get_leader(rl_id)
+            follower = self.vehicles.get_follower(rl_id)
+
+            if lead_id in ["", None]:
+                # in case leader is not visible
+                lead_speed = max_speed
+                lead_head = max_length
+            else:
+                self.leader.append(lead_id)
+                lead_speed = self.vehicles.get_speed(lead_id)
+                lead_head = self.get_x_by_id(lead_id) \
+                    - self.get_x_by_id(rl_id) - self.vehicles.get_length(rl_id)
+
+            if follower in ["", None]:
+                # in case follower is not visible
+                follow_speed = 0
+                follow_head = max_length
+            else:
+                self.follower.append(follower)
+                follow_speed = self.vehicles.get_speed(follower)
+                follow_head = self.vehicles.get_headway(follower)
+
+            observation[5 * i + 0] = this_speed / max_speed
+            observation[5 * i + 1] = (lead_speed - this_speed) / max_speed
+            observation[5 * i + 2] = lead_head / max_length
+            observation[5 * i + 3] = (this_speed - follow_speed) / max_speed
+            observation[5 * i + 4] = follow_head / max_length
+
+        return observation
+
+    def additional_command(self):
+        """See parent class.
+
+        This method performs to auxiliary tasks:
+
+        * Define which vehicles are observed for visualization purposes.
+        * Maintains the "rl_veh" and "rl_queue" variables to ensure the RL
+          vehicles that are represented in the state space does not change
+          until one of the vehicles in the state space leaves the network.
+          Then, the next vehicle in the queue is added to the state space and
+          provided with actions from the policy.
+        """
+        # add rl vehicles that just entered the network into the rl queue
+        for veh_id in self.vehicles.get_rl_ids():
+            if veh_id not in list(self.rl_queue) + self.rl_veh:
+                self.rl_queue.append(veh_id)
+
+        # remove rl vehicles that exited the network
+        for veh_id in list(self.rl_queue):
+            if veh_id not in self.vehicles.get_rl_ids():
+                self.rl_queue.remove(veh_id)
+        for veh_id in self.rl_veh:
+            if veh_id not in self.vehicles.get_rl_ids():
+                self.rl_veh.remove(veh_id)
+
+        # fil up rl_veh until they are enough controlled vehicles
+        while len(self.rl_queue) > 0 and len(self.rl_veh) < self.num_rl:
+            rl_id = self.rl_queue.popleft()
+            self.rl_veh.append(rl_id)
+
+        # specify observed vehicles
+        for veh_id in self.leader + self.follower:
+            self.vehicles.set_observed(veh_id)
 
 class AccelCNNEnv(AccelEnv):
     @property

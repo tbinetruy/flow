@@ -19,7 +19,7 @@ HORIZON = 1500
 # number of rollouts per training iteration
 N_ROLLOUTS = 18
 # number of parallel workers
-N_CPUS = 6
+N_CPUS = 2
 
 # We place one autonomous vehicle and 13 human-driven vehicles in the network
 vehicles = Vehicles()
@@ -40,10 +40,10 @@ vehicles.add(
 
 flow_params = dict(
     # name of the experiment
-    exp_tag="cross_mlp",
+    exp_tag="cross_mlpglobal",
 
     # name of the flow environment the experiment is running on
-    env_name="AccelEnv",
+    env_name="AccelMLPGlobalEnv",
 
     # name of the scenario class the experiment is running on
     scenario="Figure8Scenario",

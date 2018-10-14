@@ -22,7 +22,7 @@ HORIZON = 1500
 # number of rollouts per training iteration
 N_ROLLOUTS = 18
 # number of parallel workers
-N_CPUS = 6
+N_CPUS = 2
 
 # We place one autonomous vehicle and 22 human-driven vehicles in the network
 vehicles = Vehicles()
@@ -43,10 +43,10 @@ vehicles.add(
 
 flow_params = dict(
     # name of the experiment
-    exp_tag="circle_mlp",
+    exp_tag="circle_mlplocal",
 
     # name of the flow environment the experiment is running on
-    env_name="WaveAttenuationPOEnv",
+    env_name="WaveAttenuationMLPLocalEnv",
 
     # name of the scenario class the experiment is running on
     scenario="LoopScenario",

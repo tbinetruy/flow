@@ -26,7 +26,7 @@ HORIZON = 1500
 # number of rollouts per training iteration
 N_ROLLOUTS = 18
 # number of parallel workers
-N_CPUS = 6
+N_CPUS = 2
 
 RING_RADIUS = 50
 NUM_MERGE_HUMANS = 10
@@ -72,10 +72,10 @@ vehicles.add(
 
 flow_params = dict(
     # name of the experiment
-    exp_tag="merge_mlp",
+    exp_tag="merge_mlpglobal",
 
     # name of the flow environment the experiment is running on
-    env_name="TwoLoopsMergePOEnv",
+    env_name="TwoLoopsMergeMLPGlobalEnv",
 
     # name of the scenario class the experiment is running on
     scenario="TwoLoopsOneMergingScenario",
