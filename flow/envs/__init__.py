@@ -10,15 +10,16 @@ from flow.envs.loop.lane_changing import LaneChangeAccelEnv, \
     LaneChangeAccelPOEnv
 from flow.envs.loop.loop_accel import AccelEnv, AccelMLPGlobalEnv, \
     AccelMLPLocalEnv, AccelCNNEnv, AccelCNNIDMEnv, AccelCNNPIEnv, AccelIDMEnv, \
-    AccelPIEnv
+    AccelPIEnv, AccelCNNDebugEnv
 from flow.envs.loop.loop_merges import TwoLoopsMergePOEnv, \
     TwoLoopsMergeMLPGlobalEnv, TwoLoopsMergeMLPLocalEnv, TwoLoopsMergeCNNEnv, \
     TwoLoopsMergeCNNIDMEnv, TwoLoopsMergeCNNPIEnv, TwoLoopsMergeIDMEnv, \
-    TwoLoopsMergePIEnv
+    TwoLoopsMergePIEnv, TwoLoopsMergeCNNDebugEnv
 from flow.envs.loop.wave_attenuation import WaveAttenuationEnv, \
     WaveAttenuationPOEnv, WaveAttenuationMLPGlobalEnv, \
     WaveAttenuationMLPLocalEnv, WaveAttenuationCNNEnv, WaveAttenuationCNNIDMEnv, \
-    WaveAttenuationCNNPIEnv, WaveAttenuationIDMEnv, WaveAttenuationPIEnv
+    WaveAttenuationCNNPIEnv, WaveAttenuationIDMEnv, WaveAttenuationPIEnv, \
+    WaveAttenuationCNNDebugEnv
 from flow.envs.merge import WaveAttenuationMergePOEnv
 from flow.envs.test import TestEnv
 
@@ -32,8 +33,8 @@ __all__ = [
     "WaveAttenuationCNNEnv", "WaveAttenuationCNNIDMEnv",
     "WaveAttenuationCNNPIEnv", "WaveAttenuationIDMEnv", "WaveAttenuationPIEnv",
     "AccelMLPGlobalEnv", "AccelMLPLocalEnv", "AccelCNNEnv", "AccelCNNIDMEnv",
-    "AccelCNNPIEnv", "AccelIDMEnv", "AccelPIEnv",
+    "AccelCNNPIEnv", "AccelIDMEnv", "AccelPIEnv", "AccelCNNDebugEnv"
     "TwoLoopsMergeMLPGlobalEnv", "TwoLoopsMergeMLPLocalEnv",
     "TwoLoopsMergeCNNEnv", "TwoLoopsMergeCNNIDMEnv", "TwoLoopsMergeCNNPIEnv",
-    "TwoLoopsMergeIDMEnv", "TwoLoopsMergePIEnv"
+    "TwoLoopsMergeIDMEnv", "TwoLoopsMergePIEnv", "TwoLoopsMergeCNNDebugEnv"
 ]
