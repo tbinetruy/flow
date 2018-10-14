@@ -101,7 +101,7 @@ class AccelEnv(Env):
         return np.array([[
             self.vehicles.get_speed(veh_id) / max_speed,
             self.get_x_by_id(veh_id) / self.scenario.length
-        ] for veh_id in self.sorted_ids]).flatten()
+        ] for veh_id in self.vehicles.get_ids()]).flatten()
 
     def additional_command(self):
         """Define which vehicles are observed for visualization purposes."""
@@ -148,7 +148,19 @@ class AccelCNNIDMEnv(AccelCNNEnv):
                next_vel = max([this_vel + acc[i] * self.sim_step, 0])
                self.traci_connection.vehicle.slowDown(vid, next_vel, 1)
 
+class AccelIDMEnv(AccelCNNIDMEnv):
+    def apply_acceleration(self, veh_ids, acc):
+       for i, vid in enumerate(veh_ids):
+           if acc[i] is not None:
+               this_vel = self.vehicles.get_speed(vid)
+               if "rl" in vid:
+                   default_acc = self.default_controller[i].get_accel(self)
+                   acc[i] = default_acc
+               next_vel = max([this_vel + acc[i] * self.sim_step, 0])
+               self.traci_connection.vehicle.slowDown(vid, next_vel, 1)
+
 class AccelCNNPIEnv(AccelCNNEnv):
+    # WARNING: PI controller is not well tested. Not recommende to use.
     def __init__(self, env_params, sumo_params, scenario):
        AccelEnv.__init__(self, env_params, sumo_params, scenario)
        self.default_controller = [
@@ -162,5 +174,17 @@ class AccelCNNPIEnv(AccelCNNEnv):
                if "rl" in vid:
                    default_acc = self.default_controller[i].get_accel(self)
                    acc[i] += default_acc
+               next_vel = max([this_vel + acc[i] * self.sim_step, 0])
+               self.traci_connection.vehicle.slowDown(vid, next_vel, 1)
+
+class AccelPIEnv(AccelCNNPIEnv):
+    # WARNING: PI controller is not well tested. Not recommende to use.
+    def apply_acceleration(self, veh_ids, acc):
+       for i, vid in enumerate(veh_ids):
+           if acc[i] is not None:
+               this_vel = self.vehicles.get_speed(vid)
+               if "rl" in vid:
+                   default_acc = self.default_controller[i].get_accel(self)
+                   acc[i] = default_acc
                next_vel = max([this_vel + acc[i] * self.sim_step, 0])
                self.traci_connection.vehicle.slowDown(vid, next_vel, 1)

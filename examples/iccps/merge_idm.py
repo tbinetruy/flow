@@ -1,98 +1,204 @@
-"""Example of ring road with larger merging ring."""
+"""Trains vehicles to facilitate cooperative merging in a loop merge.
 
-from flow.controllers import RLController, IDMController, SumoLaneChangeController, \
-    ContinuousRouter
-from flow.core.experiment import SumoExperiment
-from flow.core.params import SumoParams, EnvParams, InitialConfig, NetParams, \
-    SumoCarFollowingParams, SumoLaneChangeParams
+
+This examples consists of 1 learning agent and 6 additional vehicles in an
+inner ring, and 10 vehicles in an outer ring attempting to
+merge into the inner ring.
+"""
+
+import json
+
+import ray
+import ray.rllib.agents.a3c as a3c
+from ray.tune import run_experiments
+from ray.tune.registry import register_env
+from ray.rllib.models import ModelCatalog, Model
+
+from flow.controllers import RLController, IDMController, ContinuousRouter, \
+    SumoLaneChangeController
+from flow.core.params import SumoCarFollowingParams, SumoLaneChangeParams, \
+    SumoParams, EnvParams, InitialConfig, NetParams
+from flow.utils.registry import make_create_env
+from flow.utils.rllib import FlowParamsEncoder
 from flow.core.vehicles import Vehicles
-from flow.envs.loop.loop_accel import AccelEnv, ADDITIONAL_ENV_PARAMS
-from flow.scenarios.loop_merge.scenario import \
-    TwoLoopsOneMergingScenario, ADDITIONAL_NET_PARAMS
-from flow.scenarios.loop_merge.gen import TwoLoopOneMergingGenerator
+
+import tensorflow as tf
+import tensorflow.contrib.slim as slim
 
 
-def loop_merge_example(render=None):
-    """
-    Perform a simulation of vehicles on a loop merge.
+class PixelFlowNetwork(Model):
+    def _build_layers(self, inputs, num_outputs, options):
+        print(inputs)
+        # Convolutional Layer #1 and Pooling Layer #1
+        conv1 = tf.layers.conv2d(
+          inputs=inputs,
+          filters=4,
+          kernel_size=[4, 4],
+          padding="same",
+          activation=tf.nn.relu)
+        pool1 = tf.layers.max_pooling2d(
+          inputs=conv1,
+          pool_size=[2, 2],
+          strides=2)
+        # Dense Layer
+        pool1_flat = tf.contrib.layers.flatten(pool1)
+        fc1 = tf.layers.dense(
+          inputs=pool1_flat,
+          units=8,
+          activation=tf.nn.sigmoid)
+        fc2 = tf.layers.dense(
+          inputs=fc1,
+          units=num_outputs,
+          activation=None)
+        return fc2, fc1
 
-    Parameters
-    ----------
-    render : bool, optional
-        specifies whether to use sumo's gui during execution
 
-    Returns
-    -------
-    exp: flow.core.SumoExperiment type
-        A non-rl experiment demonstrating the performance of human-driven
-        vehicles on a loop merge.
-    """
-    sumo_params = SumoParams(
-        sim_step=0.1, emission_path="./data/", render=True)
+ModelCatalog.register_custom_model("pixel_flow_network", PixelFlowNetwork)
 
-    if render is not None:
-        sumo_params.render = render
 
-    # note that the vehicles are added sequentially by the generator,
-    # so place the merging vehicles after the vehicles in the ring
-    vehicles = Vehicles()
-    vehicles.add(
-        veh_id="idm",
-        acceleration_controller=(IDMController, {}),
-        lane_change_controller=(SumoLaneChangeController, {}),
-        routing_controller=(ContinuousRouter, {}),
-        num_vehicles=6,
-        speed_mode="no_collide",
-        sumo_car_following_params=SumoCarFollowingParams(minGap=0.0, tau=0.5),
-        sumo_lc_params=SumoLaneChangeParams())
-    # A single learning agent in the inner ring
-    vehicles.add(
-        veh_id="rl",
-        acceleration_controller=(RLController, {}),
-        lane_change_controller=(SumoLaneChangeController, {}),
-        routing_controller=(ContinuousRouter, {}),
-        speed_mode="no_collide",
-        num_vehicles=1,
-        sumo_car_following_params=SumoCarFollowingParams(minGap=0.01, tau=0.5),
-        sumo_lc_params=SumoLaneChangeParams())
-    vehicles.add(
-        veh_id="merge-idm",
-        acceleration_controller=(IDMController, {}),
-        lane_change_controller=(SumoLaneChangeController, {}),
-        routing_controller=(ContinuousRouter, {}),
-        num_vehicles=10,
-        speed_mode="no_collide",
-        sumo_car_following_params=SumoCarFollowingParams(minGap=0.01, tau=0.5),
-        sumo_lc_params=SumoLaneChangeParams())
+# time horizon of a single rollout
+HORIZON = 1500
+# number of rollouts per training iteration
+N_ROLLOUTS = 18
+# number of parallel workers
+N_CPUS = 2
 
-    env_params = EnvParams(additional_params=ADDITIONAL_ENV_PARAMS)
+RING_RADIUS = 50
+NUM_MERGE_HUMANS = 10
+NUM_MERGE_RL = 1
 
-    additional_net_params = ADDITIONAL_NET_PARAMS.copy()
-    additional_net_params["ring_radius"] = 50
-    additional_net_params["inner_lanes"] = 1
-    additional_net_params["outer_lanes"] = 1
-    additional_net_params["lane_length"] = 75
-    net_params = NetParams(
-        no_internal_links=False, additional_params=additional_net_params)
+# note that the vehicles are added sequentially by the generator,
+# so place the merging vehicles after the vehicles in the ring
+vehicles = Vehicles()
+# Inner ring vehicles
+vehicles.add(
+    veh_id="human",
+    acceleration_controller=(IDMController, {
+        "noise": 0.2
+    }),
+    lane_change_controller=(SumoLaneChangeController, {}),
+    routing_controller=(ContinuousRouter, {}),
+    speed_mode="no_collide",
+    num_vehicles=6,
+    sumo_car_following_params=SumoCarFollowingParams(minGap=0.0, tau=0.5),
+    sumo_lc_params=SumoLaneChangeParams())
+# A single learning agent in the inner ring
+vehicles.add(
+    veh_id="rl",
+    acceleration_controller=(RLController, {}),
+    lane_change_controller=(SumoLaneChangeController, {}),
+    routing_controller=(ContinuousRouter, {}),
+    speed_mode="no_collide",
+    num_vehicles=NUM_MERGE_RL,
+    sumo_car_following_params=SumoCarFollowingParams(minGap=0.01, tau=0.5),
+    sumo_lc_params=SumoLaneChangeParams())
+# Outer ring vehicles
+vehicles.add(
+    veh_id="merge-human",
+    acceleration_controller=(IDMController, {
+        "noise": 0.2
+    }),
+    lane_change_controller=(SumoLaneChangeController, {}),
+    routing_controller=(ContinuousRouter, {}),
+    speed_mode="no_collide",
+    num_vehicles=NUM_MERGE_HUMANS,
+    sumo_car_following_params=SumoCarFollowingParams(minGap=0.0, tau=0.5),
+    sumo_lc_params=SumoLaneChangeParams())
 
-    initial_config = InitialConfig(
-        x0=50, spacing="uniform", additional_params={"merge_bunching": 0})
+flow_params = dict(
+    # name of the experiment
+    exp_tag="merge_idm",
 
-    scenario = TwoLoopsOneMergingScenario(
-        name="two-loop-one-merging",
-        generator_class=TwoLoopOneMergingGenerator,
-        vehicles=vehicles,
-        net_params=net_params,
-        initial_config=initial_config)
+    # name of the flow environment the experiment is running on
+    env_name="TwoLoopsMergeIDMEnv",
 
-    env = AccelEnv(env_params, sumo_params, scenario)
+    # name of the scenario class the experiment is running on
+    scenario="TwoLoopsOneMergingScenario",
 
-    return SumoExperiment(env, scenario)
+    # name of the generator used to create/modify network configuration files
+    generator="TwoLoopOneMergingGenerator",
 
+    # sumo-related parameters (see flow.core.params.SumoParams)
+    sumo=SumoParams(
+        sim_step=0.1,
+        render=False,
+    ),
+
+    # environment related parameters (see flow.core.params.EnvParams)
+    env=EnvParams(
+        horizon=HORIZON,
+        additional_params={
+            "max_accel": 0.5,
+            "max_decel": -0.5,
+            "target_velocity": 10,
+            "n_preceding": 2,
+            "n_following": 2,
+            "n_merging_in": 2,
+        },
+    ),
+
+    # network-related parameters (see flow.core.params.NetParams and the
+    # scenario's documentation or ADDITIONAL_NET_PARAMS component)
+    net=NetParams(
+        no_internal_links=False,
+        additional_params={
+            "ring_radius": RING_RADIUS,
+            "lane_length": 75,
+            "inner_lanes": 1,
+            "outer_lanes": 1,
+            "speed_limit": 30,
+            "resolution": 40,
+        },
+    ),
+
+    # vehicles to be placed in the network at the start of a rollout (see
+    # flow.core.vehicles.Vehicles)
+    veh=vehicles,
+
+    # parameters specifying the positioning of vehicles upon initialization/
+    # reset (see flow.core.params.InitialConfig)
+    initial=InitialConfig(
+        x0=50,
+        spacing="uniform",
+        additional_params={
+            "merge_bunching": 0,
+        },
+    ),
+)
 
 if __name__ == "__main__":
-    # import the experiment variable
-    exp = loop_merge_example(render=False)
+    ray.init(num_cpus=N_CPUS+1, redirect_output=False)
 
-    # run for a set number of rollouts / time steps
-    exp.run(1, 1500)
+    config = a3c.DEFAULT_CONFIG.copy()
+    config["num_workers"] = N_CPUS
+    config["train_batch_size"] = HORIZON * N_ROLLOUTS
+    config["gamma"] = 0.999
+    config["horizon"] = HORIZON
+    config["model"] = {"custom_model": "pixel_flow_network",
+                       "custom_options": {},}
+
+    # save the flow params for replay
+    flow_json = json.dumps(
+        flow_params, cls=FlowParamsEncoder, sort_keys=True, indent=4)
+    config['env_config']['flow_params'] = flow_json
+
+    create_env, env_name = make_create_env(params=flow_params, version=0)
+
+    # Register as rllib env
+    register_env(env_name, create_env)
+
+    trials = run_experiments({
+        flow_params["exp_tag"]: {
+            "run": "A3C",
+            "env": env_name,
+            "config": {
+                **config
+            },
+            "checkpoint_freq": 50,
+            "max_failures": 999,
+            "stop": {
+                "training_iteration": 1000,
+            },
+            "num_samples": 3,
+        }
+    })

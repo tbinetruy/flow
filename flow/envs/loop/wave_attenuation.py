@@ -382,7 +382,6 @@ class WaveAttenuationCNNIDMEnv(WaveAttenuationCNNEnv):
 
         return float(reward)
 
-
 class WaveAttenuationIDMEnv(WaveAttenuationCNNIDMEnv):
     def apply_acceleration(self, veh_ids, acc):
        for i, vid in enumerate(veh_ids):
@@ -426,7 +425,6 @@ class WaveAttenuationIDMEnv(WaveAttenuationCNNIDMEnv):
             reward += eta * (accel_threshold - np.mean(np.abs(rl_actions)))
 
         return float(reward)
-
 
 class WaveAttenuationCNNPIEnv(WaveAttenuationCNNEnv):
     def __init__(self, env_params, sumo_params, scenario):
@@ -477,7 +475,6 @@ class WaveAttenuationCNNPIEnv(WaveAttenuationCNNEnv):
             reward += eta * (accel_threshold - np.mean(np.abs(rl_actions)))
 
         return float(reward)
-
 
 class WaveAttenuationPIEnv(WaveAttenuationCNNPIEnv):
     def apply_acceleration(self, veh_ids, acc):

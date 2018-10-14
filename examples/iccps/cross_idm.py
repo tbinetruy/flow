@@ -1,75 +1,156 @@
-"""Example of a figure 8 network with human-driven vehicles.
+"""Figure eight example."""
 
-Right-of-way dynamics near the intersection causes vehicles to queue up on
-either side of the intersection, leading to a significant reduction in the
-average speed of vehicles in the network.
-"""
-from flow.controllers import IDMController, StaticLaneChanger, \
-    ContinuousRouter, RLController, PISaturation
-from flow.core.experiment import SumoExperiment
-from flow.core.params import SumoParams, EnvParams, NetParams
+import json
+
+import ray
+import ray.rllib.agents.a3c as a3c
+from ray.tune import run_experiments
+from ray.tune.registry import register_env
+from ray.rllib.models import ModelCatalog, Model
+
+from flow.utils.registry import make_create_env
+from flow.utils.rllib import FlowParamsEncoder
+from flow.core.params import SumoParams, EnvParams, InitialConfig, NetParams
 from flow.core.vehicles import Vehicles
-from flow.envs.loop.loop_accel import AccelEnv, ADDITIONAL_ENV_PARAMS
-from flow.scenarios.figure8.figure8_scenario import Figure8Scenario, \
-    ADDITIONAL_NET_PARAMS
-from flow.scenarios.figure8.gen import Figure8Generator
+from flow.controllers import IDMController, ContinuousRouter, RLController
+from flow.scenarios.figure8.figure8_scenario import ADDITIONAL_NET_PARAMS
+
+import tensorflow as tf
+import tensorflow.contrib.slim as slim
 
 
-def figure_eight_example(render=None):
-    """
-    Perform a simulation of vehicles on a figure eight.
+class PixelFlowNetwork(Model):
+    def _build_layers(self, inputs, num_outputs, options):
+        print(inputs)
+        # Convolutional Layer #1 and Pooling Layer #1
+        conv1 = tf.layers.conv2d(
+          inputs=inputs,
+          filters=4,
+          kernel_size=[4, 4],
+          padding="same",
+          activation=tf.nn.relu)
+        pool1 = tf.layers.max_pooling2d(
+          inputs=conv1,
+          pool_size=[2, 2],
+          strides=2)
+        # Dense Layer
+        pool1_flat = tf.contrib.layers.flatten(pool1)
+        fc1 = tf.layers.dense(
+          inputs=pool1_flat,
+          units=8,
+          activation=tf.nn.sigmoid)
+        fc2 = tf.layers.dense(
+          inputs=fc1,
+          units=num_outputs,
+          activation=None)
+        return fc2, fc1
 
-    Parameters
-    ----------
-    render: bool, optional
-        specifies whether to use sumo's gui during execution
 
-    Returns
-    -------
-    exp: flow.core.SumoExperiment type
-        A non-rl experiment demonstrating the performance of human-driven
-        vehicles on a figure eight.
-    """
-    sumo_params = SumoParams(render=True)
+ModelCatalog.register_custom_model("pixel_flow_network", PixelFlowNetwork)
 
-    if render is not None:
-        sumo_params.render = render
 
-    vehicles = Vehicles()
-    vehicles.add(
-        veh_id="idm",
-        acceleration_controller=(IDMController, {}),
-        lane_change_controller=(StaticLaneChanger, {}),
-        routing_controller=(ContinuousRouter, {}),
-        speed_mode="no_collide",
-        num_vehicles=16)
-    vehicles.add(
-        veh_id="rl",
-        acceleration_controller=(RLController, {}),
-        routing_controller=(ContinuousRouter, {}),
-        speed_mode="no_collide",
-        num_vehicles=1)
+# time horizon of a single rollout
+HORIZON = 1500
+# number of rollouts per training iteration
+N_ROLLOUTS = 18
+# number of parallel workers
+N_CPUS = 2
 
-    env_params = EnvParams(additional_params=ADDITIONAL_ENV_PARAMS)
+# We place one autonomous vehicle and 13 human-driven vehicles in the network
+vehicles = Vehicles()
+vehicles.add(
+    veh_id="human",
+    acceleration_controller=(IDMController, {
+        "noise": 0.2
+    }),
+    routing_controller=(ContinuousRouter, {}),
+    speed_mode="no_collide",
+    num_vehicles=13)
+vehicles.add(
+    veh_id="rl",
+    acceleration_controller=(RLController, {}),
+    routing_controller=(ContinuousRouter, {}),
+    speed_mode="no_collide",
+    num_vehicles=1)
 
-    additional_net_params = ADDITIONAL_NET_PARAMS.copy()
-    net_params = NetParams(
-        no_internal_links=False, additional_params=additional_net_params)
+flow_params = dict(
+    # name of the experiment
+    exp_tag="cross_idm",
 
-    scenario = Figure8Scenario(
-        name="figure8",
-        generator_class=Figure8Generator,
-        vehicles=vehicles,
-        net_params=net_params)
+    # name of the flow environment the experiment is running on
+    env_name="AccelIDMEnv",
 
-    env = AccelEnv(env_params, sumo_params, scenario)
+    # name of the scenario class the experiment is running on
+    scenario="Figure8Scenario",
 
-    return SumoExperiment(env, scenario)
+    # name of the generator used to create/modify network configuration files
+    generator="Figure8Generator",
 
+    # sumo-related parameters (see flow.core.params.SumoParams)
+    sumo=SumoParams(
+        sim_step=0.1,
+        render=False,
+    ),
+
+    # environment related parameters (see flow.core.params.EnvParams)
+    env=EnvParams(
+        horizon=HORIZON,
+        additional_params={
+            "target_velocity": 20,
+            "max_accel": 0.5,
+            "max_decel": -0.5,
+        },
+    ),
+
+    # network-related parameters (see flow.core.params.NetParams and the
+    # scenario's documentation or ADDITIONAL_NET_PARAMS component)
+    net=NetParams(
+        no_internal_links=False,
+        additional_params=ADDITIONAL_NET_PARAMS,
+    ),
+
+    # vehicles to be placed in the network at the start of a rollout (see
+    # flow.core.vehicles.Vehicles)
+    veh=vehicles,
+
+    # parameters specifying the positioning of vehicles upon initialization/
+    # reset (see flow.core.params.InitialConfig)
+    initial=InitialConfig(),
+)
 
 if __name__ == "__main__":
-    # import the experiment variable
-    exp = figure_eight_example(render=False)
+    ray.init(num_cpus=N_CPUS+1, redirect_output=False)
 
-    # run for a set number of rollouts / time steps
-    exp.run(1, 1500)
+    config = a3c.DEFAULT_CONFIG.copy()
+    config["num_workers"] = N_CPUS
+    config["train_batch_size"] = HORIZON * N_ROLLOUTS
+    config["gamma"] = 0.999
+    config["horizon"] = HORIZON
+    config["model"] = {"custom_model": "pixel_flow_network",
+                       "custom_options": {},}
+
+    # save the flow params for replay
+    flow_json = json.dumps(
+        flow_params, cls=FlowParamsEncoder, sort_keys=True, indent=4)
+    config['env_config']['flow_params'] = flow_json
+
+    create_env, env_name = make_create_env(params=flow_params, version=0)
+
+    # Register as rllib env
+    register_env(env_name, create_env)
+
+    trials = run_experiments({
+        flow_params["exp_tag"]: {
+            "run": "A3C",
+            "env": env_name,
+            "config": {
+                **config
+            },
+            "checkpoint_freq": 50,
+            "max_failures": 999,
+            "stop": {
+                "training_iteration": 1000
+            },
+            "num_samples": 3,
+        },
+    })
