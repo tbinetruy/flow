@@ -9,17 +9,15 @@ from flow.envs.green_wave_env import TrafficLightGridEnv, \
 from flow.envs.loop.lane_changing import LaneChangeAccelEnv, \
     LaneChangeAccelPOEnv
 from flow.envs.loop.loop_accel import AccelEnv, AccelMLPGlobalEnv, \
-    AccelMLPLocalEnv, AccelCNNEnv, AccelCNNIDMEnv, AccelCNNPIEnv, AccelIDMEnv, \
-    AccelPIEnv, AccelCNNDebugEnv
+    AccelMLPLocalEnv, AccelCNNEnv, AccelCNNIDMEnv, AccelCNNPIEnv, \
+    AccelCNNDebugEnv
 from flow.envs.loop.loop_merges import TwoLoopsMergePOEnv, \
     TwoLoopsMergeMLPGlobalEnv, TwoLoopsMergeMLPLocalEnv, TwoLoopsMergeCNNEnv, \
-    TwoLoopsMergeCNNIDMEnv, TwoLoopsMergeCNNPIEnv, TwoLoopsMergeIDMEnv, \
-    TwoLoopsMergePIEnv, TwoLoopsMergeCNNDebugEnv
+    TwoLoopsMergeCNNIDMEnv, TwoLoopsMergeCNNPIEnv, TwoLoopsMergeCNNDebugEnv
 from flow.envs.loop.wave_attenuation import WaveAttenuationEnv, \
     WaveAttenuationPOEnv, WaveAttenuationMLPGlobalEnv, \
     WaveAttenuationMLPLocalEnv, WaveAttenuationCNNEnv, WaveAttenuationCNNIDMEnv, \
-    WaveAttenuationCNNPIEnv, WaveAttenuationIDMEnv, WaveAttenuationPIEnv, \
-    WaveAttenuationCNNDebugEnv
+    WaveAttenuationCNNPIEnv, WaveAttenuationCNNDebugEnv
 from flow.envs.merge import WaveAttenuationMergePOEnv
 from flow.envs.test import TestEnv
 
@@ -31,10 +29,10 @@ __all__ = [
     "PO_TrafficLightGridEnv", "DesiredVelocityEnv", "TestEnv", "BayBridgeEnv",
     "WaveAttenuationMLPGlobalEnv", "WaveAttenuationMLPLocalEnv",
     "WaveAttenuationCNNEnv", "WaveAttenuationCNNIDMEnv",
-    "WaveAttenuationCNNPIEnv", "WaveAttenuationIDMEnv", "WaveAttenuationPIEnv",
+    "WaveAttenuationCNNPIEnv", "WaveAttenuationCNNDebugEnv"
     "AccelMLPGlobalEnv", "AccelMLPLocalEnv", "AccelCNNEnv", "AccelCNNIDMEnv",
-    "AccelCNNPIEnv", "AccelIDMEnv", "AccelPIEnv", "AccelCNNDebugEnv"
+    "AccelCNNDebugEnv"
     "TwoLoopsMergeMLPGlobalEnv", "TwoLoopsMergeMLPLocalEnv",
     "TwoLoopsMergeCNNEnv", "TwoLoopsMergeCNNIDMEnv", "TwoLoopsMergeCNNPIEnv",
-    "TwoLoopsMergeIDMEnv", "TwoLoopsMergePIEnv", "TwoLoopsMergeCNNDebugEnv"
+    "TwoLoopsMergeCNNDebugEnv"
 ]

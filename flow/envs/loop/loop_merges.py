@@ -386,6 +386,7 @@ class TwoLoopsMergeCNNDebugEnv(TwoLoopsMergePOEnv):
         ax2.set_title("Local Observation")
         plt.tight_layout()
         #plt.show()
+        # TODO: Fix path.
         plt.savefig("/home/fangyu/GitHub/flow/examples/iccps/debug/merge/merge%05d.png" %
                     self.step_counter, bbox_inches="tight")
         #plt.savefig("~/GitHub/flow/examples/iccps/debug/circle/%05d.png" %
@@ -428,17 +429,6 @@ class TwoLoopsMergeCNNIDMEnv(TwoLoopsMergeCNNEnv):
                next_vel = max([this_vel + acc[i] * self.sim_step, 0])
                self.traci_connection.vehicle.slowDown(vid, next_vel, 1)
 
-class TwoLoopsMergeIDMEnv(TwoLoopsMergeCNNIDMEnv):
-    def apply_acceleration(self, veh_ids, acc):
-       for i, vid in enumerate(veh_ids):
-           if acc[i] is not None:
-               this_vel = self.vehicles.get_speed(vid)
-               if "rl" in vid:
-                   default_acc = self.default_controller[i].get_accel(self)
-                   acc[i] = default_acc
-               next_vel = max([this_vel + acc[i] * self.sim_step, 0])
-               self.traci_connection.vehicle.slowDown(vid, next_vel, 1)
-
 class TwoLoopsMergeCNNPIEnv(TwoLoopsMergeCNNEnv):
     # WARNING: PI controller is not well tested. Not recommende to use.
     def __init__(self, env_params, sumo_params, scenario):
@@ -454,17 +444,5 @@ class TwoLoopsMergeCNNPIEnv(TwoLoopsMergeCNNEnv):
                if "rl" in vid:
                    default_acc = self.default_controller[i].get_accel(self)
                    acc[i] += default_acc
-               next_vel = max([this_vel + acc[i] * self.sim_step, 0])
-               self.traci_connection.vehicle.slowDown(vid, next_vel, 1)
-
-class TwoLoopsMergePIEnv(TwoLoopsMergeCNNPIEnv):
-    # WARNING: PI controller is not well tested. Not recommende to use.
-    def apply_acceleration(self, veh_ids, acc):
-       for i, vid in enumerate(veh_ids):
-           if acc[i] is not None:
-               this_vel = self.vehicles.get_speed(vid)
-               if "rl" in vid:
-                   default_acc = self.default_controller[i].get_accel(self)
-                   acc[i] = default_acc
                next_vel = max([this_vel + acc[i] * self.sim_step, 0])
                self.traci_connection.vehicle.slowDown(vid, next_vel, 1)
