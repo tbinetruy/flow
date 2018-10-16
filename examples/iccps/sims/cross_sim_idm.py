@@ -42,7 +42,7 @@ def figure_eight_example(render=None):
         lane_change_controller=(StaticLaneChanger, {}),
         routing_controller=(ContinuousRouter, {}),
         speed_mode="no_collide",
-        num_vehicles=16)
+        num_vehicles=19)
     vehicles.add(
         veh_id="rl",
         acceleration_controller=(RLController, {}),

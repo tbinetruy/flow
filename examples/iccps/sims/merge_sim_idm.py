@@ -41,7 +41,7 @@ def loop_merge_example(render=None):
         acceleration_controller=(IDMController, {}),
         lane_change_controller=(SumoLaneChangeController, {}),
         routing_controller=(ContinuousRouter, {}),
-        num_vehicles=6,
+        num_vehicles=10,
         speed_mode="no_collide",
         sumo_car_following_params=SumoCarFollowingParams(minGap=0.0, tau=0.5),
         sumo_lc_params=SumoLaneChangeParams())

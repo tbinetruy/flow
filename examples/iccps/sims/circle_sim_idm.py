@@ -40,7 +40,7 @@ def sugiyama_example(render=None):
         acceleration_controller=(IDMController, {}),
         routing_controller=(ContinuousRouter, {}),
         speed_mode="no_collide",
-        num_vehicles=21)
+        num_vehicles=19)
     vehicles.add(
         veh_id="rl",
         acceleration_controller=(RLController, {}),
