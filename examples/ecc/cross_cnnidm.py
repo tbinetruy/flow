@@ -4,7 +4,7 @@ import json
 
 import ray
 import ray.rllib.agents.a3c as a3c
-from ray.tune import run_experiments
+from ray.tune import run_experiments, grid_search
 from ray.tune.registry import register_env
 from ray.rllib.models import ModelCatalog, Model
 
@@ -64,7 +64,7 @@ HORIZON = 3000
 # number of rollouts per training iteration
 N_ROLLOUTS = 28
 # number of parallel workers
-N_CPUS = 14
+N_CPUS = 2
 
 # We place one autonomous vehicle and 13 human-driven vehicles in the network
 vehicles = Vehicles()

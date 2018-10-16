@@ -10,7 +10,7 @@ import json
 
 import ray
 import ray.rllib.agents.a3c as a3c
-from ray.tune import run_experiments
+from ray.tune import run_experiments, grid_search
 from ray.tune.registry import register_env
 from ray.rllib.models import ModelCatalog, Model
 
@@ -71,10 +71,10 @@ HORIZON = 3000
 # number of rollouts per training iteration
 N_ROLLOUTS = 28
 # number of parallel workers
-N_CPUS = 14
+N_CPUS = 2
 
 RING_RADIUS = 50
-NUM_MERGE_HUMANS = 10
+NUM_MERGE_HUMANS = 8
 NUM_MERGE_RL = 1
 
 # note that the vehicles are added sequentially by the generator,

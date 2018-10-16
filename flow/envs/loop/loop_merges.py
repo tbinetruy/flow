@@ -416,7 +416,7 @@ class TwoLoopsMergeCNNEnv(TwoLoopsMergePOEnv):
         """See class definition."""
         max_speed = self.scenario.max_speed
         speed = self.vehicles.get_speed(self.vehicles.get_ids())
-        return (0.6*np.mean(speed) + 0.4*np.std(speed))/max_speed
+        return (0.8*np.mean(speed) - 0.2*np.std(speed))/max_speed
 
 class TwoLoopsMergeCNNIDMEnv(TwoLoopsMergeCNNEnv):
     def __init__(self, env_params, sumo_params, scenario):
