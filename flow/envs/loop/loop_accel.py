@@ -15,7 +15,7 @@ ADDITIONAL_ENV_PARAMS = {
     # maximum acceleration for autonomous vehicles, in m/s^2
     "max_accel": 3,
     # maximum deceleration for autonomous vehicles, in m/s^2
-    "max_decel": 3,
+    "max_decel": 5,
     # desired velocity for all vehicles in the network, in m/s
     "target_velocity": 10,
 }
@@ -291,6 +291,12 @@ class AccelCNNEnv(AccelEnv):
         sights_buffer = np.moveaxis(sights_buffer, 0, -1)
         return sights_buffer / 255.
 
+    def compute_reward(self, state, rl_actions, **kwargs):
+        """See class definition."""
+        max_speed = self.scenario.max_speed
+        speed = self.vehicles.get_speed(self.vehicles.get_ids())
+        return (0.6*np.mean(speed) + 0.4*np.std(speed))/max_speed
+
     def additional_command(self):
         """Define which vehicles are observed for visualization purposes."""
         # specify observed vehicles
@@ -300,7 +306,7 @@ class AccelCNNEnv(AccelEnv):
 
 class AccelCNNIDMEnv(AccelCNNEnv):
     def __init__(self, env_params, sumo_params, scenario):
-       AccelEnv.__init__(self, env_params, sumo_params, scenario)
+       super().__init__(env_params, sumo_params, scenario)
        self.default_controller = [
            IDMController(vid, sumo_cf_params= SumoCarFollowingParams())
            for vid in self.vehicles.get_rl_ids()]
@@ -311,14 +317,14 @@ class AccelCNNIDMEnv(AccelCNNEnv):
                this_vel = self.vehicles.get_speed(vid)
                if "rl" in vid:
                    default_acc = self.default_controller[i].get_accel(self)
-                   acc[i] += default_acc
+                   acc[i] = 0.5*np.clip(acc[i], -5, 3) + 0.5*default_acc
                next_vel = max([this_vel + acc[i] * self.sim_step, 0])
                self.traci_connection.vehicle.slowDown(vid, next_vel, 1)
 
 class AccelCNNPIEnv(AccelCNNEnv):
     # WARNING: PI controller is not well tested. Not recommende to use.
     def __init__(self, env_params, sumo_params, scenario):
-       AccelEnv.__init__(self, env_params, sumo_params, scenario)
+       super().__init__(env_params, sumo_params, scenario)
        self.default_controller = [
            PISaturation(vid, sumo_cf_params= SumoCarFollowingParams())
            for vid in self.vehicles.get_rl_ids()]

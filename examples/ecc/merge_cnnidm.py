@@ -1,4 +1,10 @@
-"""Figure eight example."""
+"""Trains vehicles to facilitate cooperative merging in a loop merge.
+
+
+This examples consists of 1 learning agent and 6 additional vehicles in an
+inner ring, and 10 vehicles in an outer ring attempting to
+merge into the inner ring.
+"""
 
 import json
 
@@ -8,12 +14,13 @@ from ray.tune import run_experiments
 from ray.tune.registry import register_env
 from ray.rllib.models import ModelCatalog, Model
 
+from flow.controllers import RLController, IDMController, ContinuousRouter, \
+    SumoLaneChangeController
+from flow.core.params import SumoCarFollowingParams, SumoLaneChangeParams, \
+    SumoParams, EnvParams, InitialConfig, NetParams
 from flow.utils.registry import make_create_env
 from flow.utils.rllib import FlowParamsEncoder
-from flow.core.params import SumoParams, EnvParams, InitialConfig, NetParams
 from flow.core.vehicles import Vehicles
-from flow.controllers import IDMController, ContinuousRouter, RLController
-from flow.scenarios.figure8.figure8_scenario import ADDITIONAL_NET_PARAMS
 
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
@@ -25,7 +32,7 @@ class PixelFlowNetwork(Model):
         # Convolutional Layer #1 and Pooling Layer #1
         conv1 = tf.layers.conv2d(
           inputs=inputs,
-          filters=4,
+          filters=8,
           kernel_size=[4, 4],
           padding="same",
           activation=tf.nn.relu)
@@ -33,11 +40,21 @@ class PixelFlowNetwork(Model):
           inputs=conv1,
           pool_size=[2, 2],
           strides=2)
+        conv2 = tf.layers.conv2d(
+          inputs=pool1,
+          filters=16,
+          kernel_size=[4, 4],
+          padding="same",
+          activation=tf.nn.relu)
+        pool2 = tf.layers.max_pooling2d(
+          inputs=conv2,
+          pool_size=[2, 2],
+          strides=2)
         # Dense Layer
-        pool1_flat = tf.contrib.layers.flatten(pool1)
+        flat = tf.contrib.layers.flatten(pool2)
         fc1 = tf.layers.dense(
-          inputs=pool1_flat,
-          units=8,
+          inputs=flat,
+          units=32,
           activation=tf.nn.sigmoid)
         fc2 = tf.layers.dense(
           inputs=fc1,
@@ -50,41 +67,66 @@ ModelCatalog.register_custom_model("pixel_flow_network", PixelFlowNetwork)
 
 
 # time horizon of a single rollout
-HORIZON = 1500
+HORIZON = 3000
 # number of rollouts per training iteration
-N_ROLLOUTS = 18
+N_ROLLOUTS = 28
 # number of parallel workers
-N_CPUS = 6
+N_CPUS = 14
 
-# We place one autonomous vehicle and 13 human-driven vehicles in the network
+RING_RADIUS = 50
+NUM_MERGE_HUMANS = 10
+NUM_MERGE_RL = 1
+
+# note that the vehicles are added sequentially by the generator,
+# so place the merging vehicles after the vehicles in the ring
 vehicles = Vehicles()
+# Inner ring vehicles
 vehicles.add(
     veh_id="human",
     acceleration_controller=(IDMController, {
         "noise": 0.2
     }),
+    lane_change_controller=(SumoLaneChangeController, {}),
     routing_controller=(ContinuousRouter, {}),
     speed_mode="no_collide",
-    num_vehicles=13)
+    num_vehicles=6,
+    sumo_car_following_params=SumoCarFollowingParams(minGap=0.0, tau=0.5),
+    sumo_lc_params=SumoLaneChangeParams())
+# A single learning agent in the inner ring
 vehicles.add(
     veh_id="rl",
     acceleration_controller=(RLController, {}),
+    lane_change_controller=(SumoLaneChangeController, {}),
     routing_controller=(ContinuousRouter, {}),
     speed_mode="no_collide",
-    num_vehicles=1)
+    num_vehicles=NUM_MERGE_RL,
+    sumo_car_following_params=SumoCarFollowingParams(minGap=0.01, tau=0.5),
+    sumo_lc_params=SumoLaneChangeParams())
+# Outer ring vehicles
+vehicles.add(
+    veh_id="merge-human",
+    acceleration_controller=(IDMController, {
+        "noise": 0.2
+    }),
+    lane_change_controller=(SumoLaneChangeController, {}),
+    routing_controller=(ContinuousRouter, {}),
+    speed_mode="no_collide",
+    num_vehicles=NUM_MERGE_HUMANS,
+    sumo_car_following_params=SumoCarFollowingParams(minGap=0.0, tau=0.5),
+    sumo_lc_params=SumoLaneChangeParams())
 
 flow_params = dict(
     # name of the experiment
-    exp_tag="cross_cnnidm",
+    exp_tag="merge_cnnidm",
 
     # name of the flow environment the experiment is running on
-    env_name="AccelCNNIDMEnv",
+    env_name="TwoLoopsMergeCNNIDMEnv",
 
     # name of the scenario class the experiment is running on
-    scenario="Figure8Scenario",
+    scenario="TwoLoopsOneMergingScenario",
 
     # name of the generator used to create/modify network configuration files
-    generator="Figure8Generator",
+    generator="TwoLoopOneMergingGenerator",
 
     # sumo-related parameters (see flow.core.params.SumoParams)
     sumo=SumoParams(
@@ -96,9 +138,12 @@ flow_params = dict(
     env=EnvParams(
         horizon=HORIZON,
         additional_params={
-            "target_velocity": 20,
-            "max_accel": 0.5,
-            "max_decel": -0.5,
+            "max_accel": 3,
+            "max_decel": 5,
+            "target_velocity": 10,
+            "n_preceding": 2,
+            "n_following": 2,
+            "n_merging_in": 2,
         },
     ),
 
@@ -106,7 +151,14 @@ flow_params = dict(
     # scenario's documentation or ADDITIONAL_NET_PARAMS component)
     net=NetParams(
         no_internal_links=False,
-        additional_params=ADDITIONAL_NET_PARAMS,
+        additional_params={
+            "ring_radius": RING_RADIUS,
+            "lane_length": 75,
+            "inner_lanes": 1,
+            "outer_lanes": 1,
+            "speed_limit": 30,
+            "resolution": 40,
+        },
     ),
 
     # vehicles to be placed in the network at the start of a rollout (see
@@ -115,7 +167,13 @@ flow_params = dict(
 
     # parameters specifying the positioning of vehicles upon initialization/
     # reset (see flow.core.params.InitialConfig)
-    initial=InitialConfig(),
+    initial=InitialConfig(
+        x0=50,
+        spacing="uniform",
+        additional_params={
+            "merge_bunching": 0,
+        },
+    ),
 )
 
 if __name__ == "__main__":
@@ -128,6 +186,7 @@ if __name__ == "__main__":
     config["horizon"] = HORIZON
     config["model"] = {"custom_model": "pixel_flow_network",
                        "custom_options": {},}
+    config["lr"] = grid_search([0.01, 0.001, 0.0001, 0.00001, 0.000001])
 
     # save the flow params for replay
     flow_json = json.dumps(
@@ -149,8 +208,8 @@ if __name__ == "__main__":
             "checkpoint_freq": 50,
             "max_failures": 999,
             "stop": {
-                "training_iteration": 1000
+                "training_iteration": 2000,
             },
-            "num_samples": 3,
-        },
+            "num_samples": 1,
+        }
     })

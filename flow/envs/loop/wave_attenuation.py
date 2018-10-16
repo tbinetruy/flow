@@ -22,9 +22,9 @@ from scipy.optimize import fsolve
 
 ADDITIONAL_ENV_PARAMS = {
     # maximum acceleration of autonomous vehicles
-    "max_accel": 1,
+    "max_accel": 3,
     # maximum deceleration of autonomous vehicles
-    "max_decel": 1,
+    "max_decel": 5,
     # bounds on the ranges of ring road lengths the autonomous vehicle is
     # trained on
     "ring_length": [260, 260],
@@ -440,6 +440,12 @@ class WaveAttenuationCNNEnv(WaveAttenuationEnv):
         sights_buffer = np.moveaxis(sights_buffer, 0, -1)
         return sights_buffer / 255.
 
+    def compute_reward(self, state, rl_actions, **kwargs):
+        """See class definition."""
+        max_speed = self.scenario.max_speed
+        speed = self.vehicles.get_speed(self.vehicles.get_ids())
+        return (0.6*np.mean(speed) + 0.4*np.std(speed))/max_speed
+
     def additional_command(self):
         """Define which vehicles are observed for visualization purposes."""
         # specify observed vehicles
@@ -460,7 +466,7 @@ class WaveAttenuationCNNIDMEnv(WaveAttenuationCNNEnv):
                this_vel = self.vehicles.get_speed(vid)
                if "rl" in vid:
                    default_acc = self.default_controller[i].get_accel(self)
-                   acc[i] += default_acc
+                   acc[i] = 0.5*np.clip(acc[i], -5, 3) + 0.5*default_acc
                next_vel = max([this_vel + acc[i] * self.sim_step, 0])
                self.traci_connection.vehicle.slowDown(vid, next_vel, 1)
 
