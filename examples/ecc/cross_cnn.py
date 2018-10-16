@@ -1,8 +1,4 @@
-"""Ring road example.
-
-Trains a single autonomous vehicle to stabilize the flow of 21 human-driven
-vehicles in a variable length ring road.
-"""
+"""Figure eight example."""
 
 import json
 
@@ -16,7 +12,8 @@ from flow.utils.registry import make_create_env
 from flow.utils.rllib import FlowParamsEncoder
 from flow.core.params import SumoParams, EnvParams, InitialConfig, NetParams
 from flow.core.vehicles import Vehicles
-from flow.controllers import RLController, IDMController, ContinuousRouter
+from flow.controllers import IDMController, ContinuousRouter, RLController
+from flow.scenarios.figure8.figure8_scenario import ADDITIONAL_NET_PARAMS
 
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
@@ -28,7 +25,7 @@ class PixelFlowNetwork(Model):
         # Convolutional Layer #1 and Pooling Layer #1
         conv1 = tf.layers.conv2d(
           inputs=inputs,
-          filters=4,
+          filters=8,
           kernel_size=[4, 4],
           padding="same",
           activation=tf.nn.relu)
@@ -36,11 +33,21 @@ class PixelFlowNetwork(Model):
           inputs=conv1,
           pool_size=[2, 2],
           strides=2)
+        conv2 = tf.layers.conv2d(
+          inputs=pool1,
+          filters=16,
+          kernel_size=[4, 4],
+          padding="same",
+          activation=tf.nn.relu)
+        pool2 = tf.layers.max_pooling2d(
+          inputs=conv2,
+          pool_size=[2, 2],
+          strides=2)
         # Dense Layer
-        pool1_flat = tf.contrib.layers.flatten(pool1)
+        flat = tf.contrib.layers.flatten(pool2)
         fc1 = tf.layers.dense(
-          inputs=pool1_flat,
-          units=8,
+          inputs=flat,
+          units=32,
           activation=tf.nn.sigmoid)
         fc2 = tf.layers.dense(
           inputs=fc1,
@@ -53,13 +60,13 @@ ModelCatalog.register_custom_model("pixel_flow_network", PixelFlowNetwork)
 
 
 # time horizon of a single rollout
-HORIZON = 1500
+HORIZON = 3000
 # number of rollouts per training iteration
-N_ROLLOUTS = 18
+N_ROLLOUTS = 28
 # number of parallel workers
-N_CPUS = 6
+N_CPUS = 14
 
-# We place one autonomous vehicle and 22 human-driven vehicles in the network
+# We place one autonomous vehicle and 13 human-driven vehicles in the network
 vehicles = Vehicles()
 vehicles.add(
     veh_id="human",
@@ -68,7 +75,7 @@ vehicles.add(
     }),
     routing_controller=(ContinuousRouter, {}),
     speed_mode="no_collide",
-    num_vehicles=21)
+    num_vehicles=13)
 vehicles.add(
     veh_id="rl",
     acceleration_controller=(RLController, {}),
@@ -78,16 +85,16 @@ vehicles.add(
 
 flow_params = dict(
     # name of the experiment
-    exp_tag="circle_cnn",
+    exp_tag="cross_cnn",
 
     # name of the flow environment the experiment is running on
-    env_name="WaveAttenuationCNNEnv",
+    env_name="AccelCNNEnv",
 
     # name of the scenario class the experiment is running on
-    scenario="LoopScenario",
+    scenario="Figure8Scenario",
 
     # name of the generator used to create/modify network configuration files
-    generator="CircleGenerator",
+    generator="Figure8Generator",
 
     # sumo-related parameters (see flow.core.params.SumoParams)
     sumo=SumoParams(
@@ -98,23 +105,19 @@ flow_params = dict(
     # environment related parameters (see flow.core.params.EnvParams)
     env=EnvParams(
         horizon=HORIZON,
-        warmup_steps=150,
         additional_params={
-            "max_accel": 1,
-            "max_decel": -1,
-            "ring_length": [260, 260],
+            "target_velocity": 20,
+            "max_accel": 3,
+            "max_decel": 5,
         },
     ),
 
     # network-related parameters (see flow.core.params.NetParams and the
     # scenario's documentation or ADDITIONAL_NET_PARAMS component)
     net=NetParams(
-        additional_params={
-            "length": 260,
-            "lanes": 1,
-            "speed_limit": 30,
-            "resolution": 40,
-        }, ),
+        no_internal_links=False,
+        additional_params=ADDITIONAL_NET_PARAMS,
+    ),
 
     # vehicles to be placed in the network at the start of a rollout (see
     # flow.core.vehicles.Vehicles)
@@ -126,7 +129,7 @@ flow_params = dict(
 )
 
 if __name__ == "__main__":
-    ray.init(num_cpus=N_CPUS + 1, redirect_output=True)
+    ray.init(num_cpus=N_CPUS+1, redirect_output=False)
 
     config = a3c.DEFAULT_CONFIG.copy()
     config["num_workers"] = N_CPUS
@@ -135,6 +138,7 @@ if __name__ == "__main__":
     config["horizon"] = HORIZON
     config["model"] = {"custom_model": "pixel_flow_network",
                        "custom_options": {},}
+    config["lr"] = grid_search([0.01, 0.001, 0.0001, 0.00001, 0.000001])
 
     # save the flow params for replay
     flow_json = json.dumps(
@@ -156,8 +160,8 @@ if __name__ == "__main__":
             "checkpoint_freq": 50,
             "max_failures": 999,
             "stop": {
-                "training_iteration": 1000,
+                "training_iteration": 2000,
             },
-            "num_samples": 3,
+            "num_samples": 1,
         },
     })
