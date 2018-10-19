@@ -210,7 +210,7 @@ if __name__ == "__main__":
             "config": {
                 **config
             },
-            "checkpoint_freq": 10,
+            "checkpoint_freq": 50,
             "max_failures": 999,
             "stop": {
                 "training_iteration": 1e3,
