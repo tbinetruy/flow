@@ -1,0 +1,11 @@
+python circle_cnnidm.py 0e-1
+python circle_cnnidm.py 1e-1
+python circle_cnnidm.py 2e-1
+python circle_cnnidm.py 3e-1
+python circle_cnnidm.py 4e-1
+python circle_cnnidm.py 5e-1
+python circle_cnnidm.py 6e-1
+python circle_cnnidm.py 7e-1
+python circle_cnnidm.py 8e-1
+python circle_cnnidm.py 9e-1
+python circle_cnnidm.py 0e-0

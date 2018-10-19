@@ -140,16 +140,17 @@ flow_params = dict(
 )
 
 if __name__ == "__main__":
-    ray.init(num_cpus=N_CPUS + 1, redirect_output=True)
+    ray.init(num_cpus=N_CPUS+1, redirect_output=False)
 
     config = a3c.DEFAULT_CONFIG.copy()
     config["num_workers"] = N_CPUS
     config["train_batch_size"] = HORIZON * N_ROLLOUTS
-    config["gamma"] = 0.999
+    config["gamma"] = 0.99
     config["horizon"] = HORIZON
     config["model"] = {"custom_model": "pixel_flow_network",
                        "custom_options": {},}
-    config["lr"] = 0.01
+    #config["lr"] = 0.01 # A working learning rate
+    config["lr_schedule"] = [[0, 1e-1], [1e3, 1e-6]]
 
     # save the flow params for replay
     flow_json = json.dumps(
@@ -171,7 +172,7 @@ if __name__ == "__main__":
             "checkpoint_freq": 10,
             "max_failures": 999,
             "stop": {
-                "training_iteration": 500,
+                "training_iteration": 1e3,
             },
             "num_samples": 3,
         },

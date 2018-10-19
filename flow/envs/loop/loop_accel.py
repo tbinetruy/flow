@@ -320,8 +320,8 @@ class AccelCNNIDMEnv(AccelCNNEnv):
                    high=self.env_params.additional_params["max_accel"]
                    alpha = self.env_params.additional_params["augmentation"]
                    default_acc = self.default_controller[i].get_accel(self)
-                   acc[i] = (1.0 - alpha)*np.clip(acc[i], low, high) +\
-                            alpha*default_acc
+                   acc[i] = alpha*acc[i] +\
+                            (1.0 - alpha)**np.clip(default_acc, low, high)
                next_vel = max([this_vel + acc[i] * self.sim_step, 0])
                self.traci_connection.vehicle.slowDown(vid, next_vel, 1)
 
