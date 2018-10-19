@@ -470,7 +470,7 @@ class WaveAttenuationCNNIDMEnv(WaveAttenuationCNNEnv):
                    alpha = self.env_params.additional_params["augmentation"]
                    default_acc = self.default_controller[i].get_accel(self)
                    acc[i] = alpha*acc[i] +\
-                            (1.0 - alpha)**np.clip(default_acc, low, high)
+                            (1.0 - alpha)*np.clip(default_acc, low, high)
                next_vel = max([this_vel + acc[i] * self.sim_step, 0])
                self.traci_connection.vehicle.slowDown(vid, next_vel, 1)
 
