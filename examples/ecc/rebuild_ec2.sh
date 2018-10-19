@@ -10,7 +10,7 @@ sudo apt-get install -y \
     xvfb \
     libxinerama1 libxcursor1
 pip install imutils
-cd ~/flow/examples/iccps/
+cd ~/flow/examples/ecc/
 # Running script in the background.
 #nohup xvfb-run -a -s \
 #    "-screen 0 1400x900x24 +extension RANDR"\
