@@ -18,6 +18,9 @@ from flow.scenarios.figure8.figure8_scenario import ADDITIONAL_NET_PARAMS
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 
+import sys
+
+AUG = sys.argv[1]
 
 class PixelFlowNetwork(Model):
     def _build_layers(self, inputs, num_outputs, options):
@@ -85,7 +88,7 @@ vehicles.add(
 
 flow_params = dict(
     # name of the experiment
-    exp_tag="cross_cnnidm",
+    exp_tag="cross_cnnidm%s" % AUG,
 
     # name of the flow environment the experiment is running on
     env_name="AccelCNNIDMEnv",
@@ -109,6 +112,7 @@ flow_params = dict(
             "target_velocity": 20,
             "max_accel": 3,
             "max_decel": 5,
+            "augmentation": float(AUG),
         },
     ),
 
@@ -138,7 +142,7 @@ if __name__ == "__main__":
     config["horizon"] = HORIZON
     config["model"] = {"custom_model": "pixel_flow_network",
                        "custom_options": {},}
-    config["lr"] = grid_search([0.01, 0.001, 0.0001, 0.00001, 0.000001])
+    config["lr"] = 0.01
 
     # save the flow params for replay
     flow_json = json.dumps(
@@ -157,11 +161,11 @@ if __name__ == "__main__":
             "config": {
                 **config
             },
-            "checkpoint_freq": 50,
+            "checkpoint_freq": 10,
             "max_failures": 999,
             "stop": {
-                "training_iteration": 2000,
+                "training_iteration": 500,
             },
-            "num_samples": 1,
+            "num_samples": 3,
         },
     })
