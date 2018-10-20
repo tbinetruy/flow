@@ -70,7 +70,7 @@ HORIZON = 3000
 # number of rollouts per training iteration
 N_ROLLOUTS = 28
 # number of parallel workers
-N_CPUS = 4
+N_CPUS = 14
 
 # We place one autonomous vehicle and 22 human-driven vehicles in the network
 vehicles = Vehicles()
@@ -150,7 +150,7 @@ if __name__ == "__main__":
     config["model"] = {"custom_model": "pixel_flow_network",
                        "custom_options": {},}
     #config["lr"] = 0.01 # A working learning rate
-    config["lr_schedule"] = [[0, 1e-4], [1e2, 1e-6]]
+    config["lr_schedule"] = [[0, 1e-5], [1e2, 1e-6]]
 
     # save the flow params for replay
     flow_json = json.dumps(
