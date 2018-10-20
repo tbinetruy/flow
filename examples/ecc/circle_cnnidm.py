@@ -68,9 +68,9 @@ ModelCatalog.register_custom_model("pixel_flow_network", PixelFlowNetwork)
 # time horizon of a single rollout
 HORIZON = 3000
 # number of rollouts per training iteration
-N_ROLLOUTS = 28
+N_ROLLOUTS = 18
 # number of parallel workers
-N_CPUS = 14
+N_CPUS = 6
 
 # We place one autonomous vehicle and 22 human-driven vehicles in the network
 vehicles = Vehicles()
@@ -150,7 +150,7 @@ if __name__ == "__main__":
     config["model"] = {"custom_model": "pixel_flow_network",
                        "custom_options": {},}
     #config["lr"] = 0.01 # A working learning rate
-    config["lr_schedule"] = [[0, 1e-1], [1e3, 1e-6]]
+    config["lr_schedule"] = [[0, 1e-4], [1e2, 1e-6]]
 
     # save the flow params for replay
     flow_json = json.dumps(
@@ -172,7 +172,7 @@ if __name__ == "__main__":
             "checkpoint_freq": 50,
             "max_failures": 999,
             "stop": {
-                "training_iteration": 1e3,
+                "training_iteration": 1e2,
             },
             "num_samples": 3,
         },

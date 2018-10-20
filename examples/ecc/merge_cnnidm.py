@@ -191,7 +191,7 @@ if __name__ == "__main__":
     config["model"] = {"custom_model": "pixel_flow_network",
                        "custom_options": {},}
     #config["lr"] = 0.01 # A working learning rate
-    config["lr_schedule"] = [[0, 1e-1], [1e3, 1e-6]]
+    config["lr_schedule"] = [[0, 1e-4], [1e2, 1e-6]]
 
     # save the flow params for replay
     flow_json = json.dumps(
