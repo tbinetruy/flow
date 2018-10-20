@@ -181,7 +181,7 @@ flow_params = dict(
 )
 
 if __name__ == "__main__":
-    ray.init(num_cpus=N_CPUS+1, redirect_output=False)
+    ray.init(num_cpus=N_CPUS+1, num_gpus=0, redirect_output=False)
 
     config = a3c.DEFAULT_CONFIG.copy()
     config["num_workers"] = N_CPUS
