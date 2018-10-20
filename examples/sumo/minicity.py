@@ -1,6 +1,7 @@
 """Example of modified minicity network with human-driven vehicles.
 """
-from flow.controllers import IDMController, StaticLaneChanger, ContinuousRouter
+from flow.controllers import IDMController, StaticLaneChanger, ContinuousRouter, \
+    RLController
 from flow.core.experiment import SumoExperiment
 from flow.core.params import SumoParams, EnvParams, NetParams, InitialConfig
 from flow.core.vehicles import Vehicles
@@ -39,7 +40,15 @@ def minicity_example(render=None):
         routing_controller=(XiaoRouter, {}),
         speed_mode="no_collide",
         initial_speed=0,
-        num_vehicles=50)
+        num_vehicles=30)
+    vehicles.add(
+        veh_id="rl",
+        acceleration_controller=(RLController, {}),
+        lane_change_controller=(StaticLaneChanger, {}),
+        routing_controller=(XiaoRouter, {}),
+        speed_mode="no_collide",
+        initial_speed=0,
+        num_vehicles=10)
 
     env_params = EnvParams(additional_params=ADDITIONAL_ENV_PARAMS)
 
@@ -63,7 +72,7 @@ def minicity_example(render=None):
 
 if __name__ == "__main__":
     # import the experiment variable
-    exp = minicity_example()
+    exp = minicity_example(render=False)
 
     # run for a set number of rollouts / time steps
     exp.run(1, 1500)

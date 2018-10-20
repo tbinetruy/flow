@@ -9,6 +9,7 @@ import time
 import traceback
 import numpy as np
 import random
+from flow.renderer.pyglet_renderer import PygletRenderer as Renderer
 
 import traci
 from traci import constants as tc
@@ -17,6 +18,7 @@ import gym
 from gym.spaces import Box
 
 import sumolib
+
 
 try:
     # Import serializable if rllab is installed
@@ -129,6 +131,30 @@ class Env(gym.Env, Serializable):
 
         self.start_sumo()
         self.setup_initial_state()
+
+        self.renderer = Renderer(self.traci_connection)
+        self.sight_radius = 50 # 50 m
+        human_idlist = self.vehicles.get_human_ids()
+        machine_idlist = self.vehicles.get_rl_ids()
+        human_orientations = []
+        machine_orientations = []
+        for id in human_idlist:
+            if "rl" in id:
+                machine_orientations.append(self.vehicles.get_orientation(id))
+            else:
+                human_orientations.append(self.vehicles.get_orientation(id))
+        for id in machine_idlist:
+            machine_orientations.append(self.vehicles.get_orientation(id))
+        self.frame = self.renderer.render(human_orientations,
+                                          machine_orientations)
+        self.sights = []
+        for id in machine_idlist:
+            orientation = self.vehicles.get_orientation(id)
+            sight = self.renderer.get_sight(orientation, id, self.sight_radius)
+            self.sights.append(sight)
+        self.frame_buffer = [self.frame.copy() for _ in range(5)]
+        self.sights_buffer = [self.sights.copy() for _ in range(5)]
+
 
     def restart_sumo(self, sumo_params, render=None):
         """Restart an already initialized sumo instance.
@@ -251,6 +277,7 @@ class Env(gym.Env, Serializable):
                 self.traci_connection = traci.connect(port, numRetries=100)
 
                 self.traci_connection.simulationStep()
+
                 return
             except Exception as e:
                 print("Error during start: {}".format(traceback.format_exc()))
@@ -291,7 +318,8 @@ class Env(gym.Env, Serializable):
         for veh_id in self.vehicles.get_ids():
             self.traci_connection.vehicle.subscribe(veh_id, [
                 tc.VAR_LANE_INDEX, tc.VAR_LANEPOSITION, tc.VAR_ROAD_ID,
-                tc.VAR_SPEED, tc.VAR_EDGES
+                tc.VAR_SPEED, tc.VAR_EDGES, tc.VAR_POSITION, tc.VAR_ANGLE,
+                tc.VAR_SPEED_WITHOUT_TRACI
             ])
             self.traci_connection.vehicle.subscribeLeader(veh_id, 2000)
 
@@ -350,7 +378,7 @@ class Env(gym.Env, Serializable):
         self.traffic_lights.update(tls_obs)
 
         # store the network observations in the vehicles class
-        self.vehicles.update(vehicle_obs, id_lists, self)
+        #self.vehicles.update(vehicle_obs, id_lists, self)
 
     def step(self, rl_actions):
         """Advance the environment by one step.
@@ -452,12 +480,40 @@ class Env(gym.Env, Serializable):
             if crash:
                 break
 
+            human_idlist = self.vehicles.get_human_ids()
+            machine_idlist = self.vehicles.get_rl_ids()
+            human_orientations = []
+            machine_orientations = []
+            for id in human_idlist:
+                if "rl" in id:
+                    machine_orientations.append(self.vehicles.get_orientation(id))
+                else:
+                    human_orientations.append(self.vehicles.get_orientation(id))
+            for id in machine_idlist:
+                machine_orientations.append(self.vehicles.get_orientation(id))
+            self.frame = self.renderer.render(human_orientations,
+                                              machine_orientations)
+            self.sights = []
+            for id in machine_idlist:
+                orientation = self.vehicles.get_orientation(id)
+                sight = self.renderer.get_sight(orientation, id, self.sight_radius)
+                self.sights.append(sight)
+            if self.step_counter % 10 == 0:
+                self.frame_buffer.append(self.frame.copy())
+                self.sights_buffer.append(self.sights.copy())
+            if len(self.frame_buffer) > 5:
+                self.frame_buffer.pop(0)
+                self.sights_buffer.pop(0)
+
         # collect information of the state of the network based on the
         # environment class used
-        self.state = np.asarray(self.get_state()).T
+        #self.state = np.asarray(self.get_state()).T # This is donut!
+        self.state = np.asarray(self.get_state())
 
         # collect observation new state associated with action
         next_observation = np.copy(self.state)
+        #next_observation = {"pix_obs": frame,
+        #                    "num_obs": next_observation}
 
         # compute the reward
         reward = self.compute_reward(self.state, rl_actions, fail=crash)
@@ -623,7 +679,7 @@ class Env(gym.Env, Serializable):
 
         # collect information of the state of the network based on the
         # environment class used
-        self.state = np.asarray(self.get_state()).T
+        self.state = np.asarray(self.get_state())#.T
 
         # observation associated with the reset (no warm-up steps)
         observation = np.copy(self.state)
@@ -631,6 +687,27 @@ class Env(gym.Env, Serializable):
         # perform (optional) warm-up steps before training
         for _ in range(self.env_params.warmup_steps):
             observation, _, _, _ = self.step(rl_actions=None)
+
+        human_idlist = self.vehicles.get_human_ids()
+        machine_idlist = self.vehicles.get_rl_ids()
+        human_orientations = []
+        machine_orientations = []
+        for id in human_idlist:
+            if "rl" in id:
+                machine_orientations.append(self.vehicles.get_orientation(id))
+            else:
+                human_orientations.append(self.vehicles.get_orientation(id))
+        for id in machine_idlist:
+            machine_orientations.append(self.vehicles.get_orientation(id))
+        self.frame = self.renderer.render(human_orientations,
+                                          machine_orientations)
+        self.sights = []
+        for id in machine_idlist:
+            orientation = self.vehicles.get_orientation(id)
+            sight = self.renderer.get_sight(orientation, id, self.sight_radius)
+            self.sights.append(sight)
+        self.frame_buffer = [self.frame.copy() for _ in range(5)]
+        self.sights_buffer = [self.sights.copy() for _ in range(5)]
 
         return observation
 
@@ -908,6 +985,7 @@ class Env(gym.Env, Serializable):
     def _close(self):
         self.traci_connection.close()
         self.scenario.close()
+        self.renderer.close()
 
     def teardown_sumo(self):
         """Kill the sumo subprocess instance."""
