@@ -6,12 +6,17 @@ import os
 
 class PygletRenderer():
 
-    def __init__(self, kernel, save_frame=False, save_dir=None):
+    def __init__(self, kernel, rbg_mode=False, save_frame=False, save_dir=None):
+        # TODO: Add RGB mode mode.
+        # TODO: Add saving sights functionality.
+        # TODO: Add a timer.
+        # TODO: Running time optimization with efficient code and GPUs.
         self.kernel = kernel
         self.save_frame = save_frame
         self.pxpm = 2 # Pixel per meter
         if self.save_frame:
             self.save_dir = save_dir
+            # TODO: Create the folder if it does not exist.
 
         self.lane_polys = []
         lane_polys_flat = []
@@ -79,11 +84,6 @@ class PygletRenderer():
         frame = np.fromstring(image_data.data, dtype=np.uint8, sep='')
         frame = frame.reshape(buffer.height, buffer.width, 4)
         self.frame = frame[::-1,:,0:3].mean(axis=-1,keepdims=True)
-        if False:
-            # A hacky way to save the first frame.
-            import cv2
-            cv2.imwrite("init_frame.png", self.frame)#frame[::-1,:,0:3][...,::-1])
-            raise NotImplementedError
 
         self.window.flip()
         return self.frame

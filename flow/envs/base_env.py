@@ -152,8 +152,10 @@ class Env(gym.Env, Serializable):
             orientation = self.vehicles.get_orientation(id)
             sight = self.renderer.get_sight(orientation, self.sight_radius)
             self.sights.append(sight)
-        self.frame_buffer = [self.frame.copy() for _ in range(5)]
-        self.sights_buffer = [self.sights.copy() for _ in range(5)]
+        self._frame_buffer = [self.frame.copy() for _ in range(50)]
+        self.frame_buffer = self._frame_buffer[0::10]
+        self._sights_buffer = [self.sights.copy() for _ in range(50)]
+        self.sights_buffer = self._sights_buffer[0::10]
 
 
     def restart_sumo(self, sumo_params, render=None):
@@ -498,12 +500,13 @@ class Env(gym.Env, Serializable):
                 orientation = self.vehicles.get_orientation(id)
                 sight = self.renderer.get_sight(orientation, self.sight_radius)
                 self.sights.append(sight)
-            if self.step_counter % 10 == 0:
-                self.frame_buffer.append(self.frame.copy())
-                self.sights_buffer.append(self.sights.copy())
-            if len(self.frame_buffer) > 5:
-                self.frame_buffer.pop(0)
-                self.sights_buffer.pop(0)
+            self._frame_buffer.append(self.frame.copy())
+            self._sights_buffer.append(self.sights.copy())
+            if len(self._frame_buffer) > 50:
+                self._frame_buffer.pop(0)
+                self._sights_buffer.pop(0)
+            self.frame_buffer = self._frame_buffer[0::10]
+            self.sights_buffer = self._sights_buffer[0::10]
 
         # collect information of the state of the network based on the
         # environment class used
@@ -706,8 +709,10 @@ class Env(gym.Env, Serializable):
             orientation = self.vehicles.get_orientation(id)
             sight = self.renderer.get_sight(orientation, self.sight_radius)
             self.sights.append(sight)
-        self.frame_buffer = [self.frame.copy() for _ in range(5)]
-        self.sights_buffer = [self.sights.copy() for _ in range(5)]
+        self._frame_buffer = [self.frame.copy() for _ in range(50)]
+        self._sights_buffer = [self.sights.copy() for _ in range(50)]
+        self.frame_buffer = self._frame_buffer[0::10]
+        self.sights_buffer = self._sights_buffer[0::10]
 
         return observation
 
