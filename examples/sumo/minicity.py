@@ -8,6 +8,7 @@ from flow.envs.loop.loop_accel import AccelEnv, ADDITIONAL_ENV_PARAMS
 from flow.scenarios.minicity.scenario import MiniCityScenario, \
     ADDITIONAL_NET_PARAMS
 from flow.scenarios.minicity.gen import MiniCityGenerator
+from flow.controllers.routing_controllers import XiaoRouter
 
 
 def minicity_example(render=None):
@@ -35,7 +36,7 @@ def minicity_example(render=None):
         veh_id="idm",
         acceleration_controller=(IDMController, {}),
         lane_change_controller=(StaticLaneChanger, {}),
-        routing_controller=(ContinuousRouter, {}),
+        routing_controller=(XiaoRouter, {}),
         speed_mode="no_collide",
         initial_speed=0,
         num_vehicles=50)

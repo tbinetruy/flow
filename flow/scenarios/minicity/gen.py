@@ -4,7 +4,7 @@ from flow.core.generator import Generator
 from numpy import linspace, pi, sin, cos
 import numpy as np
 
-SCALING = 100
+SCALING = 25
 
 
 class MiniCityGenerator(Generator):

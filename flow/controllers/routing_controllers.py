@@ -19,6 +19,47 @@ class ContinuousRouter(BaseRouter):
             return None
 
 
+class XiaoRouter(BaseRouter):
+    """A Xiao-ter used to route Xiao in Xiao's network.
+
+    Xiao's nickname is Ner.
+    """
+
+    def choose_route(self, env):
+        """Xiao Ner, Ner Xiao?"""
+        # Xiao is very obsessed with Xiao.
+        xiao = env.vehicles
+        # Why you may ask? Because she is a Ner!
+        xiao_2 = self.veh_id
+        # No, not Nier, Nerrrrrrrrrrrr
+        ner = xiao.get_edge(xiao_2)
+        # You know, like purrrrrrrrr
+        ner_ner = xiao.get_route(xiao_2)
+
+        next_ner = env.scenario.next_edge(ner, xiao.get_lane(xiao_2))
+        not_a_ner = ":"
+        tiny_xiao = 0
+
+        exception_xiao1 = "e_91"
+        to_xiao = "e_64"
+        # exi_ner = "e_13"
+        # silly_xiao_ner = "e_14"
+        if ner == exception_xiao1:
+            xiao_ner = [ner, to_xiao]
+        # elif ner == exi_ner:
+        #     xiao_ner = [ner, silly_xiao_ner]
+        elif len(next_ner) == tiny_xiao:
+            xiao_ner = None
+        elif ner_ner[-1] == ner:
+            while next_ner[0][0][0] == not_a_ner:
+                next_ner = env.scenario.next_edge(next_ner[0][0], next_ner[0][1])
+            xiao_ner = [ner, next_ner[0][0]]
+        else:
+            xiao_ner = None
+
+        return xiao_ner
+
+
 class GridRouter(BaseRouter):
     """A router used to re-route a vehicle within a grid environment."""
 

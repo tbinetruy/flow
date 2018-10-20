@@ -11,6 +11,7 @@ from flow.core.vehicles import Vehicles
 from flow.envs.loop.loop_accel import AccelEnv, ADDITIONAL_ENV_PARAMS
 from flow.scenarios.figure8.figure8_scenario import Figure8Scenario, \
     ADDITIONAL_NET_PARAMS
+from flow.controllers.routing_controllers import XiaoRouter
 from flow.scenarios.figure8.gen import Figure8Generator
 
 
@@ -39,7 +40,7 @@ def figure_eight_example(render=None):
         veh_id="idm",
         acceleration_controller=(IDMController, {}),
         lane_change_controller=(StaticLaneChanger, {}),
-        routing_controller=(ContinuousRouter, {}),
+        routing_controller=(XiaoRouter, {}),
         speed_mode="no_collide",
         initial_speed=0,
         num_vehicles=14)
