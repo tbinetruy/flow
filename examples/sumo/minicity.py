@@ -1,22 +1,18 @@
-"""Example of a figure 8 network with human-driven vehicles.
-
-Right-of-way dynamics near the intersection causes vehicles to queue up on
-either side of the intersection, leading to a significant reduction in the
-average speed of vehicles in the network.
+"""Example of modified minicity network with human-driven vehicles.
 """
 from flow.controllers import IDMController, StaticLaneChanger, ContinuousRouter
 from flow.core.experiment import SumoExperiment
-from flow.core.params import SumoParams, EnvParams, NetParams
+from flow.core.params import SumoParams, EnvParams, NetParams, InitialConfig
 from flow.core.vehicles import Vehicles
 from flow.envs.loop.loop_accel import AccelEnv, ADDITIONAL_ENV_PARAMS
-from flow.scenarios.figure8.figure8_scenario import Figure8Scenario, \
+from flow.scenarios.minicity.scenario import MiniCityScenario, \
     ADDITIONAL_NET_PARAMS
-from flow.scenarios.figure8.gen import Figure8Generator
+from flow.scenarios.minicity.gen import MiniCityGenerator
 
 
-def figure_eight_example(render=None):
+def minicity_example(render=None):
     """
-    Perform a simulation of vehicles on a figure eight.
+    Perform a simulation of vehicles on modified minicity of University of Delaware.
 
     Parameters
     ----------
@@ -27,7 +23,7 @@ def figure_eight_example(render=None):
     -------
     exp: flow.core.SumoExperiment type
         A non-rl experiment demonstrating the performance of human-driven
-        vehicles on a figure eight.
+        vehicles on the minicity scenario.
     """
     sumo_params = SumoParams(render=True)
 
@@ -42,7 +38,7 @@ def figure_eight_example(render=None):
         routing_controller=(ContinuousRouter, {}),
         speed_mode="no_collide",
         initial_speed=0,
-        num_vehicles=14)
+        num_vehicles=50)
 
     env_params = EnvParams(additional_params=ADDITIONAL_ENV_PARAMS)
 
@@ -50,10 +46,13 @@ def figure_eight_example(render=None):
     net_params = NetParams(
         no_internal_links=False, additional_params=additional_net_params)
 
-    scenario = Figure8Scenario(
-        name="figure8",
-        generator_class=Figure8Generator,
+    initial_config = InitialConfig(spacing="random")
+
+    scenario = MiniCityScenario(
+        name="minicity",
+        generator_class=MiniCityGenerator,
         vehicles=vehicles,
+        initial_config=initial_config,
         net_params=net_params)
 
     env = AccelEnv(env_params, sumo_params, scenario)
@@ -63,7 +62,7 @@ def figure_eight_example(render=None):
 
 if __name__ == "__main__":
     # import the experiment variable
-    exp = figure_eight_example()
+    exp = minicity_example()
 
     # run for a set number of rollouts / time steps
     exp.run(1, 1500)
