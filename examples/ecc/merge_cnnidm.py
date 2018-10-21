@@ -1,15 +1,7 @@
-"""Trains vehicles to facilitate cooperative merging in a loop merge.
-
-
-This examples consists of 1 learning agent and 6 additional vehicles in an
-inner ring, and 10 vehicles in an outer ring attempting to
-merge into the inner ring.
-"""
-
 import json
 
 import ray
-import ray.rllib.agents.a3c as a3c
+import ray.rllib.agents.es as es
 from ray.tune import run_experiments, grid_search
 from ray.tune.registry import register_env
 from ray.rllib.models import ModelCatalog, Model
@@ -27,38 +19,42 @@ import tensorflow.contrib.slim as slim
 
 import sys
 
-AUG = sys.argv[1]
+augmentation = sys.argv[1]
 
 class PixelFlowNetwork(Model):
     def _build_layers(self, inputs, num_outputs, options):
         print(inputs)
-        # Convolutional Layer #1 and Pooling Layer #1
+        # Convolutional layer 1
         conv1 = tf.layers.conv2d(
           inputs=inputs,
           filters=8,
           kernel_size=[4, 4],
           padding="same",
           activation=tf.nn.relu)
+        # Pooling layer 1
         pool1 = tf.layers.max_pooling2d(
           inputs=conv1,
           pool_size=[2, 2],
           strides=2)
+        # Convolutional layer 2
         conv2 = tf.layers.conv2d(
           inputs=pool1,
           filters=16,
           kernel_size=[4, 4],
           padding="same",
           activation=tf.nn.relu)
+        # Pooling layer 2
         pool2 = tf.layers.max_pooling2d(
           inputs=conv2,
           pool_size=[2, 2],
           strides=2)
-        # Dense Layer
+        # Fully connected layer 1
         flat = tf.contrib.layers.flatten(pool2)
         fc1 = tf.layers.dense(
           inputs=flat,
           units=32,
           activation=tf.nn.sigmoid)
+        # Fully connected layer 2
         fc2 = tf.layers.dense(
           inputs=fc1,
           units=num_outputs,
@@ -72,9 +68,9 @@ ModelCatalog.register_custom_model("pixel_flow_network", PixelFlowNetwork)
 # time horizon of a single rollout
 HORIZON = 3000
 # number of rollouts per training iteration
-N_ROLLOUTS = 28
+N_ROLLOUTS = 14
 # number of parallel workers
-N_CPUS = 14
+N_CPUS = 15
 
 RING_RADIUS = 50
 NUM_MERGE_HUMANS = 8
@@ -120,7 +116,7 @@ vehicles.add(
 
 flow_params = dict(
     # name of the experiment
-    exp_tag="merge_cnnidm%s" % AUG,
+    exp_tag="merge_cnnidm%s" % augmentation,
 
     # name of the flow environment the experiment is running on
     env_name="TwoLoopsMergeCNNIDMEnv",
@@ -147,7 +143,7 @@ flow_params = dict(
             "n_preceding": 2,
             "n_following": 2,
             "n_merging_in": 2,
-            "augmentation": float(AUG),
+            "augmentation": float(augmentation),
         },
     ),
 
@@ -181,17 +177,17 @@ flow_params = dict(
 )
 
 if __name__ == "__main__":
-    ray.init(num_cpus=N_CPUS+1, num_gpus=0, redirect_output=False)
+    ray.init(num_cpus=N_CPUS, num_gpus=0, redirect_output=False)
 
-    config = a3c.DEFAULT_CONFIG.copy()
-    config["num_workers"] = N_CPUS
-    config["train_batch_size"] = HORIZON * N_ROLLOUTS
-    config["gamma"] = 0.99
-    config["horizon"] = HORIZON
+    config = es.DEFAULT_CONFIG.copy()
+    config["episodes_per_batch"] = N_ROLLOUTS
+    config["num_workers"] = N_ROLLOUTS
+    config["eval_prob"] = 0.05
+    config["noise_stdev"] = grid_search([0.01, 0.02])
+    config["stepsize"] = grid_search([0.01, 0.02])
+    config["observation_filter"] = "NoFilter"
     config["model"] = {"custom_model": "pixel_flow_network",
                        "custom_options": {},}
-    #config["lr"] = 0.01 # A working learning rate
-    config["lr_schedule"] = [[0, 1e-4], [1e2, 1e-6]]
 
     # save the flow params for replay
     flow_json = json.dumps(
@@ -205,16 +201,16 @@ if __name__ == "__main__":
 
     trials = run_experiments({
         flow_params["exp_tag"]: {
-            "run": "A3C",
+            "run": "ES",
             "env": env_name,
             "config": {
                 **config
             },
-            "checkpoint_freq": 50,
+            "checkpoint_freq": 5,
             "max_failures": 999,
             "stop": {
-                "training_iteration": 1e3,
+                "training_iteration": 1e2,
             },
-            "num_samples": 3,
-        }
+            "num_samples": 1,
+        },
     })
