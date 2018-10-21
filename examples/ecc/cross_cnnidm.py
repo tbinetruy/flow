@@ -141,8 +141,8 @@ if __name__ == "__main__":
     config["episodes_per_batch"] = N_ROLLOUTS
     config["num_workers"] = N_ROLLOUTS
     config["eval_prob"] = 0.05
-    config["noise_stdev"] = grid_search([0.01, 0.02])
-    config["stepsize"] = grid_search([0.01, 0.02])
+    config["noise_stdev"] = 0.01
+    config["stepsize"] = 0.01
     config["observation_filter"] = "NoFilter"
     config["model"] = {"custom_model": "pixel_flow_network",
                        "custom_options": {},}
@@ -169,6 +169,6 @@ if __name__ == "__main__":
             "stop": {
                 "training_iteration": 50,
             },
-            "num_samples": 1,
+            "num_samples": 3,
         },
     })
