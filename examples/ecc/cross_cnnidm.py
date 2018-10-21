@@ -167,7 +167,7 @@ if __name__ == "__main__":
             "checkpoint_freq": 5,
             "max_failures": 999,
             "stop": {
-                "training_iteration": 1e2,
+                "training_iteration": 50,
             },
             "num_samples": 1,
         },
