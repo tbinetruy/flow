@@ -1,16 +1,32 @@
 import pyglet
 from pyglet.gl import *
+from matplotlib import cm
 import numpy as np
 import cv2, imutils
 import os
+from os.path import expanduser
+HOME = expanduser("~")
+import time
 
 class PygletRenderer():
 
-    def __init__(self, kernel, save_frame=False, save_dir=None):
+    def __init__(self, kernel, mode,
+                 save_render=False,
+                 path=HOME+"/flow_rendering",
+                 sight_radius=50):
         self.kernel = kernel
-        self.save_frame = save_frame
+        self.mode = mode
+        if self.mode not in [True, False, "rgb", "drgb", "gray", "dgray"]:
+            raise ValueError("Mode %s is not supported!" % self.mode)
+        self.save_render = save_render
+        if self.save_render:
+            if not os.path.exists(path):
+                os.mkdir(path)
+            self.path = path + '/' + time.strftime("%Y%m%d-%H%M%S")
+            os.mkdir(self.path)
         self.pxpm = 5 # Pixel per meter
         self.time = 0
+        self.sight_radius = sight_radius
 
         self.lane_polys = []
         lane_polys_flat = []
@@ -24,16 +40,16 @@ class PygletRenderer():
         width = int(polys_x.max() - polys_x.min())
         shift = polys_x.min() - 2
         scale = (width - 4) / width
-        self.width = width * self.pxpm
-        self.x_shift = shift
+        self.width = (width + 2*self.sight_radius) * self.pxpm
+        self.x_shift = shift - self.sight_radius
         self.x_scale = scale
 
         polys_y = np.asarray(lane_polys_flat[1::2])
         height = int(polys_y.max() - polys_y.min())
         shift = polys_y.min() - 2
         scale = (height - 4) / height
-        self.height = height * self.pxpm
-        self.y_shift = shift
+        self.height = (height + 2*self.sight_radius) * self.pxpm
+        self.y_shift = shift - self.sight_radius
         self.y_scale = scale
 
         self.lane_colors = []
@@ -53,24 +69,21 @@ class PygletRenderer():
         frame = np.fromstring(image_data.data, dtype=np.uint8, sep='')
         frame = frame.reshape(buffer.height, buffer.width, 4)
         self.frame = frame[::-1,:,0:3][...,::-1]
-        self.sight_radius = 50 * self.pxpm
-        self.padded_frame = []
-        self.padded_frame.append(np.pad(self.frame[:,:,0],
-                                 int(self.sight_radius+1),
-                                 "constant", constant_values=32))
-        self.padded_frame.append(np.pad(self.frame[:,:,1],
-                                 int(self.sight_radius+1),
-                                 "constant", constant_values=32))
-        self.padded_frame.append(np.pad(self.frame[:,:,2],
-                                 int(self.sight_radius+1),
-                                 "constant", constant_values=32))
-        self.padded_frame = np.asarray(self.padded_frame).astype(np.uint8)
-        self.padded_frame = np.moveaxis(self.padded_frame, 0, -1)
 
         print("Rendering with Pyglet with frame size", (self.width, self.height))
 
 
-    def render(self, human_orientations, machine_orientations):
+    def render(self, human_orientations, machine_orientations,
+               human_dynamics, machine_dynamics,
+               colors=None, sight_radius=None):
+        if sight_radius is not None:
+            sight_radius = sight_radius * self.pxpm
+        else:
+            sight_radius = self.sight_radius
+        self.time = self.kernel.simulation.getCurrentTime()
+        self.time /= self.kernel.simulation.getDeltaT()
+        self.time = int(self.time)
+
         glClearColor(0.125,0.125,0.125,1)
         self.window.clear()
         self.window.switch_to()
@@ -80,67 +93,74 @@ class PygletRenderer():
         self.add_lane_polys()
         self.lane_batch.draw()
         self.vehicle_batch = pyglet.graphics.Batch()
-        self.add_vehicle_polys(human_orientations, [0, 128, 128])#[0,139,139])
-        self.add_vehicle_polys(machine_orientations, [255, 255, 255])#[255,20,147])
+        if "d" in self.mode:
+            human_conditions = [
+                (255*np.array(cm.Greens(d)[:3])).astype(np.uint8).tolist()
+                for d in human_dynamics]
+            self.add_vehicle_polys(human_orientations,
+                                   human_conditions, 0)
+        else:
+            human_conditions = [[0, 128, 128] for d in human_dynamics]
+            self.add_vehicle_polys(human_orientations,
+                                   human_conditions, 0)
+        if "d" in self.mode:
+            machine_conditions = [
+                (255*np.array(cm.Blues(d)[:3])).astype(np.uint8).tolist()
+                for d in machine_dynamics]
+            self.add_vehicle_polys(machine_orientations,
+                                   machine_conditions,
+                                   sight_radius)
+        else:
+            machine_conditions = [[255, 255, 255] for d in machine_dynamics]
+            self.add_vehicle_polys(machine_orientations,
+                                   machine_conditions,
+                                   sight_radius)
         self.vehicle_batch.draw()
 
         buffer = pyglet.image.get_buffer_manager().get_color_buffer()
-        if self.save_frame:
-            t = self.kernel.simulation.getCurrentTime()
-            buffer.save("%s/frame%06d.png" % (self.save_dir, t))
         image_data = buffer.get_image_data()
         frame = np.fromstring(image_data.data, dtype=np.uint8, sep='')
         frame = frame.reshape(buffer.height, buffer.width, 4)
-        #self.frame = frame[::-1,:,0:3].mean(axis=-1,keepdims=True)
         self.frame = frame[::-1,:,0:3][...,::-1]
-        self.padded_frame = []
-        self.padded_frame.append(np.pad(self.frame[:,:,0],
-                                 int(self.sight_radius+1),
-                                 "constant", constant_values=32))
-        self.padded_frame.append(np.pad(self.frame[:,:,1],
-                                 int(self.sight_radius+1),
-                                 "constant", constant_values=32))
-        self.padded_frame.append(np.pad(self.frame[:,:,2],
-                                 int(self.sight_radius+1),
-                                 "constant", constant_values=32))
-        self.padded_frame = np.asarray(self.padded_frame).astype(np.uint8)
-        self.padded_frame = np.moveaxis(self.padded_frame, 0, -1)
-        if False:
-            # A hacky way to save the frame.
-            cv2.imwrite("frames/frame%05d.png" % self.time, self.frame)
-            #raise NotImplementedError
-
         self.window.flip()
-        self.time += 1
-        return self.frame
+
+        if "gray" in self.mode:
+            _frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
+        else:
+            _frame = self.frame
+        if self.save_render:
+            cv2.imwrite("%s/frame_%06d.png" % \
+                        (self.path, self.time), _frame)
+        return _frame
 
 
-    def get_sight(self, orientation, id, sight_radius):
-        sight_radius = sight_radius * self.pxpm
-        x, y, ang = orientation#; print(ang)
+    def get_sight(self, orientation, id, sight_radius=None):
+        if sight_radius is not None:
+            sight_radius = sight_radius * self.pxpm
+        else:
+            sight_radius = self.sight_radius * self.pxpm
+        x, y, ang = orientation
         x = (x-self.x_shift)*self.x_scale*self.pxpm
         y = (y-self.y_shift)*self.y_scale*self.pxpm
-        x_med = x + sight_radius
-        y_med = self.height - y + sight_radius # TODO: Check this!
+        x_med = x
+        y_med = self.height - y # TODO: Check this!
         x_min = int(x_med - sight_radius)
         y_min = int(y_med - sight_radius)
         x_max = int(x_med + sight_radius)
         y_max = int(y_med + sight_radius)
-        #print(self.padded_frame.shape)
-        fixed_sight = self.padded_frame[y_min:y_max, x_min:x_max]
+        fixed_sight = self.frame[y_min:y_max, x_min:x_max]
         height, width = fixed_sight.shape[0:2]
         mask = np.zeros((height,width), np.uint8)
         cv2.circle(mask, (int(sight_radius), int(sight_radius)),
                    int(sight_radius), (255,255,255), thickness=-1)
-        #rotated_sight = cv2.cvtColor(fixed_sight, cv2.COLOR_GRAY2BGR)
         rotated_sight = cv2.bitwise_and(fixed_sight, fixed_sight, mask=mask)
         rotated_sight = imutils.rotate(rotated_sight, ang)
-        if False:
-            # A hacky way to save the sight.
-            cv2.imwrite("frames/sight_%s_%05d.png" % (id, self.time),
+        if "gray" in self.mode:
+            rotated_sight = cv2.cvtColor(rotated_sight, cv2.COLOR_BGR2GRAY)
+        if self.save_render:
+            cv2.imwrite("%s/sight_%s_%06d.png" % \
+                        (self.path, id, self.time), \
                         rotated_sight)
-            #cv2.waitKey(10000)
-            #raise NotImplementedError
         return rotated_sight
 
 
@@ -161,18 +181,17 @@ class PygletRenderer():
                                ("v2f", lane_poly), ("c3B", lane_color))
 
 
-    def add_vehicle_polys(self, orientations, color):
-        for orientation in orientations:
+    def add_vehicle_polys(self, orientations, colors, sight_radius):
+        for orientation, color in zip(orientations, colors):
             x, y, ang = orientation
             x = (x-self.x_shift)*self.x_scale*self.pxpm
             y = (y-self.y_shift)*self.y_scale*self.pxpm
             self._add_vehicle_poly_triangle((x, y), ang, 5, color)
-            #self._add_vehicle_poly_circle((x, y), 3, color)
+            self._add_vehicle_poly_circle((x, y), sight_radius, color)
 
 
     def _add_vehicle_poly_triangle(self, center, angle, size, color):
         cx, cy = center
-        #print(angle)
         ang = np.radians(angle)
         s = size*self.pxpm
         pt1 = [cx, cy]
@@ -196,8 +215,10 @@ class PygletRenderer():
 
 
     def _add_vehicle_poly_circle(self, center, radius, color):
+        if radius == 0:
+            return
         cx, cy = center
-        r = radius*self.pxpm
+        radius = radius * self.pxpm
         pxpm = self.pxpm*10
         vertex_list = []
         vertex_color = []
@@ -209,7 +230,7 @@ class PygletRenderer():
             vertex_color += color
         index = [x for x in range(pxpm)]
         group = pyglet.graphics.Group()
-        self.vehicle_batch.add_indexed(pxpm, GL_POLYGON,
+        self.vehicle_batch.add_indexed(pxpm, GL_LINE_LOOP,
                                        group, index,
                                        ("v2f", vertex_list),
                                        ("c3B", vertex_color))

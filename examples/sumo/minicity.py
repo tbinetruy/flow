@@ -12,7 +12,7 @@ from flow.scenarios.minicity.gen import MiniCityGenerator
 from flow.controllers.routing_controllers import XiaoRouter
 
 
-def minicity_example(render=None):
+def minicity_example(render=None, save_render=None):
     """
     Perform a simulation of vehicles on modified minicity of University of Delaware.
 
@@ -32,6 +32,9 @@ def minicity_example(render=None):
     if render is not None:
         sumo_params.render = render
 
+    if save_render is not None:
+        sumo_params.save_render = save_render
+
     vehicles = Vehicles()
     vehicles.add(
         veh_id="idm",
@@ -40,7 +43,7 @@ def minicity_example(render=None):
         routing_controller=(XiaoRouter, {}),
         speed_mode="no_collide",
         initial_speed=0,
-        num_vehicles=30)
+        num_vehicles=40)
     vehicles.add(
         veh_id="rl",
         acceleration_controller=(RLController, {}),
@@ -48,7 +51,7 @@ def minicity_example(render=None):
         routing_controller=(XiaoRouter, {}),
         speed_mode="no_collide",
         initial_speed=0,
-        num_vehicles=10)
+        num_vehicles=4)
 
     env_params = EnvParams(additional_params=ADDITIONAL_ENV_PARAMS)
 
@@ -72,7 +75,14 @@ def minicity_example(render=None):
 
 if __name__ == "__main__":
     # import the experiment variable
-    exp = minicity_example(render=False)
+    # There are six modes of pyglet rendering:
+    # No rendering: minicity_example(render=False)
+    # SUMO-GUI rendering: minicity_example(render=True)
+    # Static grayscale rendering: minicity_example(render="gray")
+    # Dynamic grayscale rendering: minicity_example(render="dgray")
+    # Static RGB rendering: minicity_example(render="rgb")
+    # Dynamic RGB rendering: minicity_example(render="drgb")
+    exp = minicity_example(render="drgb", save_render=False)
 
     # run for a set number of rollouts / time steps
     exp.run(1, 1500)

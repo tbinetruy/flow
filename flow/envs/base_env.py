@@ -132,28 +132,47 @@ class Env(gym.Env, Serializable):
         self.start_sumo()
         self.setup_initial_state()
 
-        self.renderer = Renderer(self.traci_connection)
-        self.sight_radius = 50 # 50 m
-        human_idlist = self.vehicles.get_human_ids()
-        machine_idlist = self.vehicles.get_rl_ids()
-        human_orientations = []
-        machine_orientations = []
-        for id in human_idlist:
-            if "rl" in id:
-                machine_orientations.append(self.vehicles.get_orientation(id))
-            else:
-                human_orientations.append(self.vehicles.get_orientation(id))
-        for id in machine_idlist:
-            machine_orientations.append(self.vehicles.get_orientation(id))
-        self.frame = self.renderer.render(human_orientations,
-                                          machine_orientations)
-        self.sights = []
-        for id in machine_idlist:
-            orientation = self.vehicles.get_orientation(id)
-            sight = self.renderer.get_sight(orientation, id, self.sight_radius)
-            self.sights.append(sight)
-        self.frame_buffer = [self.frame.copy() for _ in range(5)]
-        self.sights_buffer = [self.sights.copy() for _ in range(5)]
+        mode = self.sumo_params.render
+        if mode not in [True, False, "rgb", "drgb", "gray", "dgray"]:
+            raise ValueError("Mode %s is not supported!" % mode)
+        if self.sumo_params.render in ["gray", "dgray", "rgb", "drgb"]:
+            save_render = self.sumo_params.save_render
+            self.renderer = Renderer(
+                self.traci_connection, mode, save_render, sight_radius=25)
+            human_idlist = self.vehicles.get_human_ids()
+            machine_idlist = self.vehicles.get_rl_ids()
+            human_orientations = []
+            human_dynamics = []
+            machine_orientations = []
+            machine_dynamics = []
+            max_speed = self.scenario.max_speed
+            for id in human_idlist:
+                if "rl" in id:
+                    machine_orientations.append(\
+                        self.vehicles.get_orientation(id))
+                    machine_dynamics.append(\
+                        self.vehicles.get_speed(id)/max_speed)
+                else:
+                    human_orientations.append(\
+                        self.vehicles.get_orientation(id))
+                    human_dynamics.append(\
+                        self.vehicles.get_speed(id)/max_speed)
+            for id in machine_idlist:
+                machine_orientations.append(\
+                    self.vehicles.get_orientation(id))
+                machine_dynamics.append(\
+                    self.vehicles.get_speed(id)/max_speed)
+            self.frame = self.renderer.render(human_orientations,
+                                              machine_orientations,
+                                              human_dynamics,
+                                              machine_dynamics)
+            self.sights = []
+            for id in machine_idlist:
+                orientation = self.vehicles.get_orientation(id)
+                sight = self.renderer.get_sight(orientation, id)
+                self.sights.append(sight)
+            self.frame_buffer = [self.frame.copy() for _ in range(5)]
+            self.sights_buffer = [self.sights.copy() for _ in range(5)]
 
 
     def restart_sumo(self, sumo_params, render=None):
@@ -207,7 +226,8 @@ class Env(gym.Env, Serializable):
                         time.sleep(1.0 * int(time_stamp[-6:]) / 1e6)
                         port = sumolib.miscutils.getFreeSocketPort()
 
-                sumo_binary = "sumo-gui" if self.sumo_params.render else "sumo"
+                sumo_binary = "sumo-gui" if self.sumo_params.render==True\
+                    else "sumo"
 
                 # command used to start sumo
                 sumo_call = [
@@ -480,30 +500,46 @@ class Env(gym.Env, Serializable):
             if crash:
                 break
 
-            human_idlist = self.vehicles.get_human_ids()
-            machine_idlist = self.vehicles.get_rl_ids()
-            human_orientations = []
-            machine_orientations = []
-            for id in human_idlist:
-                if "rl" in id:
-                    machine_orientations.append(self.vehicles.get_orientation(id))
-                else:
-                    human_orientations.append(self.vehicles.get_orientation(id))
-            for id in machine_idlist:
-                machine_orientations.append(self.vehicles.get_orientation(id))
-            self.frame = self.renderer.render(human_orientations,
-                                              machine_orientations)
-            self.sights = []
-            for id in machine_idlist:
-                orientation = self.vehicles.get_orientation(id)
-                sight = self.renderer.get_sight(orientation, id, self.sight_radius)
-                self.sights.append(sight)
-            if self.step_counter % 10 == 0:
-                self.frame_buffer.append(self.frame.copy())
-                self.sights_buffer.append(self.sights.copy())
-            if len(self.frame_buffer) > 5:
-                self.frame_buffer.pop(0)
-                self.sights_buffer.pop(0)
+            if self.sumo_params.render in ["gray", "dgray", "rgb", "drgb"]:
+                human_idlist = self.vehicles.get_human_ids()
+                machine_idlist = self.vehicles.get_rl_ids()
+                human_orientations = []
+                human_dynamics = []
+                machine_orientations = []
+                machine_dynamics = []
+                max_speed = self.scenario.max_speed
+                for id in human_idlist:
+                    if "rl" in id:
+                        machine_orientations.append(\
+                            self.vehicles.get_orientation(id))
+                        machine_dynamics.append(\
+                            self.vehicles.get_speed(id)/max_speed)
+                    else:
+                        human_orientations.append(\
+                            self.vehicles.get_orientation(id))
+                        human_dynamics.append(\
+                            self.vehicles.get_speed(id)/max_speed)
+                for id in machine_idlist:
+                    machine_orientations.append(\
+                        self.vehicles.get_orientation(id))
+                    machine_dynamics.append(\
+                        self.vehicles.get_speed(id)/max_speed)
+                self.frame = self.renderer.render(human_orientations,
+                                                  machine_orientations,
+                                                  human_dynamics,
+                                                  machine_dynamics)
+                self.sights = []
+                for id in machine_idlist:
+                    orientation = self.vehicles.get_orientation(id)
+                    sight = self.renderer.get_sight(\
+                        orientation, id)#, self.sight_radius)
+                    self.sights.append(sight)
+                if self.step_counter % 10 == 0:
+                    self.frame_buffer.append(self.frame.copy())
+                    self.sights_buffer.append(self.sights.copy())
+                if len(self.frame_buffer) > 5:
+                    self.frame_buffer.pop(0)
+                    self.sights_buffer.pop(0)
 
         # collect information of the state of the network based on the
         # environment class used
@@ -688,26 +724,42 @@ class Env(gym.Env, Serializable):
         for _ in range(self.env_params.warmup_steps):
             observation, _, _, _ = self.step(rl_actions=None)
 
-        human_idlist = self.vehicles.get_human_ids()
-        machine_idlist = self.vehicles.get_rl_ids()
-        human_orientations = []
-        machine_orientations = []
-        for id in human_idlist:
-            if "rl" in id:
-                machine_orientations.append(self.vehicles.get_orientation(id))
-            else:
-                human_orientations.append(self.vehicles.get_orientation(id))
-        for id in machine_idlist:
-            machine_orientations.append(self.vehicles.get_orientation(id))
-        self.frame = self.renderer.render(human_orientations,
-                                          machine_orientations)
-        self.sights = []
-        for id in machine_idlist:
-            orientation = self.vehicles.get_orientation(id)
-            sight = self.renderer.get_sight(orientation, id, self.sight_radius)
-            self.sights.append(sight)
-        self.frame_buffer = [self.frame.copy() for _ in range(5)]
-        self.sights_buffer = [self.sights.copy() for _ in range(5)]
+        if self.sumo_params.render in ["gray", "dgray", "rgb", "drgb"]:
+            human_idlist = self.vehicles.get_human_ids()
+            machine_idlist = self.vehicles.get_rl_ids()
+            human_orientations = []
+            human_dynamics = []
+            machine_orientations = []
+            machine_dynamics = []
+            max_speed = self.scenario.max_speed
+            for id in human_idlist:
+                if "rl" in id:
+                    machine_orientations.append(\
+                        self.vehicles.get_orientation(id))
+                    machine_dynamics.append(\
+                        self.vehicles.get_speed(id)/max_speed)
+                else:
+                    human_orientations.append(\
+                        self.vehicles.get_orientation(id))
+                    human_dynamics.append(\
+                        self.vehicles.get_speed(id)/max_speed)
+            for id in machine_idlist:
+                machine_orientations.append(\
+                    self.vehicles.get_orientation(id))
+                machine_dynamics.append(\
+                    self.vehicles.get_speed(id)/max_speed)
+            self.frame = self.renderer.render(human_orientations,
+                                              machine_orientations,
+                                              human_dynamics,
+                                              machine_dynamics)
+            self.sights = []
+            for id in machine_idlist:
+                orientation = self.vehicles.get_orientation(id)
+                sight = self.renderer.get_sight(\
+                    orientation, id)#, self.sight_radius)
+                self.sights.append(sight)
+            self.frame_buffer = [self.frame.copy() for _ in range(5)]
+            self.sights_buffer = [self.sights.copy() for _ in range(5)]
 
         return observation
 
@@ -884,7 +936,7 @@ class Env(gym.Env, Serializable):
         """
         # do not change the colors of vehicles if the sumo-gui is not active
         # (in order to avoid slow downs)
-        if not self.sumo_params.render:
+        if not self.sumo_params.render==True:
             return
 
         for veh_id in self.vehicles.get_rl_ids():
@@ -985,7 +1037,8 @@ class Env(gym.Env, Serializable):
     def _close(self):
         self.traci_connection.close()
         self.scenario.close()
-        self.renderer.close()
+        if self.sumo_params.render in ["gray", "dgray", "rgb", "drgb"]:
+            self.renderer.close()
 
     def teardown_sumo(self):
         """Kill the sumo subprocess instance."""
