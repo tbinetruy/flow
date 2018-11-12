@@ -9,8 +9,7 @@ from flow.core.params import SumoParams, EnvParams, \
     InitialConfig, NetParams
 from flow.core.vehicles import Vehicles
 from flow.envs.loop.loop_accel import AccelEnv, ADDITIONAL_ENV_PARAMS
-from flow.scenarios.lord_of_the_rings.gen import MultiCircleGenerator
-from flow.scenarios.lord_of_the_rings.scenario import MultiLoopScenario, \
+from flow.scenarios.lord_of_the_rings import MultiLoopScenario, \
     ADDITIONAL_NET_PARAMS
 
 NUM_RINGS = 3
@@ -54,7 +53,6 @@ def sugiyama_example(render=None):
 
     scenario = MultiLoopScenario(
         name="sugiyama",
-        generator_class=MultiCircleGenerator,
         vehicles=vehicles,
         net_params=net_params,
         initial_config=initial_config)
