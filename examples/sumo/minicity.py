@@ -9,7 +9,7 @@ from flow.envs.loop.loop_accel import AccelEnv, ADDITIONAL_ENV_PARAMS
 from flow.scenarios.minicity.scenario import MiniCityScenario, \
     ADDITIONAL_NET_PARAMS
 from flow.scenarios.minicity.gen import MiniCityGenerator
-from flow.controllers.routing_controllers import XiaoRouter
+from flow.controllers.routing_controllers import MinicityRouter
 
 
 def minicity_example(render=None, save_render=None):
@@ -40,18 +40,18 @@ def minicity_example(render=None, save_render=None):
         veh_id="idm",
         acceleration_controller=(IDMController, {}),
         lane_change_controller=(StaticLaneChanger, {}),
-        routing_controller=(XiaoRouter, {}),
+        routing_controller=(MinicityRouter, {}),
         speed_mode="no_collide",
-        initial_speed=0,
-        num_vehicles=40)
+        initial_speed=10,
+        num_vehicles=20)
     vehicles.add(
         veh_id="rl",
         acceleration_controller=(RLController, {}),
         lane_change_controller=(StaticLaneChanger, {}),
-        routing_controller=(XiaoRouter, {}),
+        routing_controller=(MinicityRouter, {}),
         speed_mode="no_collide",
-        initial_speed=0,
-        num_vehicles=4)
+        initial_speed=10,
+        num_vehicles=5)
 
     env_params = EnvParams(additional_params=ADDITIONAL_ENV_PARAMS)
 
@@ -59,8 +59,8 @@ def minicity_example(render=None, save_render=None):
     net_params = NetParams(
         no_internal_links=False, additional_params=additional_net_params)
 
+    # initial_config = InitialConfig(spacing="uniform", edges_distribution=["e_51"])
     initial_config = InitialConfig(spacing="random")
-
     scenario = MiniCityScenario(
         name="minicity",
         generator_class=MiniCityGenerator,

@@ -4,7 +4,7 @@ from flow.core.generator import Generator
 from numpy import linspace, pi, sin, cos
 import numpy as np
 
-SCALING = 50
+SCALING = 40
 
 
 class MiniCityGenerator(Generator):
@@ -31,7 +31,8 @@ class MiniCityGenerator(Generator):
                  {"id": "n_r4_tmp", "x": 1.83 - 0.53 * cos(0.2 * pi), "y": 0.94 - 0.53 * sin(0.2 * pi)},
                  {"id": "n_r5", "x": 4.55, "y": 1.15},
                  {"id": "n_r6", "x": 4.75, "y": 1.55},
-                 {"id": "n_r7", "x": 5.35, "y": 0.70},
+                 #{"id": "n_r7", "x": 5.35, "y": 0.70},
+                 {"id": "n_r7", "x": 5.10, "y": 0.64},
                  {"id": "n_r8", "x": 5.35, "y": 1.60},
                  {"id": "n_b1", "x": 0.65, "y": 3.70},
                  {"id": "n_b2", "x": 0.65, "y": 4.20},
@@ -46,7 +47,7 @@ class MiniCityGenerator(Generator):
                  {"id": "n_m3", "x": 2.18, "y": 4.90},
                  {"id": "n_m4", "x": 2.30, "y": 0.40},
                  {"id": "n_m5", "x": 4.20, "y": 4.90},
-                 {"id": "n_s1", "x": 0.66, "y": 1.80},
+                 {"id": "n_s1", "x": 0.65, "y": 1.80},
                  {"id": "n_s2", "x": 1.35, "y": 4.07},
                  {"id": "n_s3", "x": 1.67, "y": 4.52},
                  {"id": "n_s4", "x": 2.34, "y": 1.14},
@@ -54,7 +55,7 @@ class MiniCityGenerator(Generator):
                  {"id": "n_s6", "x": 3.05, "y": 1.15},
                  {"id": "n_s7", "x": 3.85, "y": 0.40},
                  {"id": "n_s8", "x": 4.20, "y": 4.30},
-                 {"id": "n_s9", "x": 5.07, "y": 2.22},
+                 {"id": "n_s9", "x": 5.08, "y": 2.22},
                  {"id": "n_s10", "x": 5.63, "y": 4.30},
                  {"id": "n_s11", "x": 5.63, "y": 5.21},
                  {"id": "n_s12", "x": 0.65, "y": 5.25},
@@ -77,7 +78,7 @@ class MiniCityGenerator(Generator):
 
         edges = [{"id": "e_1", "from": "n_s1", "to": "n_r1", "length": None,
                   "numLanes": 2, "type": "edgeType",
-                  "shape": [(-0.36 + 1.03 * cos(t), 1.80 + 1.03 * sin(t))
+                  "shape": [(-0.38 + 1.03 * cos(t), 1.80 + 1.03 * sin(t))
                             for t in linspace(2 * pi, 2 * pi - 0.56 / 1.03, resolution)]
                   },
                  {"id": "e_2", "from": "n_i1", "to": "n_s1", "length": None,
@@ -117,7 +118,7 @@ class MiniCityGenerator(Generator):
                   },
                  {"id": "e_10", "from": "n_r3", "to": "n_s1", "length": None,
                   "numLanes": 2, "type": "edgeType",
-                  "shape": [(1.09 + 0.43 * cos(t) + 0.03, 1.65 + 0.43 * sin(t) + 0.23)
+                  "shape": [(1.08 + 0.43 * cos(t), 1.90 + 0.43 * sin(t))
                             for t in reversed(linspace(pi, pi + 0.50 / 0.43, resolution))]
                   },
                  {"id": "e_11", "from": "n_s1", "to": "n_i1", "length": None,
@@ -151,7 +152,7 @@ class MiniCityGenerator(Generator):
                   "numLanes": 1, "type": "edgeType"},
                  {"id": "e_21", "from": "n_m1_u", "to": "n_r4_tmp", "length": None,
                   "numLanes": 2, "type": "edgeType",
-                  "shape": [(1.83 + 0.53 * cos(t), 0.94 + 0.53 * sin(t))
+                  "shape": [(1.89 + 0.54 * cos(t), 0.94 + 0.54 * sin(t))
                             for t in reversed(linspace(1.2 * pi, 3 * pi / 2, resolution))]
                   },
                  {"id": "e_22", "from": "n_i2", "to": "n_m3", "length": None,
@@ -202,7 +203,7 @@ class MiniCityGenerator(Generator):
                   "numLanes": 2, "type": "edgeType"},
                  {"id": "e_37", "from": "n_s6", "to": "n_m4", "length": None,
                   "numLanes": 2, "type": "edgeType",
-                  "shape": [(2.59 + 0.46 * cos(t), 0.85 + 0.46 * sin(t))
+                  "shape": [(2.59 + 0.46 * cos(t), 0.86 + 0.46 * sin(t))
                             for t in reversed(linspace(3 * pi / 2, 2 * pi, resolution))]
                   },
                  {"id": "e_38", "from": "n_s6", "to": "n_i3", "length": None,
@@ -235,12 +236,12 @@ class MiniCityGenerator(Generator):
                   "numLanes": 2, "type": "edgeType"},
                  {"id": "e_52", "from": "n_s7", "to": "n_s6", "length": None,
                   "numLanes": 2, "type": "edgeType",
-                  "shape": [(3.51 + 0.46 * cos(t), 0.84 + 0.46 * sin(t))
+                  "shape": [(3.51 + 0.46 * cos(t), 0.86 + 0.46 * sin(t))
                             for t in reversed(linspace(pi, 3 * pi / 2, resolution))]
                   },
                  {"id": "e_53", "from": "n_s7", "to": "n_r7", "length": None,
                   "numLanes": 2, "type": "edgeType",
-                  "shape": [(3.85 + 3.84 * cos(t), 4.37 + 3.84 * sin(t) - 0.15)
+                  "shape": [(3.85 + 3.84 * cos(t), 4.39 + 3.84 * sin(t) - 0.15)
                             for t in linspace(3 * pi / 2, 3 * pi / 2 + 1.40 / 3.84, resolution)]
                   },
                  {"id": "e_54", "from": "n_b5", "to": "n_i3", "length": None,
@@ -269,13 +270,14 @@ class MiniCityGenerator(Generator):
                   },
                  {"id": "e_63", "from": "n_r5", "to": "n_s7", "length": None,
                   "numLanes": 2, "type": "edgeType",
-                  "shape": [(3.85 + 0.63 * cos(t), 1.01 + 0.63 * sin(t))
+                  "shape": [(3.86 + 0.63 * cos(t), 1.03 + 0.63 * sin(t))
                             for t in reversed(linspace(3 * pi / 2, 2 * pi, resolution))]
                   },
                  {"id": "e_64", "from": "n_r7", "to": "n_r8", "length": None,
                   "numLanes": 2, "type": "edgeType",
                   "shape": [(5.08 + 0.58 * cos(t), 1.17 + 0.58 * sin(t))
-                            for t in linspace(pi + 1.28 / 0.58, pi + 2.58 / 0.58, resolution)]
+                            #for t in linspace(pi + 1.28 / 0.58, pi + 2.58 / 0.58, resolution)]
+                            for t in linspace(3 * pi / 2, pi + 2.58 / 0.58, resolution)]
                   },
                  {"id": "e_65", "from": "n_r8", "to": "n_r6", "length": None,
                   "numLanes": 2, "type": "edgeType",
@@ -289,12 +291,12 @@ class MiniCityGenerator(Generator):
                   },
                  {"id": "e_67", "from": "n_r8", "to": "n_s9", "length": None,
                   "numLanes": 1, "type": "edgeType",
-                  "shape": [(5.74 + 0.67 * cos(t), 2.22 + 0.67 * sin(t))
+                  "shape": [(5.75 + 0.67 * cos(t), 2.23 + 0.67 * sin(t))
                             for t in reversed(linspace(pi, pi + 0.64 / 0.67, resolution))]
                   },
                  {"id": "e_68", "from": "n_s9", "to": "n_r6", "length": None,
                   "numLanes": 1, "type": "edgeType",
-                  "shape": [(4.40 + 0.67 * cos(t), 2.21 + 0.67 * sin(t))
+                  "shape": [(4.41 + 0.67 * cos(t), 2.22 + 0.67 * sin(t))
                             for t in reversed(linspace(- 0.64 / 0.67, 0, resolution))]
                   },
                  {"id": "e_69", "from": "n_b6", "to": "n_i6", "length": None,
@@ -378,25 +380,55 @@ class MiniCityGenerator(Generator):
 
         return edges
 
-    # def specify_connections(self, net_params):
-    #     """See parent class."""
-    #     scaling = net_params.additional_params.get("scaling", 1)
-    #     conn = []
-    #     for i in range(4 * scaling):
-    #         conn += [{
-    #             "from": "3",
-    #             "to": "4",
-    #             "fromLane": str(i),
-    #             "toLane": str(int(np.floor(i / 2)))
-    #         }]
-    #     for i in range(2 * scaling):
-    #         conn += [{
-    #             "from": "4",
-    #             "to": "5",
-    #             "fromLane": str(i),
-    #             "toLane": str(int(np.floor(i / 2)))
-    #         }]
-    #     return conn
+    def specify_connections(self, net_params):
+        """See parent class."""
+        conn = []
+        # connect lanes at bottlenecks
+        num_lanes = 2
+        edges_from_b = ["e_13", "e_42", "e_60"]  # order matters
+        edges_to_b = ["e_14", "e_44", "e_69"]
+        for e_from, e_to in zip(edges_from_b, edges_to_b):
+            for i in range(num_lanes):
+                conn += [{
+                    "from": e_from,
+                    "to": e_to,
+                    "fromLane": str(i),
+                    "toLane": str(int(np.floor(i / 2)))
+                }]
+        # connect lanes at roundabout
+        edges_from_r = ["e_66", "e_66", "e_7", "e_7", "e_9", "e_9"]  # order matters
+        edges_to_r = ["e_91", "e_63", "e_17", "e_8_b", "e_10", "e_92"]
+        for r_from, r_to in zip(edges_from_r, edges_to_r):
+            for i in range(num_lanes):
+                conn += [{
+                    "from": r_from,
+                    "to": r_to,
+                    "fromLane": str(i),
+                    "toLane": str(i)
+                }]
+
+        # split one lane to two lanes from e_68 to e_66
+        conn += [{
+            "from": "e_68",
+            "to": "e_66",
+            "fromLane": "0",
+            "toLane": "0"
+        }]
+
+        # adding s_13 -> i5 -> i9
+        # conn += [{
+        #     "from": "e_20",
+        #     "to": "e_48",
+        #     "fromLane": "0",
+        #     "toLane": "0"
+        # }]
+        # conn += [{
+        #     "from": "e_20",
+        #     "to": "e_47",
+        #     "fromLane": "0",
+        #     "toLane": "0"
+        # }]
+        return conn
 
     def specify_types(self, net_params):
         """See parent class."""

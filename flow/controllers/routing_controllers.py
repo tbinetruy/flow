@@ -1,13 +1,14 @@
 """Contains a list of custom routing controllers."""
 
 from flow.controllers.base_routing_controller import BaseRouter
+import random
 
 
 class ContinuousRouter(BaseRouter):
     """A router used to continuously re-route of the vehicle in a closed loop.
 
     This class is useful if vehicles are expected to continuously follow the
-    same route, and repeat said route once it reaches its end.
+    same route, and repeat the same route once it reaches its end.
     """
 
     def choose_route(self, env):
@@ -19,45 +20,37 @@ class ContinuousRouter(BaseRouter):
             return None
 
 
-class XiaoRouter(BaseRouter):
-    """A Xiao-ter used to route Xiao in Xiao's network.
+class MinicityRouter(BaseRouter):
+    """A router used to continuously re-route vehicles in minicity scenario.
 
-    Xiao's nickname is Ner.
+    This class allows the vehicle to pick a random route at conjunctions.
     """
 
     def choose_route(self, env):
-        """Xiao Ner, Ner Xiao?"""
-        # Xiao is very obsessed with Xiao.
-        xiao = env.vehicles
-        # Why you may ask? Because she is a Ner!
-        xiao_2 = self.veh_id
-        # No, not Nier, Nerrrrrrrrrrrr
-        ner = xiao.get_edge(xiao_2)
-        # You know, like purrrrrrrrr
-        ner_ner = xiao.get_route(xiao_2)
+        vehicles = env.vehicles
+        veh_id = self.veh_id
+        veh_edge = vehicles.get_edge(veh_id)
+        # print("veh_edge", veh_edge)
+        veh_route = vehicles.get_route(veh_id)
+        # print("veh_route", veh_route)
 
-        next_ner = env.scenario.next_edge(ner, xiao.get_lane(xiao_2))
-        not_a_ner = ":"
-        tiny_xiao = 0
+        veh_next_edge = env.scenario.next_edge(veh_edge, vehicles.get_lane(veh_id))
+        # print("veh_next_edge = env.scenario.next_edge()", veh_next_edge)
+        not_an_edge = ":"
+        no_next = 0
 
-        exception_xiao1 = "e_91"
-        to_xiao = "e_64"
-        # exi_ner = "e_13"
-        # silly_xiao_ner = "e_14"
-        if ner == exception_xiao1:
-            xiao_ner = [ner, to_xiao]
-        # elif ner == exi_ner:
-        #     xiao_ner = [ner, silly_xiao_ner]
-        elif len(next_ner) == tiny_xiao:
-            xiao_ner = None
-        elif ner_ner[-1] == ner:
-            while next_ner[0][0][0] == not_a_ner:
-                next_ner = env.scenario.next_edge(next_ner[0][0], next_ner[0][1])
-            xiao_ner = [ner, next_ner[0][0]]
+        if len(veh_next_edge) == no_next:
+            next_route = None
+        elif veh_route[-1] == veh_edge:
+            random_route = random.randint(0, len(veh_next_edge) - 1)
+            while veh_next_edge[0][0][0] == not_an_edge:
+                veh_next_edge = env.scenario.next_edge(veh_next_edge[random_route][0], veh_next_edge[random_route][1])
+            next_route = [veh_edge, veh_next_edge[0][0]]
         else:
-            xiao_ner = None
+            next_route = None
 
-        return xiao_ner
+        print("next_route", next_route)
+        return next_route
 
 
 class GridRouter(BaseRouter):
