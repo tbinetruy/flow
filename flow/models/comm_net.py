@@ -39,8 +39,9 @@ class Commnet(Model):
     #        scope=label)
     #    return output, last_layer
     @staticmethod
-    def _build_layers(self, inputs, num_outputs, options):
-        custom_name = options["custom_options"].get("name", "test_name")
+    def _build_layers_v2(self, inputs, num_outputs, options):
+        print('llallalalallalalalal')
+        custom_name = options["custom_options"].get("name", "test")
         hidden_vector_len = options["custom_options"].get("hidden_vector_len", 20)
         # remove all zero rows from inputs
         intermediate_tensor = tf.reduce_sum(tf.abs(inputs), 1)
@@ -67,6 +68,7 @@ class Commnet(Model):
     def comm_step(self, name, H, C, hidden_vector_len, H0_skip_con=None):
         batch_size = tf.shape(H)[0]
         with tf.variable_scope(name):
+            print('hidden_vector_len',hidden_vector_len)
             next_H = tf.zeros(shape=(batch_size, 0, hidden_vector_len))
             for j in range(NUM_AGENTS):
                 h = H[:, j]

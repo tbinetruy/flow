@@ -157,8 +157,8 @@ flow_params = dict(
 )
 
 if __name__ == '__main__':
-    ray.init(num_cpus=N_CPUS+1, redirect_output=True)
-
+    #ray.init(num_cpus=N_CPUS+1, redirect_output=True)
+    ray.init(num_cpus=N_CPUS+1, redirect_output=False)
     config = ppo.DEFAULT_CONFIG.copy()
     config['num_workers'] = N_CPUS
     config['train_batch_size'] = HORIZON * N_ROLLOUTS
@@ -184,10 +184,13 @@ if __name__ == '__main__':
     register_env(env_name, create_env)
 
     # register the model
-    ModelCatalog.register_custom_model("my_model", Commnet)
+    ModelCatalog.register_custom_model("Commnet", Commnet)
+
+
+    config['model']['custom_model']='Commnet'
     config["model"]["custom_options"].update({"custom_name": "test",
                                      "hidden_vector_len": 20})
-
+    import ipdb; ipdb.set_trace()
     trials = run_experiments({
         flow_params['exp_tag']: {
             'run': 'PPO',

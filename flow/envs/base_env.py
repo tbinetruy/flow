@@ -52,8 +52,7 @@ elif serializable_flag and not multiagent_flag:
 elif not serializable_flag and multiagent_flag:
     classdef = (gym.Env, MultiAgentEnv)
 else:
-    classdef = (gym.Env)
-
+    classdef = (gym.Env, )
 
 class Env(*classdef):
     """Base environment class.
@@ -200,7 +199,8 @@ class Env(*classdef):
                         time.sleep(1.0 * int(time_stamp[-6:]) / 1e6)
                         port = sumolib.miscutils.getFreeSocketPort()
 
-                sumo_binary = 'sumo-gui' if self.sumo_params.render else 'sumo'
+                #sumo_binary = 'sumo-gui' if self.sumo_params.render else 'sumo'
+                sumo_binary = 'sumo' if self.sumo_params.render else 'sumo'
 
                 # command used to start sumo
                 sumo_call = [
