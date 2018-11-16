@@ -10,6 +10,8 @@ from flow.scenarios.minicity.scenario import MiniCityScenario, \
     ADDITIONAL_NET_PARAMS
 from flow.scenarios.minicity.gen import MiniCityGenerator
 from flow.controllers.routing_controllers import MinicityRouter
+import numpy as np
+np.random.seed(204)
 
 
 def minicity_example(render=None, save_render=None):
@@ -43,7 +45,7 @@ def minicity_example(render=None, save_render=None):
         routing_controller=(MinicityRouter, {}),
         speed_mode="no_collide",
         initial_speed=10,
-        num_vehicles=20)
+        num_vehicles=12)
     vehicles.add(
         veh_id="rl",
         acceleration_controller=(RLController, {}),
@@ -51,7 +53,7 @@ def minicity_example(render=None, save_render=None):
         routing_controller=(MinicityRouter, {}),
         speed_mode="no_collide",
         initial_speed=10,
-        num_vehicles=5)
+        num_vehicles=4)
 
     env_params = EnvParams(additional_params=ADDITIONAL_ENV_PARAMS)
 
@@ -60,7 +62,9 @@ def minicity_example(render=None, save_render=None):
         no_internal_links=False, additional_params=additional_net_params)
 
     # initial_config = InitialConfig(spacing="uniform", edges_distribution=["e_51"])
-    initial_config = InitialConfig(spacing="random")
+    initial_config = InitialConfig(
+        spacing="random",
+        min_gap=5)
     scenario = MiniCityScenario(
         name="minicity",
         generator_class=MiniCityGenerator,
@@ -82,7 +86,7 @@ if __name__ == "__main__":
     # Dynamic grayscale rendering: minicity_example(render="dgray")
     # Static RGB rendering: minicity_example(render="rgb")
     # Dynamic RGB rendering: minicity_example(render="drgb")
-    exp = minicity_example(render="drgb", save_render=False)
+    exp = minicity_example(render="drgb", save_render=True)
 
     # run for a set number of rollouts / time steps
-    exp.run(1, 1500)
+    exp.run(1, 750)

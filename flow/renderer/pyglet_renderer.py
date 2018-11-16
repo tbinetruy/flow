@@ -13,7 +13,8 @@ class PygletRenderer():
     def __init__(self, kernel, mode,
                  save_render=False,
                  path=HOME+"/flow_rendering",
-                 sight_radius=50):
+                 sight_radius=50,
+                 pxpm=2):
         self.kernel = kernel
         self.mode = mode
         if self.mode not in [True, False, "rgb", "drgb", "gray", "dgray"]:
@@ -24,7 +25,7 @@ class PygletRenderer():
                 os.mkdir(path)
             self.path = path + '/' + time.strftime("%Y%m%d-%H%M%S")
             os.mkdir(self.path)
-        self.pxpm = 5 # Pixel per meter
+        self.pxpm = pxpm # Pixel per meter
         self.time = 0
         self.sight_radius = sight_radius
 
@@ -59,7 +60,7 @@ class PygletRenderer():
             lane_poly[1::2] = [(y-self.y_shift)*self.y_scale*self.pxpm
                                for y in lane_poly[1::2]]
             color = [c for _ in range(int(len(lane_poly)/2))
-                     for c in [250, 250, 0]]
+                     for c in [250, 250, 255]]
             self.lane_colors.append(color)
 
         self.window = pyglet.window.Window(width=self.width,
@@ -95,7 +96,7 @@ class PygletRenderer():
         self.vehicle_batch = pyglet.graphics.Batch()
         if "d" in self.mode:
             human_conditions = [
-                (255*np.array(cm.Greens(d)[:3])).astype(np.uint8).tolist()
+                (255*np.array(cm.summer_r(d)[:3])).astype(np.uint8).tolist()
                 for d in human_dynamics]
             self.add_vehicle_polys(human_orientations,
                                    human_conditions, 0)
@@ -105,7 +106,7 @@ class PygletRenderer():
                                    human_conditions, 0)
         if "d" in self.mode:
             machine_conditions = [
-                (255*np.array(cm.Blues(d)[:3])).astype(np.uint8).tolist()
+                (255*np.array(cm.spring_r(d)[:3])).astype(np.uint8).tolist()
                 for d in machine_dynamics]
             self.add_vehicle_polys(machine_orientations,
                                    machine_conditions,

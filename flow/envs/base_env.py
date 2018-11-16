@@ -138,7 +138,8 @@ class Env(gym.Env, Serializable):
         if self.sumo_params.render in ["gray", "dgray", "rgb", "drgb"]:
             save_render = self.sumo_params.save_render
             self.renderer = Renderer(
-                self.traci_connection, mode, save_render, sight_radius=25)
+                self.traci_connection, mode, save_render, \
+                sight_radius=25, pxpm=8)
             human_idlist = self.vehicles.get_human_ids()
             machine_idlist = self.vehicles.get_rl_ids()
             human_orientations = []
@@ -161,7 +162,7 @@ class Env(gym.Env, Serializable):
                 machine_orientations.append(\
                     self.vehicles.get_orientation(id))
                 machine_dynamics.append(\
-                    self.vehicles.get_speed(id)/max_speed)
+                    self.vehicles.get_speed(id)/max_speed*0.75)
             self.frame = self.renderer.render(human_orientations,
                                               machine_orientations,
                                               human_dynamics,

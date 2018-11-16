@@ -49,7 +49,7 @@ class MinicityRouter(BaseRouter):
         else:
             next_route = None
 
-        print("next_route", next_route)
+        #print("next_route", next_route)
         return next_route
 
 
