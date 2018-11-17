@@ -137,9 +137,16 @@ class Env(gym.Env, Serializable):
             raise ValueError("Mode %s is not supported!" % mode)
         if self.sumo_params.render in ["gray", "dgray", "rgb", "drgb"]:
             save_render = self.sumo_params.save_render
+            sight_radius = self.sumo_params.sight_radius
+            pxpm = self.sumo_params.pxpm
+            show_radius = self.sumo_params.show_radius
             self.renderer = Renderer(
-                self.traci_connection, mode, save_render, \
-                sight_radius=25, pxpm=8)
+                self.traci_connection,
+                mode,
+                save_render,
+                sight_radius=sight_radius,
+                pxpm=pxpm,
+                show_radius=show_radius)
             human_idlist = self.vehicles.get_human_ids()
             machine_idlist = self.vehicles.get_rl_ids()
             human_orientations = []

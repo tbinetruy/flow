@@ -14,7 +14,11 @@ import numpy as np
 np.random.seed(204)
 
 
-def minicity_example(render=None, save_render=None):
+def minicity_example(render=None,
+                     save_render=None,
+                     sight_radius=None,
+                     pxpm=None,
+                     show_radius=None):
     """
     Perform a simulation of vehicles on modified minicity of University of Delaware.
 
@@ -36,6 +40,15 @@ def minicity_example(render=None, save_render=None):
 
     if save_render is not None:
         sumo_params.save_render = save_render
+
+    if sight_radius is not None:
+        sumo_params.sight_radius = sight_radius
+
+    if pxpm is not None:
+        sumo_params.pxpm = pxpm
+
+    if show_radius is not None:
+        sumo_params.show_radius = show_radius
 
     vehicles = Vehicles()
     vehicles.add(
@@ -86,7 +99,11 @@ if __name__ == "__main__":
     # Dynamic grayscale rendering: minicity_example(render="dgray")
     # Static RGB rendering: minicity_example(render="rgb")
     # Dynamic RGB rendering: minicity_example(render="drgb")
-    exp = minicity_example(render="drgb", save_render=True)
+    exp = minicity_example(render="drgb",
+                           save_render=False,
+                           sight_radius=50,
+                           pxpm=6,
+                           show_radius=True)
 
     # run for a set number of rollouts / time steps
     exp.run(1, 750)

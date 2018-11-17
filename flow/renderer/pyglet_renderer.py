@@ -14,7 +14,8 @@ class PygletRenderer():
                  save_render=False,
                  path=HOME+"/flow_rendering",
                  sight_radius=50,
-                 pxpm=2):
+                 pxpm=2,
+                 show_radius=False):
         self.kernel = kernel
         self.mode = mode
         if self.mode not in [True, False, "rgb", "drgb", "gray", "dgray"]:
@@ -25,9 +26,10 @@ class PygletRenderer():
                 os.mkdir(path)
             self.path = path + '/' + time.strftime("%Y%m%d-%H%M%S")
             os.mkdir(self.path)
-        self.pxpm = pxpm # Pixel per meter
-        self.time = 0
         self.sight_radius = sight_radius
+        self.pxpm = pxpm # Pixel per meter
+        self.show_radius = show_radius
+        self.time = 0
 
         self.lane_polys = []
         lane_polys_flat = []
@@ -76,11 +78,14 @@ class PygletRenderer():
 
     def render(self, human_orientations, machine_orientations,
                human_dynamics, machine_dynamics,
-               colors=None, sight_radius=None):
+               colors=None, sight_radius=None, show_radius=None):
         if sight_radius is not None:
             sight_radius = sight_radius * self.pxpm
         else:
             sight_radius = self.sight_radius
+        if show_radius is None:
+            show_radius = self.show_radius
+
         self.time = self.kernel.simulation.getCurrentTime()
         self.time /= self.kernel.simulation.getDeltaT()
         self.time = int(self.time)
@@ -98,24 +103,26 @@ class PygletRenderer():
             human_conditions = [
                 (255*np.array(cm.summer_r(d)[:3])).astype(np.uint8).tolist()
                 for d in human_dynamics]
-            self.add_vehicle_polys(human_orientations,
-                                   human_conditions, 0)
         else:
             human_conditions = [[0, 128, 128] for d in human_dynamics]
-            self.add_vehicle_polys(human_orientations,
-                                   human_conditions, 0)
+        self.add_vehicle_polys(human_orientations,
+                               human_conditions, 0)
         if "d" in self.mode:
             machine_conditions = [
                 (255*np.array(cm.spring_r(d)[:3])).astype(np.uint8).tolist()
                 for d in machine_dynamics]
-            self.add_vehicle_polys(machine_orientations,
-                                   machine_conditions,
-                                   sight_radius)
         else:
             machine_conditions = [[255, 255, 255] for d in machine_dynamics]
             self.add_vehicle_polys(machine_orientations,
                                    machine_conditions,
                                    sight_radius)
+        if show_radius:
+            self.add_vehicle_polys(machine_orientations,
+                                   machine_conditions,
+                                   sight_radius)
+        else:
+            self.add_vehicle_polys(machine_orientations,
+                                   machine_conditions, 0)
         self.vehicle_batch.draw()
 
         buffer = pyglet.image.get_buffer_manager().get_color_buffer()
