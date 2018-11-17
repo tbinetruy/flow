@@ -96,7 +96,7 @@ class Commnet(Model):
 
             return next_H, tf.identity(next_C, "C")
 
-    @staticmethod
+    #@staticmethod
     def module(self, h, c, hidden_vector_len):
         with tf.variable_scope("module", reuse=tf.AUTO_REUSE):
             w_H = tf.get_variable(name='w_H', shape=hidden_vector_len,
@@ -106,7 +106,7 @@ class Commnet(Model):
 
             return tf.tanh(tf.multiply(w_H, h) + tf.multiply(w_C, c))
 
-    @staticmethod
+    #@staticmethod
     def actor_output_layer(self, H, num_outputs, hidden_vector_len):
         with tf.variable_scope("actor_output"):
             w_out = tf.get_variable(name='w_out', shape=(hidden_vector_len, num_outputs),
