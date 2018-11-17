@@ -10,6 +10,11 @@ from gym.spaces.tuple_space import Tuple
 
 import numpy as np
 
+import os
+from os.path import expanduser
+HOME = expanduser("~")
+import time
+
 ADDITIONAL_ENV_PARAMS = {
     # maximum acceleration for autonomous vehicles, in m/s^2
     "max_accel": 3,
@@ -111,6 +116,10 @@ class AccelEnv(Env):
                 self.vehicles.set_observed(veh_id)
 
 class AccelCNNDebugEnv(AccelEnv):
+    def __init__(self, env_params, sumo_params, scenario):
+        self.path = HOME+"/flow_rendering"+'/'+time.strftime("%Y%m%d-%H%M%S")
+        super().__init__(env_params, sumo_params, scenario)
+
     @property
     def observation_space(self):
         """See class definition."""
@@ -124,11 +133,12 @@ class AccelCNNDebugEnv(AccelEnv):
         import matplotlib
         matplotlib.rc("font", family="FreeSans", size=12)
 
-        np.set_printoptions(threshold=np.nan)
-        print("get_state() frame shape:", self.frame.shape)
-        print("get_state() frame buffer length:", len(self.frame_buffer))
-        print("get_state() sights 0 shape:", self.sights[0].shape)
-        print("get_state() sights buffer length:", len(self.sights_buffer))
+        if False:
+            np.set_printoptions(threshold=np.nan)
+            print("get_state() frame shape:", self.frame.shape)
+            print("get_state() frame buffer length:", len(self.frame_buffer))
+            print("get_state() sights 0 shape:", self.sights[0].shape)
+            print("get_state() sights buffer length:", len(self.sights_buffer))
 
         fig = plt.figure()
         ax1 = fig.add_subplot(1,2,1)
@@ -140,12 +150,11 @@ class AccelCNNDebugEnv(AccelEnv):
                    cmap="gray", vmin=0, vmax=255)
         ax2.set_title("Local Observation")
         plt.tight_layout()
-        path = HOME + "/flow_rendering" + '/' + time.strftime("%Y%m%d-%H%M%S")
-        if not os.path.exists(path):
-            os.mkdir(path)
+        if not os.path.exists(self.path):
+            os.mkdir(self.path)
         plt.savefig("%s/frame_%06d.png" %
-                    (path, self.step_counter),
-                    bbox_inches="tight")
+                    (self.path, self.step_counter),
+                    bbox_inches="tight", dpi=300)
         plt.close()
         sights_buffer = np.squeeze(np.array(self.sights_buffer))
         sights_buffer = np.moveaxis(sights_buffer, 0, -1)

@@ -62,7 +62,7 @@ class PygletRenderer():
             lane_poly[1::2] = [(y-self.y_shift)*self.y_scale*self.pxpm
                                for y in lane_poly[1::2]]
             color = [c for _ in range(int(len(lane_poly)/2))
-                     for c in [250, 250, 255]]
+                     for c in [200, 200, 0]]
             self.lane_colors.append(color)
 
         self.window = pyglet.window.Window(width=self.width,
@@ -111,9 +111,6 @@ class PygletRenderer():
                 for d in machine_dynamics]
         else:
             machine_conditions = [[255, 255, 255] for d in machine_dynamics]
-            self.add_vehicle_polys(machine_orientations,
-                                   machine_conditions,
-                                   sight_radius)
         if show_radius:
             self.add_vehicle_polys(machine_orientations,
                                    machine_conditions,
