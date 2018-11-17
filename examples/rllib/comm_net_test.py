@@ -190,7 +190,7 @@ if __name__ == '__main__':
     config['model']['custom_model']='Commnet'
     config["model"]["custom_options"].update({"custom_name": "test",
                                      "hidden_vector_len": 20})
-    import ipdb; ipdb.set_trace()
+    #import ipdb; ipdb.set_trace()
     trials = run_experiments({
         flow_params['exp_tag']: {
             'run': 'PPO',
