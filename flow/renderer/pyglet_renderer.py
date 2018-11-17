@@ -86,9 +86,11 @@ class PygletRenderer():
         if show_radius is None:
             show_radius = self.show_radius
 
-        self.time = self.kernel.simulation.getCurrentTime()
-        self.time /= self.kernel.simulation.getDeltaT()
-        self.time = int(self.time)
+        self.time += 1
+        # This does not work because TRACI has bugs.
+        #self.time = self.kernel.simulation.getCurrentTime()
+        #self.time /= self.kernel.simulation.getDeltaT()
+        #self.time = int(self.time)
 
         glClearColor(0.125,0.125,0.125,1)
         self.window.clear()
