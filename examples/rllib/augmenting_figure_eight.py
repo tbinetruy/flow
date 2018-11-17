@@ -90,7 +90,7 @@ vehicles.add(
 
 flow_params = dict(
     # name of the experiment
-    exp_tag="cross_cnnidm%s" % augmentation,
+    exp_tag="augmenting_figure_eight%s" % augmentation,
 
     # name of the flow environment the experiment is running on
     env_name="AccelCNNIDMEnv",

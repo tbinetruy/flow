@@ -89,7 +89,7 @@ vehicles.add(
 
 flow_params = dict(
     # name of the experiment
-    exp_tag="circle_cnnidm%s" % augmentation,
+    exp_tag="augmenting_the_ring%s" % augmentation,
 
     # name of the flow environment the experiment is running on
     env_name="WaveAttenuationCNNIDMEnv",
