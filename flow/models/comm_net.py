@@ -11,6 +11,7 @@ from ray.rllib.models.misc import normc_initializer, get_activation_fn
 ### Added by Lucas Fischer on 10/24/18
 import numpy as np
 
+
 class Commnet(Model):
     """Generic fully connected network."""
 
@@ -38,37 +39,54 @@ class Commnet(Model):
     #        activation_fn=None,
     #        scope=label)
     #    return output, last_layer
-    @staticmethod
-    def _build_layers_v2(self, inputs, num_outputs, options):
-        print('llallalalallalalalal')
-        custom_name = options["custom_options"].get("name", "test")
-        hidden_vector_len = options["custom_options"].get("hidden_vector_len", 20)
+    # @staticmethod
+
+    def _build_layers_v2(self, inputs_dict, num_outputs , options):
+        #custom_name = options["custom_options"].get("name", "test")
+        custom_name='test'
+        #hidden_vector_len = options["custom_options"].get("hidden_vector_len", 20)
+        hidden_vector_len=20
+        print(inputs_dict,'inputs_dict')
+        inputs=inputs_dict['obs']
         # remove all zero rows from inputs
         intermediate_tensor = tf.reduce_sum(tf.abs(inputs), 1)
         zero_vector = tf.zeros(shape=(1, 1), dtype=tf.float32)
         bool_mask = tf.not_equal(intermediate_tensor, zero_vector)
-        omit_zeros = tf.boolean_mask(inputs, bool_mask)
-        inputs = inputs[omit_zeros]
+        inputs = tf.boolean_mask(inputs, bool_mask)
+        NUM_AGENTS=1
+
+        print(inputs)
+        #input=inputs[omit_zeros]
+
         with tf.variable_scope(custom_name):
             H = self.base_build_network(inputs, num_outputs, hidden_vector_len)
             return self.actor_output_layer(H, num_outputs, hidden_vector_len)
 
-    @staticmethod
+    #@staticmethod
     def base_build_network(self, observation, num_outputs, hidden_len):
-
-        H0 = observation
+        H0 = CommNet.encoder(observation)
+        #H0 = observation
         # vector of communication
         C0 = tf.zeros(tf.shape(H0), name="C0")
         H1, C1 = self.comm_step("comm_step1", H0, C0, hidden_len)
-        H2, _ = self.comm_step("comm_step2", H1, C1, hidden_len, H0)
+        H2, _ = self.comm_step("comm_step2", H1, C1, hidden_len,H0)
 
         return H2
+    def encoder(s):
+        H = []
+        with tf.variable_scope("encoder", reuse=tf.AUTO_REUSE):
+            for j in range(NUM_AGENTS):
+                encoded = tf.layers.dense(tf.reshape(s[j], (1, VECTOR_OBS_LEN)), HIDDEN_VECTOR_LEN, name="dense")
+                H.append(tf.squeeze(encoded))
+            H = tf.stack(H)
+            H = tf.reshape(H, (NUM_AGENTS, HIDDEN_VECTOR_LEN))
 
-    @staticmethod
+        return H
+    #@staticmethod
     def comm_step(self, name, H, C, hidden_vector_len, H0_skip_con=None):
         batch_size = tf.shape(H)[0]
         with tf.variable_scope(name):
-            print('hidden_vector_len',hidden_vector_len)
+
             next_H = tf.zeros(shape=(batch_size, 0, hidden_vector_len))
             for j in range(NUM_AGENTS):
                 h = H[:, j]
@@ -120,7 +138,6 @@ class Commnet(Model):
                 h = tf.slice(H, [0, j, 0], [batch_size, 1, hidden_vector_len])
                 w_out_batch = tf.tile(tf.expand_dims(w_out, axis=0), [batch_size, 1, 1])
                 action = tf.squeeze(tf.matmul(h, w_out_batch) + b_out, [1])
-
                 actions.append(action)
             actions = tf.stack(actions, name="actions", axis=1)
 

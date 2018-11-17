@@ -16,6 +16,7 @@ from flow.core.params import SumoParams, EnvParams, InitialConfig, NetParams, \
 from flow.core.vehicles import Vehicles
 from flow.controllers import RLController, GridRouter
 
+
 # time horizon of a single rollout
 HORIZON = 200
 # number of rollouts per training iteration
@@ -198,6 +199,7 @@ if __name__ == '__main__':
             'config': {
                 **config
             },
+
             'checkpoint_freq': 20,
             'max_failures': 999,
             'stop': {

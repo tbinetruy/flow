@@ -76,27 +76,33 @@ class CommNetEnv(Env):
         return Box(
             low=0,
             high=1,
-            shape=(3 * 100,),
+            shape=(3 * self.vehicles.num_vehicles,),
             dtype=np.float32)
 
     def get_state(self):
         """See class definition."""
         # compute the normalizers
-        state_array = np.zeros((3, 100))
+        state_array = np.zeros((3, self.vehicles.num_vehicles))
         for i, rl_id in enumerate(self.vehicles.get_rl_ids()):
             headway = self.vehicles.get_headway(rl_id)
             leader = self.vehicles.get_leader(rl_id)
             leader_speed = self.vehicles.get_speed(leader)
             ego_speed = self.vehicles.get_speed(rl_id)
-            state_array[i] = np.concatenate(([headway / 1000.0],
-                                             [leader_speed / 100.0],
-                                             [ego_speed / 100.0]))
+            print(headway,'headway')
+            print(leader_speed,'leader_speed')
+            print(ego_speed,'ego_speed')
+            state_array[:,i] = np.concatenate(([headway / 1000.0],
+                                     [leader_speed / 100.0],
+                                     [ego_speed / 100.0]))
+
+
         return state_array
 
     def _apply_rl_actions(self, rl_actions):
         """See class definition."""
         # check if the action space is discrete
         zero_mask = np.isclose(rl_actions, 0.0)
+
         rl_actions = rl_actions[not zero_mask]
         self.apply_acceleration(self.vehicle.get_rl_ids(), rl_actions)
 
