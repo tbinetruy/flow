@@ -13,6 +13,8 @@ from flow.renderer.pyglet_renderer import PygletRenderer as Renderer
 
 import traci
 from traci import constants as tc
+VAR_TIME = 102
+VAR_TIME_STEP = 112
 from traci.exceptions import FatalTraCIError, TraCIException
 import gym
 from gym.spaces import Box
@@ -140,8 +142,13 @@ class Env(gym.Env, Serializable):
             sight_radius = self.sumo_params.sight_radius
             pxpm = self.sumo_params.pxpm
             show_radius = self.sumo_params.show_radius
+            network = []
+            for lane_id in self.traci_connection.lane.getIDList():
+                _lane_poly = self.traci_connection.lane.getShape(lane_id)
+                lane_poly = [i for pt in _lane_poly for i in pt]
+                network.append(lane_poly)
             self.renderer = Renderer(
-                self.traci_connection,
+                network,
                 mode,
                 save_render,
                 sight_radius=sight_radius,
@@ -149,35 +156,52 @@ class Env(gym.Env, Serializable):
                 show_radius=show_radius)
             human_idlist = self.vehicles.get_human_ids()
             machine_idlist = self.vehicles.get_rl_ids()
+            human_timelogs = []
             human_orientations = []
             human_dynamics = []
+            machine_timelogs = []
             machine_orientations = []
             machine_dynamics = []
             max_speed = self.scenario.max_speed
             for id in human_idlist:
                 if "rl" in id:
+                    machine_timelogs.append(\
+                        self.vehicles.get_timelog(id)+[id]+[id])
                     machine_orientations.append(\
                         self.vehicles.get_orientation(id))
                     machine_dynamics.append(\
                         self.vehicles.get_speed(id)/max_speed)
                 else:
+                    human_timelogs.append(\
+                        self.vehicles.get_timelog(id)+[id])
                     human_orientations.append(\
                         self.vehicles.get_orientation(id))
                     human_dynamics.append(\
                         self.vehicles.get_speed(id)/max_speed)
             for id in machine_idlist:
+                machine_timelogs.append(\
+                    self.vehicles.get_timelog(id)+[id])
                 machine_orientations.append(\
                     self.vehicles.get_orientation(id))
                 machine_dynamics.append(\
-                    self.vehicles.get_speed(id)/max_speed*0.75)
+                    self.vehicles.get_speed(id)/max_speed)
             self.frame = self.renderer.render(human_orientations,
                                               machine_orientations,
                                               human_dynamics,
-                                              machine_dynamics)
+                                              machine_dynamics,
+                                              human_timelogs,
+                                              machine_timelogs)
             self.sights = []
+            for id in human_idlist:
+                if "rl" in id:
+                    orientation = self.vehicles.get_orientation(id)
+                    sight = self.renderer.get_sight(\
+                        orientation, id)
+                    self.sights.append(sight)
             for id in machine_idlist:
                 orientation = self.vehicles.get_orientation(id)
-                sight = self.renderer.get_sight(orientation, id)
+                sight = self.renderer.get_sight(\
+                    orientation, id)
                 self.sights.append(sight)
             self.frame_buffer = [self.frame.copy() for _ in range(5)]
             self.sights_buffer = [self.sights.copy() for _ in range(5)]
@@ -347,7 +371,7 @@ class Env(gym.Env, Serializable):
             self.traci_connection.vehicle.subscribe(veh_id, [
                 tc.VAR_LANE_INDEX, tc.VAR_LANEPOSITION, tc.VAR_ROAD_ID,
                 tc.VAR_SPEED, tc.VAR_EDGES, tc.VAR_POSITION, tc.VAR_ANGLE,
-                tc.VAR_SPEED_WITHOUT_TRACI
+                tc.VAR_SPEED_WITHOUT_TRACI, VAR_TIME, VAR_TIME_STEP
             ])
             self.traci_connection.vehicle.subscribeLeader(veh_id, 2000)
 
@@ -511,23 +535,31 @@ class Env(gym.Env, Serializable):
             if self.sumo_params.render in ["gray", "dgray", "rgb", "drgb"]:
                 human_idlist = self.vehicles.get_human_ids()
                 machine_idlist = self.vehicles.get_rl_ids()
+                human_timelogs = []
                 human_orientations = []
                 human_dynamics = []
+                machine_timelogs = []
                 machine_orientations = []
                 machine_dynamics = []
                 max_speed = self.scenario.max_speed
                 for id in human_idlist:
                     if "rl" in id:
+                        machine_timelogs.append(\
+                            self.vehicles.get_timelog(id)+[id])
                         machine_orientations.append(\
                             self.vehicles.get_orientation(id))
                         machine_dynamics.append(\
                             self.vehicles.get_speed(id)/max_speed)
                     else:
+                        human_timelogs.append(\
+                            self.vehicles.get_timelog(id)+[id])
                         human_orientations.append(\
                             self.vehicles.get_orientation(id))
                         human_dynamics.append(\
                             self.vehicles.get_speed(id)/max_speed)
                 for id in machine_idlist:
+                    machine_timelogs.append(\
+                        self.vehicles.get_timelog(id)+[id])
                     machine_orientations.append(\
                         self.vehicles.get_orientation(id))
                     machine_dynamics.append(\
@@ -535,12 +567,20 @@ class Env(gym.Env, Serializable):
                 self.frame = self.renderer.render(human_orientations,
                                                   machine_orientations,
                                                   human_dynamics,
-                                                  machine_dynamics)
+                                                  machine_dynamics,
+                                                  human_timelogs,
+                                                  machine_timelogs)
                 self.sights = []
+                for id in human_idlist:
+                    if "rl" in id:
+                        orientation = self.vehicles.get_orientation(id)
+                        sight = self.renderer.get_sight(\
+                            orientation, id)
+                        self.sights.append(sight)
                 for id in machine_idlist:
                     orientation = self.vehicles.get_orientation(id)
                     sight = self.renderer.get_sight(\
-                        orientation, id)#, self.sight_radius)
+                        orientation, id)
                     self.sights.append(sight)
                 if self.step_counter % 10 == 0:
                     self.frame_buffer.append(self.frame.copy())
@@ -735,23 +775,31 @@ class Env(gym.Env, Serializable):
         if self.sumo_params.render in ["gray", "dgray", "rgb", "drgb"]:
             human_idlist = self.vehicles.get_human_ids()
             machine_idlist = self.vehicles.get_rl_ids()
+            human_timelogs = []
             human_orientations = []
             human_dynamics = []
+            machine_timelogs = []
             machine_orientations = []
             machine_dynamics = []
             max_speed = self.scenario.max_speed
             for id in human_idlist:
                 if "rl" in id:
+                    machine_timelogs.append(\
+                        self.vehicles.get_timelog(id)+[id])
                     machine_orientations.append(\
                         self.vehicles.get_orientation(id))
                     machine_dynamics.append(\
                         self.vehicles.get_speed(id)/max_speed)
                 else:
+                    human_timelogs.append(\
+                        self.vehicles.get_timelog(id)+[id])
                     human_orientations.append(\
                         self.vehicles.get_orientation(id))
                     human_dynamics.append(\
                         self.vehicles.get_speed(id)/max_speed)
             for id in machine_idlist:
+                machine_timelogs.append(\
+                    self.vehicles.get_timelog(id)+[id])
                 machine_orientations.append(\
                     self.vehicles.get_orientation(id))
                 machine_dynamics.append(\
@@ -759,12 +807,20 @@ class Env(gym.Env, Serializable):
             self.frame = self.renderer.render(human_orientations,
                                               machine_orientations,
                                               human_dynamics,
-                                              machine_dynamics)
+                                              machine_dynamics,
+                                              human_timelogs,
+                                              machine_timelogs)
             self.sights = []
+            for id in human_idlist:
+                if "rl" in id:
+                    orientation = self.vehicles.get_orientation(id)
+                    sight = self.renderer.get_sight(\
+                        orientation, id)
+                    self.sights.append(sight)
             for id in machine_idlist:
                 orientation = self.vehicles.get_orientation(id)
                 sight = self.renderer.get_sight(\
-                    orientation, id)#, self.sight_radius)
+                    orientation, id)
                 self.sights.append(sight)
             self.frame_buffer = [self.frame.copy() for _ in range(5)]
             self.sights_buffer = [self.sights.copy() for _ in range(5)]
