@@ -159,12 +159,14 @@ class PygletRenderer():
         rotated_sight = cv2.bitwise_and(fixed_sight, fixed_sight, mask=mask)
         rotated_sight = imutils.rotate(rotated_sight, ang)
         if "gray" in self.mode:
-            rotated_sight = cv2.cvtColor(rotated_sight, cv2.COLOR_BGR2GRAY)
+            _rotated_sight = cv2.cvtColor(rotated_sight, cv2.COLOR_BGR2GRAY)
+        else:
+            _rotated_sight = rotated_sight
         if self.save_render:
             cv2.imwrite("%s/sight_%s_%06d.png" % \
                         (self.path, id, self.time), \
-                        rotated_sight)
-        return rotated_sight
+                        _rotated_sight)
+        return _rotated_sight
 
 
     def close(self):

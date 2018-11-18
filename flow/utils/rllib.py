@@ -106,6 +106,12 @@ def get_flow_params(config):
     # convert all parameters from dict to their object form
     sumo = SumoParams()
     sumo.__dict__ = flow_params["sumo"].copy()
+    # TODO: Remove this later. This is a temporary hack (:
+    sumo.render = "gray"
+    sumo.save_render = True
+    sumo.sight_radius = 25
+    sumo.pxpm = 2
+    sumo.show_radius = False
 
     net = NetParams()
     net.__dict__ = flow_params["net"].copy()
