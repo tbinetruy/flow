@@ -51,20 +51,20 @@ def minicity_example(render=None,
 
     vehicles = Vehicles()
     vehicles.add(
-        veh_id="idm",
+        veh_id='idm',
         acceleration_controller=(IDMController, {}),
         routing_controller=(MinicityRouter, {}),
         speed_mode=1,
-        lane_change_mode="no_lat_collide",
+        lane_change_mode='no_lat_collide',
         initial_speed=0,
-        num_vehicles=20)
+        num_vehicles=0)
     vehicles.add(
-        veh_id="rl",
+        veh_id='rl',
         acceleration_controller=(RLController, {}),
         routing_controller=(MinicityRouter, {}),
-        speed_mode="no_collide",
+        speed_mode='no_collide',
         initial_speed=0,
-        num_vehicles=5)
+        num_vehicles=100)
 
     env_params = EnvParams(additional_params=ADDITIONAL_ENV_PARAMS)
 
@@ -72,12 +72,13 @@ def minicity_example(render=None,
     net_params = NetParams(
         no_internal_links=False, additional_params=additional_net_params)
 
+    # initial_config = InitialConfig(spacing='uniform', edges_distribution=['e_64', 'e_68', 'e_74'])
     initial_config = InitialConfig(
         spacing="random",
         min_gap=5
     )
     scenario = MiniCityScenario(
-        name="minicity",
+        name='minicity',
         vehicles=vehicles,
         initial_config=initial_config,
         net_params=net_params)
@@ -96,11 +97,11 @@ if __name__ == "__main__":
     # Dynamic grayscale rendering: minicity_example(render="dgray")
     # Static RGB rendering: minicity_example(render="rgb")
     # Dynamic RGB rendering: minicity_example(render="drgb")
-    exp = minicity_example(render=True,
+    exp = minicity_example(render='drgb',
                            save_render=False,
                            sight_radius=50,
                            pxpm=3,
-                           show_radius=True)
+                           show_radius=False)
 
     # run for a set number of rollouts / time steps
-    exp.run(1, 750)
+    exp.run(1, 3000)
