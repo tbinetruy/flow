@@ -92,7 +92,6 @@ class MiniCityScenario(Scenario):
                  {'id': 'n_s4', 'x': 2.34, 'y': 1.14},
                  {'id': 'n_s5', 'x': 2.34, 'y': 1.98},
                  {'id': 'n_s6', 'x': 3.05, 'y': 1.15},
-                 # {'id': 'n_s7', 'x': 3.85, 'y': 0.40},
                  {'id': 'n_s7_l', 'x': 3.51, 'y': 0.40},
                  {'id': 'n_s7_r', 'x': 3.95, 'y': 0.40},
                  {'id': 'n_s8', 'x': 4.20, 'y': 4.30},
@@ -279,7 +278,8 @@ class MiniCityScenario(Scenario):
                  {'id': 'e_53', 'from': 'n_s7_r', 'to': 'n_r7', 'length': None,
                   'numLanes': 2, 'type': 'edgeType',
                   'shape': [(3.95 + 3.84 * cos(t), 4.39 + 3.84 * sin(t) - 0.15)
-                            for t in linspace(3*pi/2 - 0.1/3.84, 3*pi/2 + 1.30/3.84, res)]
+                            for t in linspace(3 * pi / 2 - 0.1 / 3.84,
+                                              3 * pi / 2 + 1.3 / 3.84, res)]
                   },
                  {'id': 'e_54', 'from': 'n_b5', 'to': 'n_i3', 'length': None,
                   'numLanes': 2, 'type': 'edgeType'},
@@ -319,13 +319,15 @@ class MiniCityScenario(Scenario):
                   'numLanes': 2, 'type': 'edgeType',
                   'shape': [
                       (5.08 + 0.58 * cos(t), 1.17 + 0.58 * sin(t))
-                      for t in linspace(pi + 2.58/0.58, 1.2 * pi + 2.58/0.58, res)]
+                      for t in linspace(pi + 2.58 / 0.58,
+                                        1.2 * pi + 2.58 / 0.58, res)]
                   },
                  {'id': 'e_66', 'from': 'n_r6', 'to': 'n_r5', 'length': None,
                   'numLanes': 2, 'type': 'edgeType',
                   'shape': [
                       (5.08 + 0.58 * cos(t), 1.17 + 0.58 * sin(t))
-                      for t in linspace(1.2*pi + 2.58/0.58, 1.66*pi + 2.58/0.58, res)]
+                      for t in linspace(1.2 * pi + 2.58 / 0.58,
+                                        1.66 * pi + 2.58 / 0.58, res)]
                   },
                  {'id': 'e_67', 'from': 'n_r8', 'to': 'n_s9', 'length': None,
                   'numLanes': 1, 'type': 'edgeType',
@@ -335,7 +337,8 @@ class MiniCityScenario(Scenario):
                   },
                  {'id': 'e_68', 'from': 'n_s9', 'to': 'n_r6', 'length': None,
                   'numLanes': 1, 'type': 'edgeType',
-                  'shape': [(4.51 + 0.57 * cos(t), 2.27 + 0.57 * sin(t))
+                  'shape': [
+                      (4.51 + 0.57 * cos(t), 2.27 + 0.57 * sin(t))
                       for t in reversed(linspace(- 0.42 / 0.57, 0, res))]
                   },
                  {'id': 'e_69', 'from': 'n_b6', 'to': 'n_i6', 'length': None,
@@ -402,13 +405,13 @@ class MiniCityScenario(Scenario):
                  {'id': 'e_92', 'from': 'n_r3', 'to': 'n_r1', 'length': None,
                   'numLanes': 2, 'type': 'edgeType',
                   'shape': [(0.90 + 0.53 * cos(t), 0.93 + 0.53 * sin(t))
-                            for t in linspace(3*pi/2 + 1.46/0.53,
-                                              3.46 * pi/2 + 1.46/0.53, res)]
+                            for t in linspace(3 * pi / 2 + 1.46 / 0.53,
+                                              3.46 * pi / 2 + 1.46/0.53, res)]
                   },
-                 {'id': 'e_93', 'from': 'n_s7_l', 'to': 'n_s7_r', 'length': None,
-                  'numLanes': 2, 'type': 'edgeType'},
-                 {'id': 'e_94', 'from': 'n_s7_r', 'to': 'n_s7_l', 'length': None,
-                  'numLanes': 2, 'type': 'edgeType'}
+                 {'id': 'e_93', 'from': 'n_s7_l', 'to': 'n_s7_r',
+                  'length': None, 'numLanes': 2, 'type': 'edgeType'},
+                 {'id': 'e_94', 'from': 'n_s7_r', 'to': 'n_s7_l',
+                  'length': None, 'numLanes': 2, 'type': 'edgeType'}
                  ]
 
         for edge in edges:
@@ -427,26 +430,27 @@ class MiniCityScenario(Scenario):
                                                     self.nodes[edge['from']]))
 
             # fix junction overlapping issue
-            junctions = {'e_1': 9.9,
-                         'e_4': 10,
-                         'e_8_b': 2,
-                         'e_8_u': 12,
-                         'e_13': 10,
+            junctions = {'e_8_b': 2,
                          'e_17': 18,
-                         'e_18': 12,
-                         'e_21': 12,
-                         'e_24': 12,
+                         'e_8_u': 8,
+                         'e_1': 9.9,
                          'e_29_u': 13,
-                         'e_32': 12,
-                         'e_36': 8,
-                         'e_37': 5,
-                         'e_51': 8,
-                         'e_52': 5,
-                         'e_53': 49,
+                         'e_21': 5,
+                         'e_91': 5,
                          'e_63': 26,
                          'e_65': 5,
                          'e_66': 30,
-                         'e_91': 5}
+                         'e_32': 12,
+                         'e_51': 8,
+                         'e_37': 5,
+                         'e_52': 5,
+                         'e_18': 12,
+                         'e_24': 12,
+                         'e_13': 10,
+                         'e_4': 10,
+                         'e_36': 8,
+                         'e_53': 49
+                         }
             if edge['id'] in junctions:
                 edge['length'] = str(junctions[edge['id']])
 
