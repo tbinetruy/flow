@@ -56,6 +56,29 @@ class MinicityRouter(BaseRouter):
         return next_route
 
 
+class MinicityTrainingRouter(MinicityRouter):
+
+    def choose_route(self, env):
+        type_id = env.vehicles.get_state(self.veh_id, 'type')
+        edge = env.vehicles.get_edge(self.veh_id)
+        if type_id == 'bottom_left' and edge == 'e_7':
+            print(self.veh_id, edge)
+            route = ['e_7', 'e_8_b', 'e_8_u', 'e_9', 'e_10', 'e_11', 'e_12']
+        elif 'center_left' in type_id and edge == 'e_25':
+            print(self.veh_id, edge)
+            route = ['e_25', 'e_30', 'e_31', 'e_32', 'e_21', 'e_8_u', 'e_9']
+        elif 'center_center' in type_id and edge == 'e_41':
+            print(self.veh_id, edge)
+            route = ['e_41', 'e_39', 'e_37', 'e_29_u', 'e_21', 'e_8_u', 'e_9']
+        elif type_id == 'bottom_center' and edge == 'e_38':
+            print(self.veh_id, edge)
+            route = ['e_38', 'e_88', 'e_26', 'e_2', 'e_1', 'e_7']
+        else:
+            route = MinicityRouter.choose_route(self, env)
+
+        return route
+
+
 class GridRouter(BaseRouter):
     """A router used to re-route a vehicle within a grid environment."""
 

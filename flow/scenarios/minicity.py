@@ -427,65 +427,28 @@ class MiniCityScenario(Scenario):
                                                     self.nodes[edge['from']]))
 
             # fix junction overlapping issue
-            junctions = {'e_8_b': 2,
+            junctions = {'e_1': 9.9,
+                         'e_4': 10,
+                         'e_8_b': 2,
+                         'e_8_u': 12,
+                         'e_13': 10,
                          'e_17': 18,
-                         'e_8_u': 8,
-                         'e_1': 9.9,
+                         'e_18': 12,
+                         'e_21': 12,
+                         'e_24': 12,
                          'e_29_u': 13,
-                         'e_21': 5,
-                         'e_91': 5,
+                         'e_32': 12,
+                         'e_36': 8,
+                         'e_37': 5,
+                         'e_51': 8,
+                         'e_52': 5,
+                         'e_53': 49,
                          'e_63': 26,
                          'e_65': 5,
                          'e_66': 30,
-                         'e_32': 12,
-                         'e_51': 8,
-                         'e_37': 5,
-                         'e_52': 5,
-                         'e_18': 12,
-                         'e_24': 12,
-                         'e_13': 10,
-                         'e_4': 10,
-                         'e_36': 8,
-                         'e_53': 49
-                         }
+                         'e_91': 5}
             if edge['id'] in junctions:
                 edge['length'] = str(junctions[edge['id']])
-
-            # if edge['id'] == 'e_8_b':
-            #     edge['length'] = '2'
-            # elif edge['id'] == 'e_17':
-            #     edge['length'] = '18'
-            # elif edge['id'] == 'e_8_u':
-            #     edge['length'] = '8'
-            # elif edge['id'] == 'e_1':
-            #     edge['length'] = '9.9'
-            # elif edge['id'] == 'e_29_u':
-            #     edge['length'] = '13'
-            # elif edge['id'] == 'e_21':
-            #     edge['length'] = '5'
-            # elif edge['id'] == 'e_91':
-            #     edge['length'] = '33'
-            # elif edge['id'] == 'e_63':
-            #     edge['length'] = '26'
-            # elif edge['id'] == 'e_65':
-            #     edge['length'] = '5'
-            #
-            # elif edge['id'] == 'e_66':
-            #     edge['length'] = '30'
-            # elif edge['id'] == 'e_32':
-            #     edge['length'] = '12'
-            # elif edge['id'] == 'e_51':
-            #     edge['length'] = '28'
-            # elif edge['id'] == 'e_37':
-            #     edge['length'] = '5'
-            # elif edge['id'] == 'e_18':
-            #     edge['length'] = '12'
-            # elif edge['id'] == 'e_24':
-            #     edge['length'] = '12'
-            # elif edge['id'] == 'e_13':
-            #     edge['length'] = '10'
-            # elif edge['id'] == 'e_4':
-            #     edge['length'] = '10'
 
         return edges
 

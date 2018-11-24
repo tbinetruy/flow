@@ -6,7 +6,7 @@ from flow.core.params import SumoParams, EnvParams, NetParams, InitialConfig
 from flow.core.vehicles import Vehicles
 from flow.envs.loop.loop_accel import AccelEnv, ADDITIONAL_ENV_PARAMS
 from flow.scenarios.minicity import MiniCityScenario, ADDITIONAL_NET_PARAMS
-from flow.controllers.routing_controllers import MinicityRouter
+from flow.controllers.routing_controllers import MinicityTrainingRouter
 import numpy as np
 
 np.random.seed(204)
@@ -51,20 +51,68 @@ def minicity_example(render=None,
 
     vehicles = Vehicles()
     vehicles.add(
-        veh_id='idm',
+        veh_id='bottom_left_rl',
         acceleration_controller=(IDMController, {}),
-        routing_controller=(MinicityRouter, {}),
-        speed_mode=1,
-        lane_change_mode='no_lat_collide',
-        initial_speed=0,
+        routing_controller=(MinicityTrainingRouter, {}),
+        speed_mode='no_collide',
+        lane_change_mode='strategic',
+        num_vehicles=4)
+    vehicles.add(
+        veh_id='center_left_rl',
+        acceleration_controller=(IDMController, {}),
+        routing_controller=(MinicityTrainingRouter, {}),
+        speed_mode='no_collide',
+        lane_change_mode='strategic',
+        num_vehicles=3)
+    vehicles.add(
+        veh_id='center_center_rl',
+        acceleration_controller=(IDMController, {}),
+        routing_controller=(MinicityTrainingRouter, {}),
+        speed_mode='no_collide',
+        lane_change_mode='strategic',
         num_vehicles=0)
     vehicles.add(
-        veh_id='rl',
-        acceleration_controller=(RLController, {}),
-        routing_controller=(MinicityRouter, {}),
+        veh_id='bottom_center_rl',
+        acceleration_controller=(IDMController, {}),
+        routing_controller=(MinicityTrainingRouter, {}),
         speed_mode='no_collide',
-        initial_speed=0,
-        num_vehicles=100)
+        lane_change_mode='strategic',
+        num_vehicles=0)
+    vehicles.add(
+        veh_id='bottom_right_rl',
+        acceleration_controller=(IDMController, {}),
+        routing_controller=(MinicityTrainingRouter, {}),
+        speed_mode='no_collide',
+        lane_change_mode='strategic',
+        num_vehicles=0)
+    vehicles.add(
+        veh_id='center_right_rl',
+        acceleration_controller=(IDMController, {}),
+        routing_controller=(MinicityTrainingRouter, {}),
+        speed_mode='no_collide',
+        lane_change_mode='strategic',
+        num_vehicles=0)
+    vehicles.add(
+        veh_id='top_left_rl',
+        acceleration_controller=(IDMController, {}),
+        routing_controller=(MinicityTrainingRouter, {}),
+        speed_mode='no_collide',
+        lane_change_mode='strategic',
+        num_vehicles=0)
+    vehicles.add(
+        veh_id='top_center_rl',
+        acceleration_controller=(IDMController, {}),
+        routing_controller=(MinicityTrainingRouter, {}),
+        speed_mode='no_collide',
+        lane_change_mode='strategic',
+        num_vehicles=0)
+    vehicles.add(
+        veh_id='top_right_rl',
+        acceleration_controller=(IDMController, {}),
+        routing_controller=(MinicityTrainingRouter, {}),
+        speed_mode='no_collide',
+        lane_change_mode='strategic',
+        num_vehicles=0)
 
     env_params = EnvParams(additional_params=ADDITIONAL_ENV_PARAMS)
 
@@ -72,11 +120,13 @@ def minicity_example(render=None,
     net_params = NetParams(
         no_internal_links=False, additional_params=additional_net_params)
 
-    # initial_config = InitialConfig(spacing='uniform', edges_distribution=['e_64', 'e_68', 'e_74'])
     initial_config = InitialConfig(
-        spacing="random",
-        min_gap=5
-    )
+                                    spacing='random',
+                                   edges_distribution={'e_7': 4, 'e_25': 3})
+    # initial_config = InitialConfig(
+    #     spacing="random",
+    #     min_gap=5
+    # )
     scenario = MiniCityScenario(
         name='minicity',
         vehicles=vehicles,
@@ -101,7 +151,7 @@ if __name__ == "__main__":
                            save_render=False,
                            sight_radius=50,
                            pxpm=3,
-                           show_radius=False)
+                           show_radius=True)
 
     # run for a set number of rollouts / time steps
     exp.run(1, 3000)
