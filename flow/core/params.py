@@ -298,6 +298,8 @@ class InitialConfig:
             * dict of edges: where the key is the name of the edge to be
               utilized, and the elements are the number of cars to place on
               each edge
+            * dict of tuple: where the key is the name of the edge, and the
+              value is a list of tuple of (vehicle types, number of vehicles)
 
         additional_params: dict, optional
             some other network-specific params
