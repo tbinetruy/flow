@@ -855,6 +855,11 @@ class DesiredVelocityEnv(BottleneckEnv):
         else:
             reward = self.vehicles.get_outflow_rate(10 * self.sim_step) / \
                      (2000.0 * self.scaling)
+            # congestion in lane 4 penalty
+            congest_ids = self.vehicles.get_ids_by_edge('4')
+            if congest_ids > 30:
+                penalty = (len(congest_ids) - 30)/10.0
+            reward -= penalty
         return reward
 
     def reset(self):

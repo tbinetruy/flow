@@ -22,7 +22,7 @@ from flow.controllers import RLController, ContinuousRouter, \
 # time horizon of a single rollout
 HORIZON = 1000
 # number of parallel workers
-N_CPUS = 2
+N_CPUS = 14
 # number of rollouts per training iteration
 N_ROLLOUTS = N_CPUS * 4
 
@@ -41,7 +41,7 @@ vehicles.add(
     lane_change_mode=0,
     num_vehicles=1 * SCALING)
 vehicles.add(
-    veh_id="followerstopper",
+    veh_id="av",
     acceleration_controller=(RLController, {}),
     lane_change_controller=(SumoLaneChangeController, {}),
     routing_controller=(ContinuousRouter, {}),
@@ -78,7 +78,7 @@ inflow.add(
     departLane="random",
     departSpeed=10)
 inflow.add(
-    veh_type="followerstopper",
+    veh_type="av",
     edge="1",
     vehs_per_hour=flow_rate * AV_FRAC,
     departLane="random",
@@ -191,7 +191,7 @@ if __name__ == "__main__":
             "checkpoint_freq": 20,
             "max_failures": 999,
             "stop": {
-                "training_iteration": 200,
+                "training_iteration": 400,
             },
         }
     })
