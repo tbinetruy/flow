@@ -68,9 +68,9 @@ ModelCatalog.register_custom_model("pixel_flow_network", PixelFlowNetwork)
 # time horizon of a single rollout
 HORIZON = 3000
 # number of rollouts per training iteration
-N_ROLLOUTS = 14
+N_ROLLOUTS = 1
 # number of parallel workers
-N_CPUS = 15
+N_CPUS = 2
 
 RING_RADIUS = 50
 NUM_MERGE_HUMANS = 8
@@ -116,7 +116,7 @@ vehicles.add(
 
 flow_params = dict(
     # name of the experiment
-    exp_tag="single_merge%s" % augmentation,
+    exp_tag="loop_merge_v0_%s" % augmentation,
 
     # name of the flow environment the experiment is running on
     env_name="TwoLoopsMergeCNNIDMEnv",

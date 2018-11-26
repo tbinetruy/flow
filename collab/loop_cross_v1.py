@@ -68,9 +68,9 @@ ModelCatalog.register_custom_model("pixel_flow_network", PixelFlowNetwork)
 # time horizon of a single rollout
 HORIZON = 3000
 # number of rollouts per training iteration
-N_ROLLOUTS = 2
+N_ROLLOUTS = 1
 # number of parallel workers
-N_CPUS = 3
+N_CPUS = 2
 
 # We place one autonomous vehicle and 13 human-driven vehicles in the network
 vehicles = Vehicles()
@@ -91,7 +91,7 @@ vehicles.add(
 
 flow_params = dict(
     # name of the experiment
-    exp_tag="augment_double_eight%s" % augmentation,
+    exp_tag="loop_cross_v1_%s" % augmentation,
 
     # name of the flow environment the experiment is running on
     env_name="AccelCNNIDMEnv",
