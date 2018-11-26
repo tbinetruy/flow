@@ -859,7 +859,7 @@ class DesiredVelocityEnv(BottleneckEnv):
             congest_ids = self.vehicles.get_ids_by_edge('4')
             penalty = 0
             if len(congest_ids) > 20:
-                penalty = (len(congest_ids) - 20)/10.0
+                penalty = (len(congest_ids) - 20)/20.0
             reward -= penalty
         return reward
 
