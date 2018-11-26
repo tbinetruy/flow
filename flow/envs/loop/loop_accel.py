@@ -179,7 +179,7 @@ class AccelCNNEnv(AccelEnv):
     def get_state(self, **kwargs):
         """See class definition."""
         sights_buffer = np.squeeze(np.array(self.sights_buffer))
-        sights_buffer = np.moveaxis(sights_buffer, 0, -1).T
+        sights_buffer = np.moveaxis(sights_buffer, 0, -1)
         return sights_buffer / 255.
 
     def compute_reward(self, rl_actions, **kwargs):

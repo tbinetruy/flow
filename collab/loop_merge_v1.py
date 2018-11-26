@@ -73,7 +73,7 @@ N_ROLLOUTS = 1
 N_CPUS = 2
 
 RING_RADIUS = 50
-NUM_MERGE_HUMANS = 8
+NUM_MERGE_HUMANS = 8*2
 NUM_MERGE_RL = 1
 
 # note that the vehicles are added sequentially by the generator,
@@ -88,7 +88,7 @@ vehicles.add(
     lane_change_controller=(SumoLaneChangeController, {}),
     routing_controller=(ContinuousRouter, {}),
     speed_mode="no_collide",
-    num_vehicles=6,
+    num_vehicles=6*2,
     sumo_car_following_params=SumoCarFollowingParams(minGap=0.0, tau=0.5),
     sumo_lc_params=SumoLaneChangeParams())
 # A single learning agent in the inner ring
@@ -130,7 +130,7 @@ flow_params = dict(
     # sumo-related parameters (see flow.core.params.SumoParams)
     sumo=SumoParams(
         sim_step=0.1,
-        render=False,
+        render='gray',
     ),
 
     # environment related parameters (see flow.core.params.EnvParams)
@@ -183,8 +183,8 @@ if __name__ == "__main__":
     config["episodes_per_batch"] = N_ROLLOUTS
     config["num_workers"] = N_ROLLOUTS
     config["eval_prob"] = 0.05
-    config["noise_stdev"] = grid_search([0.01, 0.02])
-    config["stepsize"] = grid_search([0.01, 0.02])
+    config["noise_stdev"] = 0.01
+    config["stepsize"] = 0.01
     config["observation_filter"] = "NoFilter"
     config["model"] = {"custom_model": "pixel_flow_network",
                        "custom_options": {},}
@@ -206,11 +206,11 @@ if __name__ == "__main__":
             "config": {
                 **config
             },
-            "checkpoint_freq": 5,
+            "checkpoint_freq": 10,
             "max_failures": 999,
             "stop": {
-                "training_iteration": 50,
+                "training_iteration": 100,
             },
-            "num_samples": 1,
+            "num_samples": 6,
         },
     })
