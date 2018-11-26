@@ -15,6 +15,7 @@ from flow.scenarios.loop import LoopScenario
 from flow.scenarios.merge import MergeScenario
 from flow.scenarios.netfile import NetFileScenario
 from flow.scenarios.loop_merge import TwoLoopsOneMergingScenario
+from flow.scenarios.multi_loop import MultiLoopScenario
 
 __all__ = [
     "Scenario", "BayBridgeScenario", "BayBridgeTollScenario",
