@@ -18,6 +18,7 @@ import tensorflow.contrib.slim as slim
 
 import sys
 
+ADDITIONAL_NET_PARAMS["lanes"] = 1
 augmentation = sys.argv[1]
 
 class PixelFlowNetwork(Model):
@@ -67,9 +68,9 @@ ModelCatalog.register_custom_model("pixel_flow_network", PixelFlowNetwork)
 # time horizon of a single rollout
 HORIZON = 3000
 # number of rollouts per training iteration
-N_ROLLOUTS = 14
+N_ROLLOUTS = 2
 # number of parallel workers
-N_CPUS = 15
+N_CPUS = 3
 
 # We place one autonomous vehicle and 13 human-driven vehicles in the network
 vehicles = Vehicles()
@@ -122,7 +123,7 @@ flow_params = dict(
     # scenario's documentation or ADDITIONAL_NET_PARAMS component)
     net=NetParams(
         no_internal_links=False,
-        additional_params={"lanes": 1,},
+        additional_params=ADDITIONAL_NET_PARAMS,
     ),
 
     # vehicles to be placed in the network at the start of a rollout (see
