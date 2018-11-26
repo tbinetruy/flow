@@ -79,7 +79,7 @@ vehicles.add(
     }),
     routing_controller=(ContinuousRouter, {}),
     speed_mode="no_collide",
-    num_vehicles=21*2)
+    num_vehicles=21*2)  # This does not work yet.
 vehicles.add(
     veh_id="rl",
     acceleration_controller=(RLController, {}),

@@ -236,7 +236,7 @@ class SimpleGridScenario(Scenario):
         list <dict>
             List of inner nodes
         """
-        tls = self.net_params.additional_params.get("traffic_lights", True)
+        tls = self.net_params.additional_params.get("traffic_lights", False)
         node_type = "traffic_light" if tls else "priority"
         row_num = self.grid_array["row_num"]
         col_num = self.grid_array["col_num"]
