@@ -15,7 +15,7 @@ from flow.envs.loop.loop_accel import AccelCNNDebugEnv, AccelCNNEnv, \
 from flow.envs.loop.loop_accel import MultiAgentAccelEnv
 from flow.envs.loop.loop_merges import TwoLoopsMergePOEnv
 from flow.envs.loop.wave_attenuation import WaveAttenuationEnv, \
-    WaveAttenuationPOEnv,
+    WaveAttenuationPOEnv
 from flow.envs.loop.wave_attenuation import WaveAttenuationCNNDebugEnv, \
 WaveAttenuationCNNEnv, WaveAttenuationCNNIDMEnv
 from flow.envs.loop.wave_attenuation import MultiWaveAttenuationPOEnv

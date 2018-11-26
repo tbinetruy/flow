@@ -80,7 +80,7 @@ def loop_merge_example(render=None):
 
 if __name__ == "__main__":
     # import the experiment variable
-    exp = loop_merge_example()
+    exp = loop_merge_example(render='drgb')
 
     # run for a set number of rollouts / time steps
     exp.run(1, 1500, convert_to_csv=True)
