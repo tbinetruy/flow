@@ -1,3 +1,6 @@
+#git clone https://github.com/eclipse/sumo.git sumo-x
+#cd sumo-x
+#git checkout 016c09d306
 cd ~
 rm -rf ray_results
 rm -rf ray
