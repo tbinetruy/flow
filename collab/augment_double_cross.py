@@ -80,7 +80,7 @@ vehicles.add(
     }),
     routing_controller=(ContinuousRouter, {}),
     speed_mode="no_collide",
-    num_vehicles=13)
+    num_vehicles=13*2)
 vehicles.add(
     veh_id="rl",
     acceleration_controller=(RLController, {}),
@@ -90,7 +90,7 @@ vehicles.add(
 
 flow_params = dict(
     # name of the experiment
-    exp_tag="augment_cross%s" % augmentation,
+    exp_tag="augment_double_cross%s" % augmentation,
 
     # name of the flow environment the experiment is running on
     env_name="AccelCNNIDMEnv",
@@ -122,7 +122,7 @@ flow_params = dict(
     # scenario's documentation or ADDITIONAL_NET_PARAMS component)
     net=NetParams(
         no_internal_links=False,
-        additional_params=ADDITIONAL_NET_PARAMS,
+        additional_params={"lanes": 2,},
     ),
 
     # vehicles to be placed in the network at the start of a rollout (see
