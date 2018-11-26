@@ -6,19 +6,19 @@ from ray.tune import run_experiments, grid_search
 from ray.tune.registry import register_env
 from ray.rllib.models import ModelCatalog, Model
 
-from flow.controllers import RLController, IDMController, ContinuousRouter, \
-    SumoLaneChangeController
-from flow.core.params import SumoCarFollowingParams, SumoLaneChangeParams, \
-    SumoParams, EnvParams, InitialConfig, NetParams
 from flow.utils.registry import make_create_env
 from flow.utils.rllib import FlowParamsEncoder
+from flow.core.params import SumoParams, EnvParams, InitialConfig, NetParams
 from flow.core.vehicles import Vehicles
+from flow.controllers import IDMController, ContinuousRouter, RLController
+from flow.scenarios.figure_eight import ADDITIONAL_NET_PARAMS
 
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 
 import sys
 
+ADDITIONAL_NET_PARAMS["lanes"] = 1
 augmentation = sys.argv[1]
 
 class PixelFlowNetwork(Model):
@@ -68,81 +68,53 @@ ModelCatalog.register_custom_model("pixel_flow_network", PixelFlowNetwork)
 # time horizon of a single rollout
 HORIZON = 3000
 # number of rollouts per training iteration
-N_ROLLOUTS = 14
+N_ROLLOUTS = 2
 # number of parallel workers
-N_CPUS = 15
+N_CPUS = 3
 
-RING_RADIUS = 50
-NUM_MERGE_HUMANS = 8
-NUM_MERGE_RL = 1
-
-# note that the vehicles are added sequentially by the generator,
-# so place the merging vehicles after the vehicles in the ring
+# We place one autonomous vehicle and 13 human-driven vehicles in the network
 vehicles = Vehicles()
-# Inner ring vehicles
 vehicles.add(
     veh_id="human",
     acceleration_controller=(IDMController, {
         "noise": 0.2
     }),
-    lane_change_controller=(SumoLaneChangeController, {}),
     routing_controller=(ContinuousRouter, {}),
     speed_mode="no_collide",
-    num_vehicles=6,
-    sumo_car_following_params=SumoCarFollowingParams(minGap=0.0, tau=0.5),
-    sumo_lc_params=SumoLaneChangeParams())
-# A single learning agent in the inner ring
+    num_vehicles=13)
 vehicles.add(
     veh_id="rl",
     acceleration_controller=(RLController, {}),
-    lane_change_controller=(SumoLaneChangeController, {}),
     routing_controller=(ContinuousRouter, {}),
     speed_mode="no_collide",
-    num_vehicles=NUM_MERGE_RL,
-    sumo_car_following_params=SumoCarFollowingParams(minGap=0.01, tau=0.5),
-    sumo_lc_params=SumoLaneChangeParams())
-# Outer ring vehicles
-vehicles.add(
-    veh_id="merge-human",
-    acceleration_controller=(IDMController, {
-        "noise": 0.2
-    }),
-    lane_change_controller=(SumoLaneChangeController, {}),
-    routing_controller=(ContinuousRouter, {}),
-    speed_mode="no_collide",
-    num_vehicles=NUM_MERGE_HUMANS,
-    sumo_car_following_params=SumoCarFollowingParams(minGap=0.0, tau=0.5),
-    sumo_lc_params=SumoLaneChangeParams())
+    num_vehicles=1)
 
 flow_params = dict(
     # name of the experiment
-    exp_tag="merge_cnnidm%s" % augmentation,
+    exp_tag="augment_single_eight%s" % augmentation,
 
     # name of the flow environment the experiment is running on
-    env_name="TwoLoopsMergeCNNIDMEnv",
+    env_name="AccelCNNIDMEnv",
 
     # name of the scenario class the experiment is running on
-    scenario="TwoLoopsOneMergingScenario",
+    scenario="Figure8Scenario",
 
     # name of the generator used to create/modify network configuration files
-    generator="TwoLoopOneMergingGenerator",
+    generator="Figure8Generator",
 
     # sumo-related parameters (see flow.core.params.SumoParams)
     sumo=SumoParams(
         sim_step=0.1,
-        render=False,
+        render="gray",
     ),
 
     # environment related parameters (see flow.core.params.EnvParams)
     env=EnvParams(
         horizon=HORIZON,
         additional_params={
+            "target_velocity": 20,
             "max_accel": 3,
             "max_decel": 5,
-            "target_velocity": 10,
-            "n_preceding": 2,
-            "n_following": 2,
-            "n_merging_in": 2,
             "augmentation": float(augmentation),
         },
     ),
@@ -151,14 +123,7 @@ flow_params = dict(
     # scenario's documentation or ADDITIONAL_NET_PARAMS component)
     net=NetParams(
         no_internal_links=False,
-        additional_params={
-            "ring_radius": RING_RADIUS,
-            "lane_length": 75,
-            "inner_lanes": 1,
-            "outer_lanes": 1,
-            "speed_limit": 30,
-            "resolution": 40,
-        },
+        additional_params=ADDITIONAL_NET_PARAMS,
     ),
 
     # vehicles to be placed in the network at the start of a rollout (see
@@ -167,13 +132,7 @@ flow_params = dict(
 
     # parameters specifying the positioning of vehicles upon initialization/
     # reset (see flow.core.params.InitialConfig)
-    initial=InitialConfig(
-        x0=50,
-        spacing="uniform",
-        additional_params={
-            "merge_bunching": 0,
-        },
-    ),
+    initial=InitialConfig(),
 )
 
 if __name__ == "__main__":
@@ -183,8 +142,8 @@ if __name__ == "__main__":
     config["episodes_per_batch"] = N_ROLLOUTS
     config["num_workers"] = N_ROLLOUTS
     config["eval_prob"] = 0.05
-    config["noise_stdev"] = grid_search([0.01, 0.02])
-    config["stepsize"] = grid_search([0.01, 0.02])
+    config["noise_stdev"] = 0.01
+    config["stepsize"] = 0.01
     config["observation_filter"] = "NoFilter"
     config["model"] = {"custom_model": "pixel_flow_network",
                        "custom_options": {},}
@@ -206,11 +165,11 @@ if __name__ == "__main__":
             "config": {
                 **config
             },
-            "checkpoint_freq": 5,
+            "checkpoint_freq": 10,
             "max_failures": 999,
             "stop": {
-                "training_iteration": 50,
+                "training_iteration": 100,
             },
-            "num_samples": 1,
+            "num_samples": 6,
         },
     })
