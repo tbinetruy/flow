@@ -56,7 +56,7 @@ def minicity_example(render=None,
         routing_controller=(MinicityTrainingRouter, {}),
         speed_mode='no_collide',
         lane_change_mode='strategic',
-        num_vehicles=4)
+        num_vehicles=2)
     vehicles.add(
         veh_id='center_left_rl',
         acceleration_controller=(IDMController, {}),
@@ -70,7 +70,7 @@ def minicity_example(render=None,
         routing_controller=(MinicityTrainingRouter, {}),
         speed_mode='no_collide',
         lane_change_mode='strategic',
-        num_vehicles=0)
+        num_vehicles=2)
     vehicles.add(
         veh_id='bottom_center_rl',
         acceleration_controller=(IDMController, {}),
@@ -122,7 +122,7 @@ def minicity_example(render=None,
 
     initial_config = InitialConfig(
                                     spacing='random',
-                                   edges_distribution={'e_7': 4, 'e_25': 3})
+                                   edges_distribution={'e_7': 2, 'e_25': 3, 'e_41': 2})
     # initial_config = InitialConfig(
     #     spacing="random",
     #     min_gap=5

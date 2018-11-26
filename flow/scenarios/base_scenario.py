@@ -478,9 +478,13 @@ class Scenario(Serializable):
             edges_distribution = deepcopy(initial_config.edges_distribution)
             startpositions, startlanes = [], []
             for key in edges_distribution:
-                # set the edge distribution to only include the next edge
+                # if isinstance(edges_distribution[key], int):
+                #     # set the edge distribution to only include the next edge
+                #     initial_config.edges_distribution = [key]
+                #     # set the number of vehicles that this edge can carry
+                #     num_vehicles = edges_distribution[key]
+                # else:
                 initial_config.edges_distribution = [key]
-                # set the number of vehicles that this edge can carry
                 num_vehicles = edges_distribution[key]
                 # recursively collect the next starting positions and lanes
                 pos, lane = self.gen_random_start_pos(
@@ -1018,7 +1022,7 @@ class Scenario(Serializable):
         """Generate .rou.xml files using net files and netconvert.
 
         This file specifies the sumo-specific properties of vehicles with
-        similar types, and well as the starting positions of vehicles. The
+        similar types, as well as the starting positions of vehicles. The
         starting positions, however, may be modified in real-time (e.g. during
         an environment reset).
 
@@ -1027,7 +1031,7 @@ class Scenario(Serializable):
         scenario : Scenario type
             scenario class calling this method. This contains information on
             the properties and initial states of vehicles in the network.
-        positions : list of tuple (float, float)
+        positions : list of tuple (str, float)
             list of start positions [(edge0, pos0), (edge1, pos1), ...]
         lanes : list of float
             list of start lanes
@@ -1040,22 +1044,31 @@ class Scenario(Serializable):
 
         # add the types of vehicles to the xml file
         for params in vehicles.types:
+            # print(params)
             type_params_str = {
-                key: str(params["type_params"][key])
+                key: str(params['type_params'][key])
                 for key in params["type_params"]
             }
-            routes.append(E("vType", id=params["veh_id"], **type_params_str))
+            # print(type_params_str)
+            routes.append(E('vType', id=params['veh_id'], **type_params_str))
 
         self.vehicle_ids = vehicles.get_ids()
+
 
         if shuffle:
             random.shuffle(self.vehicle_ids)
 
+
+
+        # print(positions)
         # add the initial positions of vehicles to the xml file
         for i, veh_id in enumerate(self.vehicle_ids):
             veh_type = vehicles.get_state(veh_id, "type")
+            print(veh_type)
+
             edge, pos = positions[i]
             lane = lanes[i]
+
             type_depart_speed = vehicles.get_initial_speed(veh_id)
             routes.append(
                 self._vehicle(
