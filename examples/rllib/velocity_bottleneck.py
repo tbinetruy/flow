@@ -98,7 +98,7 @@ net_params = NetParams(
 
 flow_params = dict(
     # name of the experiment
-    exp_tag="DesiredVelocity",
+    exp_tag="DesiredVelocity_p30_div10",
 
     # name of the flow environment the experiment is running on
     env_name="DesiredVelocityEnv",
@@ -193,5 +193,6 @@ if __name__ == "__main__":
             "stop": {
                 "training_iteration": 400,
             },
+            "upload_dir": "s3://eugene.experiments/for_gifs"
         }
     })
