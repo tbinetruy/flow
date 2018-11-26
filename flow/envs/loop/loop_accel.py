@@ -1,7 +1,8 @@
 """Environment for training the acceleration behavior of vehicles in a loop."""
 
-from flow.envs.base_env import Env
 from flow.core import rewards
+from flow.envs.base_env import Env
+from flow.envs.multiagent_env import MultiEnv
 from flow.core.params import InitialConfig, NetParams, SumoCarFollowingParams
 from flow.controllers import IDMController
 
@@ -17,11 +18,11 @@ import time
 
 ADDITIONAL_ENV_PARAMS = {
     # maximum acceleration for autonomous vehicles, in m/s^2
-    "max_accel": 3,
+    'max_accel': 3,
     # maximum deceleration for autonomous vehicles, in m/s^2
-    "max_decel": 3,
+    'max_decel': 3,
     # desired velocity for all vehicles in the network, in m/s
-    "target_velocity": 10,
+    'target_velocity': 10,
 }
 
 
@@ -59,7 +60,7 @@ class AccelEnv(Env):
         for p in ADDITIONAL_ENV_PARAMS.keys():
             if p not in env_params.additional_params:
                 raise KeyError(
-                    'Environment parameter "{}" not supplied'.format(p))
+                    'Environment parameter \'{}\' not supplied'.format(p))
 
         super().__init__(env_params, sumo_params, scenario)
 
@@ -67,8 +68,8 @@ class AccelEnv(Env):
     def action_space(self):
         """See class definition."""
         return Box(
-            low=-abs(self.env_params.additional_params["max_decel"]),
-            high=self.env_params.additional_params["max_accel"],
+            low=-abs(self.env_params.additional_params['max_decel']),
+            high=self.env_params.additional_params['max_accel'],
             shape=(self.vehicles.num_rl_vehicles, ),
             dtype=np.float32)
 
@@ -96,9 +97,9 @@ class AccelEnv(Env):
         if self.env_params.evaluate:
             return np.mean(self.vehicles.get_speed(self.vehicles.get_ids()))
         else:
-            return rewards.desired_velocity(self, fail=kwargs["fail"])
+            return rewards.desired_velocity(self, fail=kwargs['fail'])
 
-    def get_state(self, **kwargs):
+    def get_state(self):
         """See class definition."""
         # speed normalizer
         max_speed = self.scenario.max_speed
@@ -214,3 +215,48 @@ class AccelCNNIDMEnv(AccelCNNEnv):
                             (1.0 - alpha)*np.clip(default_acc, low, high)
                next_vel = max([this_vel + acc[i] * self.sim_step, 0])
                self.traci_connection.vehicle.slowDown(vid, next_vel, 1)
+
+class MultiAgentAccelEnv(AccelEnv, MultiEnv):
+    """Adversarial multi-agent env.
+
+    Multi-agent env with an adversarial agent perturbing
+    the accelerations of the autonomous vehicle
+    """
+    def _apply_rl_actions(self, rl_actions):
+        """See class definition."""
+        sorted_rl_ids = [
+            veh_id for veh_id in self.sorted_ids
+            if veh_id in self.vehicles.get_rl_ids()
+        ]
+        av_action = rl_actions['av']
+        adv_action = rl_actions['adversary']
+        perturb_weight = self.env_params.additional_params['perturb_weight']
+        rl_action = av_action + perturb_weight * adv_action
+        self.apply_acceleration(sorted_rl_ids, rl_action)
+
+    def compute_reward(self, rl_actions, **kwargs):
+        """The agents receives opposing speed rewards.
+
+        The agent receives the class definition reward,
+        the adversary receives the negative of the agent reward
+        """
+        if self.env_params.evaluate:
+            reward = np.mean(self.vehicles.get_speed(self.vehicles.get_ids()))
+            return {'av': reward, 'adversary': -reward}
+        else:
+            reward = rewards.desired_velocity(self, fail=kwargs['fail'])
+            return {'av': reward, 'adversary': -reward}
+
+    def get_state(self, **kwargs):
+        """See class definition for the state.
+
+        The adversary state and the agent state are identical.
+        """
+        # speed normalizer
+        max_speed = self.scenario.max_speed
+        state = np.array([[
+            self.vehicles.get_speed(veh_id) / max_speed,
+            self.get_x_by_id(veh_id) / self.scenario.length
+        ] for veh_id in self.sorted_ids])
+        state = np.ndarray.flatten(state)
+        return {'av': state, 'adversary': state}
