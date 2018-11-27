@@ -60,26 +60,23 @@ class MinicityTrainingRouter(MinicityRouter):
 
     def choose_route(self, env):
         type_id = env.vehicles.get_state(self.veh_id, 'type')
-        edge = env.vehicles.get_edge(self.veh_id)
         cur_route = env.vehicles.get_route(self.veh_id)
-        # print(cur_route)
-        if 'bottom_left' in type_id and cur_route[0] == edge:
-            # print(self.veh_id, edge)
-            route = ['e_7', 'e_8_b', 'e_8_u', 'e_9', 'e_10', 'e_11', 'e_12']
-        elif 'center_left' in type_id and cur_route[0] == edge:
-            # print(self.veh_id, edge)
-            route = ['e_25', 'e_30', 'e_31', 'e_32', 'e_21', 'e_8_u', 'e_9']
-        elif 'center_center' in type_id and cur_route[0] == edge:
-            # print(self.veh_id, edge)
+        route_assigned = False
+
+        if len(cur_route) > 1:
+            route_assigned = True
+        if 'bottom_left' in type_id and not route_assigned:
+            route = ['e_2', 'e_1', 'e_7', 'e_8_b', 'e_8_u', 'e_9', 'e_10']
+        elif 'center_left' in type_id and not route_assigned:
+            route = ['e_3', 'e_25', 'e_30', 'e_31', 'e_32', 'e_21', 'e_8_u']
+        elif 'center_center' in type_id and not route_assigned:
             route = ['e_41', 'e_39', 'e_37', 'e_29_u', 'e_21', 'e_8_u', 'e_9']
-        elif 'bottom_center' in type_id and cur_route[0] == edge:
-            # print(self.veh_id, edge)
-            route = ['e_38', 'e_88', 'e_26', 'e_2', 'e_1', 'e_7']
-        elif env.vehicles.get_edge(self.veh_id) == \
-                env.vehicles.get_route(self.veh_id)[-1]:
-            route = None
-        else:
+        elif 'bottom_center' in type_id and not route_assigned:
+            route = ['e_39', 'e_37', 'e_29_u', 'e_21']
+        elif 'idm' in type_id:
             route = MinicityRouter.choose_route(self, env)
+        else:
+            route = None
 
         return route
 

@@ -76,6 +76,8 @@ class Scenario(Serializable):
         if Serializable is not object:
             Serializable.quick_init(self, locals())
 
+        self.total_veh_types = []
+
         self.orig_name = name  # To avoid repeated concatenation upon reset
         self.name = name + time.strftime("_%Y%m%d-%H%M%S") + str(time.time())
 
@@ -340,8 +342,15 @@ class Scenario(Serializable):
         if isinstance(initial_config.edges_distribution, dict):
             # check that the number of vehicle in edges_distribution matches
             # that of the vehicles class
-            num_vehicles_e = sum(initial_config.edges_distribution[k]
-                                 for k in initial_config.edges_distribution)
+            keys = list(initial_config.edges_distribution.keys())
+            if isinstance(initial_config.edges_distribution[keys[0]], int):
+                num_vehicles_e = sum(
+                    initial_config.edges_distribution[k]
+                    for k in initial_config.edges_distribution)
+            else:
+                num_vehicles_e = sum(sum(pair[1] for pair in
+                                     initial_config.edges_distribution[key])
+                                     for key in keys)
             assert num_vehicles == num_vehicles_e, \
                 'Number of vehicles in edges_distribution and the Vehicles ' \
                 'class do not match: {}, {}'.format(num_vehicles,
@@ -354,7 +363,15 @@ class Scenario(Serializable):
                 # set the edge distribution to only include the next edge
                 initial_config.edges_distribution = [key]
                 # set the number of vehicles that this edge can carry
-                num_vehicles = edges_distribution[key]
+                if isinstance(edges_distribution[key], int):
+                    num_vehicles = edges_distribution[key]
+                else:
+                    num_vehicles = sum(pair[1]
+                                       for pair in edges_distribution[key])
+                    veh_ids = []
+                    for pair in edges_distribution[key]:
+                        veh_ids += [pair[0] for _ in range(pair[1])]
+                    self.total_veh_types.extend(veh_ids)  # TODO: maybe shuffle
                 # recursively collect the next starting positions and lanes
                 pos, lane = self.gen_even_start_pos(
                     initial_config, num_vehicles, **kwargs)
@@ -467,25 +484,32 @@ class Scenario(Serializable):
         if isinstance(initial_config.edges_distribution, dict):
             # check that the number of vehicle in edges_distribution matches
             # that of the vehicles class
-            num_vehicles_e = sum(initial_config.edges_distribution[k]
-                                 for k in initial_config.edges_distribution)
-            assert num_vehicles == num_vehicles_e, \
-                'Number of vehicles in edges_distribution and the Vehicles ' \
-                'class do not match: {}, {}'.format(num_vehicles,
-                                                    num_vehicles_e)
+            # num_vehicles_e = sum(initial_config.edges_distribution[k]
+            #                      for k in initial_config.edges_distribution)
+            # assert num_vehicles == num_vehicles_e, \
+            #     'Number of vehicles in edges_distribution and the Vehicles ' \
+            #     'class do not match: {}, {}'.format(num_vehicles,
+            #                                         num_vehicles_e)
 
             # add starting positions and lanes
             edges_distribution = deepcopy(initial_config.edges_distribution)
             startpositions, startlanes = [], []
             for key in edges_distribution:
-                # if isinstance(edges_distribution[key], int):
-                #     # set the edge distribution to only include the next edge
-                #     initial_config.edges_distribution = [key]
-                #     # set the number of vehicles that this edge can carry
-                #     num_vehicles = edges_distribution[key]
-                # else:
                 initial_config.edges_distribution = [key]
-                num_vehicles = edges_distribution[key]
+                if isinstance(edges_distribution[key], int):
+                    # set the number of vehicles that this edge can carry
+                    num_vehicles = edges_distribution[key]
+                else:
+                    if isinstance(edges_distribution[key], int):
+                        num_vehicles = edges_distribution[key]
+                    else:
+                        num_vehicles = sum(pair[1]
+                                           for pair in edges_distribution[key])
+                        veh_ids = []
+                        for pair in edges_distribution[key]:
+                            print(pair)
+                            veh_ids += [pair[0] for _ in range(pair[1])]
+                        self.total_veh_types.extend(veh_ids)  # TODO: maybe shuffle
                 # recursively collect the next starting positions and lanes
                 pos, lane = self.gen_random_start_pos(
                     initial_config, num_vehicles, **kwargs)
@@ -1052,22 +1076,23 @@ class Scenario(Serializable):
             # print(type_params_str)
             routes.append(E('vType', id=params['veh_id'], **type_params_str))
 
-        self.vehicle_ids = vehicles.get_ids()
-
+        vehicle_ids = deepcopy(vehicles.get_ids())
 
         if shuffle:
-            random.shuffle(self.vehicle_ids)
+            random.shuffle(vehicle_ids)
 
-
-
-        # print(positions)
         # add the initial positions of vehicles to the xml file
-        for i, veh_id in enumerate(self.vehicle_ids):
-            veh_type = vehicles.get_state(veh_id, "type")
-            print(veh_type)
-
-            edge, pos = positions[i]
-            lane = lanes[i]
+        for i, ((edge, pos), lane) in enumerate(zip(positions, lanes)):
+            if len(self.total_veh_types) == 0:
+                veh_id = vehicle_ids[i]
+                veh_type = vehicles.get_state(veh_id, "type")
+            else:
+                j = next(k for k, veh_id in enumerate(vehicle_ids) if
+                         vehicles.get_state(veh_id, "type") ==
+                         self.total_veh_types[i])
+                veh_id = deepcopy(vehicle_ids[j])
+                veh_type = vehicles.get_state(veh_id, "type")
+                del vehicle_ids[j]
 
             type_depart_speed = vehicles.get_initial_speed(veh_id)
             routes.append(

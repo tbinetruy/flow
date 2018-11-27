@@ -193,7 +193,7 @@ class MiniCityScenario(Scenario):
                  {'id': 'e_21', 'from': 'n_m1_u', 'to': 'n_r4_tmp',
                   'length': None, 'numLanes': 2, 'type': 'edgeType',
                   'shape': [(1.89 + 0.54 * cos(t), 0.94 + 0.54 * sin(t))
-                            for t in reversed(linspace(1.25*pi, 3*pi/2, res))]
+                            for t in reversed(linspace(1.2*pi, 3*pi/2, res))]
                   },
                  {'id': 'e_22', 'from': 'n_i2', 'to': 'n_m3', 'length': None,
                   'numLanes': 1, 'type': 'edgeType'},
@@ -432,10 +432,10 @@ class MiniCityScenario(Scenario):
             # fix junction overlapping issue
             junctions = {'e_8_b': 2,
                          'e_17': 18,
-                         'e_8_u': 8,
+                         'e_8_u': 12,
                          'e_1': 9.9,
                          'e_29_u': 13,
-                         'e_21': 5,
+                         'e_21': 12,
                          'e_91': 5,
                          'e_63': 26,
                          'e_65': 5,
