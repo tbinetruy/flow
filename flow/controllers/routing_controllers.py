@@ -66,7 +66,7 @@ class MinicityTrainingRouter(MinicityRouter):
         if len(cur_route) > 1:
             route_assigned = True
         if 'bottom_left' in type_id and not route_assigned:
-            route = ['e_2', 'e_1', 'e_7', 'e_8_b', 'e_8_u', 'e_9', 'e_10']
+            route = ['e_2', 'e_1', 'e_7', 'e_8_b', 'e_8_u', 'e_9', 'e_10', 'e_11']
         elif 'center_left' in type_id and not route_assigned:
             route = ['e_3', 'e_25', 'e_30', 'e_31', 'e_32', 'e_21', 'e_8_u']
         elif 'center_center' in type_id and not route_assigned:
