@@ -24,7 +24,7 @@ HORIZON = 1000
 # number of parallel workers
 N_CPUS = 14
 # number of rollouts per training iteration
-N_ROLLOUTS = N_CPUS * 4
+N_ROLLOUTS = N_CPUS * 2
 
 SCALING = 1
 NUM_LANES = 4 * SCALING  # number of lanes in the widest highway
@@ -73,12 +73,14 @@ flow_rate = 1900 * SCALING
 inflow = InFlows()
 inflow.add(
     veh_type="human",
+    name="human",
     edge="1",
     vehs_per_hour=flow_rate * (1 - AV_FRAC),
     departLane="random",
     departSpeed=10)
 inflow.add(
     veh_type="av",
+    name="av",
     edge="1",
     vehs_per_hour=flow_rate * AV_FRAC,
     departLane="random",
@@ -98,7 +100,7 @@ net_params = NetParams(
 
 flow_params = dict(
     # name of the experiment
-    exp_tag="DesiredVelocity_p20_div20",
+    exp_tag="DesiredVelocity_p20_div20_rn2",
 
     # name of the flow environment the experiment is running on
     env_name="DesiredVelocityEnv",

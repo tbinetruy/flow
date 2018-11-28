@@ -837,7 +837,7 @@ class DesiredVelocityEnv(BottleneckEnv):
 
                     traci_veh = self.traci_connection.vehicle
                     max_speed_curr = traci_veh.getMaxSpeed(rl_id)
-                    next_max = np.clip(max_speed_curr + action, 0.01, 23.0)
+                    next_max = np.clip(max_speed_curr + action, 2.0, 23.0)
                     traci_veh.setMaxSpeed(rl_id, next_max)
 
                 else:
@@ -873,7 +873,8 @@ class DesiredVelocityEnv(BottleneckEnv):
                 try:
                     inflow = InFlows()
                     inflow.add(
-                        veh_type="followerstopper",
+                        veh_type="av",
+                        name="av",
                         edge="1",
                         vehs_per_hour=flow_rate * .1,
                         departLane="random",
@@ -900,7 +901,7 @@ class DesiredVelocityEnv(BottleneckEnv):
                         lane_change_mode=0,  # 1621,#0b100000101,
                         num_vehicles=1 * self.scaling)
                     vehicles.add(
-                        veh_id="followerstopper",
+                        veh_id="av",
                         acceleration_controller=(RLController, {}),
                         lane_change_controller=(SumoLaneChangeController, {}),
                         routing_controller=(ContinuousRouter, {}),
