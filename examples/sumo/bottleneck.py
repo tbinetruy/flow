@@ -13,7 +13,7 @@ SCALING = 1
 DISABLE_TB = True
 # If set to False, ALINEA will control the ramp meter
 DISABLE_RAMP_METER = True
-INFLOW = 1800
+INFLOW = 1900
 
 
 def bottleneck_example(flow_rate, horizon, render=None):
@@ -69,6 +69,7 @@ def bottleneck_example(flow_rate, horizon, render=None):
     inflow = InFlows()
     inflow.add(
         veh_type="human",
+        name="human",
         edge="1",
         vehsPerHour=flow_rate,
         departLane="random",

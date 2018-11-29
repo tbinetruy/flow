@@ -837,7 +837,7 @@ class DesiredVelocityEnv(BottleneckEnv):
 
                     traci_veh = self.traci_connection.vehicle
                     max_speed_curr = traci_veh.getMaxSpeed(rl_id)
-                    next_max = np.clip(max_speed_curr + action, 2.0, 23.0)
+                    next_max = np.clip(max_speed_curr + action, 1.0, 23.0)
                     traci_veh.setMaxSpeed(rl_id, next_max)
 
                 else:
