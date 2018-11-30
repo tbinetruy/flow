@@ -94,69 +94,6 @@ def minicity_example(render=None,
             speed_mode='no_collide',
             lane_change_mode='strategic',
             num_vehicles=v_num)
-    # vehicles.add(
-    #     veh_id='bottom_left_rl',
-    #     acceleration_controller=(IDMController, {}),
-    #     routing_controller=(MinicityTrainingRouter, {}),
-    #     speed_mode='no_collide',
-    #     lane_change_mode='strategic',
-    #     num_vehicles=3)
-    # vehicles.add(
-    #     veh_id='center_left_rl',
-    #     acceleration_controller=(IDMController, {}),
-    #     routing_controller=(MinicityTrainingRouter, {}),
-    #     speed_mode='no_collide',
-    #     lane_change_mode='strategic',
-    #     num_vehicles=2)
-    # vehicles.add(
-    #     veh_id='center_center_rl',
-    #     acceleration_controller=(IDMController, {}),
-    #     routing_controller=(MinicityTrainingRouter, {}),
-    #     speed_mode='no_collide',
-    #     lane_change_mode='strategic',
-    #     num_vehicles=5)
-    # vehicles.add(
-    #     veh_id='bottom_center_rl',
-    #     acceleration_controller=(IDMController, {}),
-    #     routing_controller=(MinicityTrainingRouter, {}),
-    #     speed_mode='no_collide',
-    #     lane_change_mode='strategic',
-    #     num_vehicles=0)
-    # vehicles.add(
-    #     veh_id='bottom_right_rl',
-    #     acceleration_controller=(IDMController, {}),
-    #     routing_controller=(MinicityTrainingRouter, {}),
-    #     speed_mode='no_collide',
-    #     lane_change_mode='strategic',
-    #     num_vehicles=0)
-    # vehicles.add(
-    #     veh_id='center_right_rl',
-    #     acceleration_controller=(IDMController, {}),
-    #     routing_controller=(MinicityTrainingRouter, {}),
-    #     speed_mode='no_collide',
-    #     lane_change_mode='strategic',
-    #     num_vehicles=0)
-    # vehicles.add(
-    #     veh_id='top_left_rl',
-    #     acceleration_controller=(IDMController, {}),
-    #     routing_controller=(MinicityTrainingRouter, {}),
-    #     speed_mode='no_collide',
-    #     lane_change_mode='strategic',
-    #     num_vehicles=0)
-    # vehicles.add(
-    #     veh_id='top_center_rl',
-    #     acceleration_controller=(IDMController, {}),
-    #     routing_controller=(MinicityTrainingRouter, {}),
-    #     speed_mode='no_collide',
-    #     lane_change_mode='strategic',
-    #     num_vehicles=0)
-    # vehicles.add(
-    #     veh_id='top_right_rl',
-    #     acceleration_controller=(IDMController, {}),
-    #     routing_controller=(MinicityTrainingRouter, {}),
-    #     speed_mode='no_collide',
-    #     lane_change_mode='strategic',
-    #     num_vehicles=0)
 
     env_params = EnvParams(additional_params=ADDITIONAL_ENV_PARAMS)
 
