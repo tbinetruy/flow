@@ -49,6 +49,8 @@ def minicity_example(render=None,
     if show_radius is not None:
         sumo_params.show_radius = show_radius
 
+    sumo_params.sim_step = 0.2
+
     vehicles = Vehicles()
     # section 1: bottom_left
     section_1 = {'e_2': [('bottom_left_track', 3), ('idm', 2)],
