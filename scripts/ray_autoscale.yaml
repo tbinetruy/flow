@@ -74,7 +74,7 @@ worker_nodes:
 setup_commands:
     # checkout your desired branch on all worker nodes
     - cd flow && git fetch && git checkout lotr_testing_kanaad
-    - cd ray && git fetch eugene_upstream && git checkout eugene_upstream/master && git pull eugene_upstream master
+#    - cd ray && git fetch eugene_upstream && git checkout eugene_upstream/master && git pull eugene_upstream master
     - echo 'export PATH="/home/ubuntu/sumo/bin:$PATH"' >> ~/.bashrc
     - echo 'export SUMO_HOME="/home/ubuntu/sumo"' >> ~/.bashrc
     - echo 'export PYTHONPATH="/home/ubuntu/sumo/tools:$PYTHONPATH"' >> ~/.bashrc
