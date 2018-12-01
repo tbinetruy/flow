@@ -78,13 +78,15 @@ class MinicityTrainingRouter(MinicityRouter):
         elif 'bottom_center' in type_id and not route_assigned:
             route = ['e_39', 'e_37', 'e_29_u', 'e_21']
         elif 'center_right' in type_id and not route_assigned:
-            #route = ['e_60','e_69', 'e_72','e_68', 'e_66', 'e_63','e_94','e_52','e_38','e_50','e_60','e_69', 'e_72','e_68', 'e_66', 'e_63','e_94','e_52','e_38','e_50','e_60']
             route = ['e_60', 'e_69','e_72','e_68','e_66','e_63','e_94','e_52','e_38','e_50','e_60']
         elif 'top_left' in type_id and not route_assigned:
             route = ['e_34', 'e_23', 'e_15', 'e_16','e_20', 'e_47', 'e_34']
         elif 'top_center' in type_id and not route_assigned:
             route = ['e_42', 'e_44','e_46','e_48','e_78','e_86', 'e_59']
-            #route = ['e_42']
+        elif 'top_center_down' in type_id and not route_assigned:
+            route = ['e_79','e_47', 'e_45']
+        elif 'toplucas' in type_id and not route_assigned:
+            route = ['e_73','e_75','e_77','e_81','e_84','e_85','e_90']
         elif 'idm' in type_id:
             route = MinicityRouter.choose_route(self, env)
         else:

@@ -83,7 +83,8 @@ def minicity_example(render=None,
                  'e_14': [('idm', 3)],
                  'e_27': [('idm', 2)],
                  'e_6': [('idm', 1)],
-                 'e_12': [('idm', 2)]}    
+                 'e_12': [('idm', 2)],
+                 'e_35': [('idm', 5)]}    
     # section 6: right center
     section_6 = {'e_60': [('center_right_track', 1), ('idm', 1)],
                  'e_50': [('center_right_track', 3), ('idm', 1)],
@@ -91,17 +92,34 @@ def minicity_example(render=None,
                  'e_67': [('idm', 3)],
                  'e_71': [('idm', 2)],
                  'e_69': [('idm', 1)],
-                 'e_64': [('idm', 3)]}
+                 'e_64': [('idm', 2)]}
     # section 7: top center
     section_7 = {'e_42': [('top_center_track', 3), ('idm', 1)],
                  'e_44': [('top_center_track', 2), ('idm', 1)],
+                 'e_79': [('idm', 8)],
                  'e_59': [('idm', 3)],
                  'e_24': [('idm', 1)],
-                 'e_33': [('idm', 1)],
-                 'e_47': [('idm', 1)],
-                 'e_40': [('idm', 1)]}
+                 'e_33': [('idm', 3)],
+                 'e_47': [('idm', 2)],
+                 'e_86': [('idm', 2)],
+                 'e_22': [('idm', 5)],
+                 'e_40': [('idm', 2)]}
+    # top right
+    section_8 ={'e_84': [('idm', 1)],
+    			'e_73': [('toplucas_track',3)],
+                'e_77': [('idm', 1)],
+                'e_56': [('idm', 3)],
+                'e_89': [('idm', 1)],
+                'e_80': [('idm', 3)],
+                'e_83': [('idm', 2)],
+                'e_82': [('idm', 1)],
+                'e_90': [('idm', 1)],
+                'e_78': [('idm', 1)],
+                'e_76': [('idm', 2)],
+                'e_86': [('idm', 4)],
+                'e_75': [('idm', 1)]}
 
-    experiment = section_7
+    experiment = section_8
     vehicle_data = {}
     # get all different vehicle types
     for _, pairs in experiment.items():
