@@ -32,7 +32,7 @@ NUM_RINGS = 1
 # number of rollouts per training iteration
 N_ROLLOUTS = 20  # int(20/NUM_RINGS)
 # number of parallel workers
-N_CPUS = 2  # int(20/NUM_RINGS)
+N_CPUS = 16  # int(20/NUM_RINGS)
 
 # We place one autonomous vehicle and 21 human-driven vehicles in the network
 vehicles = Vehicles()
@@ -107,8 +107,11 @@ def setup_exps():
     config['train_batch_size'] = HORIZON * N_ROLLOUTS
     config['simple_optimizer'] = True
     config['gamma'] = 0.999  # discount rate
-    config['model'].update({'fcnet_hiddens': [32, 32]})
-    config['lr'] = tune.grid_search([1e-5])
+    config['model'].update({'fcnet_hiddens': [64, 64, 64]})
+    config['lr'] = tune.grid_search([1e-6, 1e-5, 1e-4])
+    config["use_gae"] = True
+    config["lambda"] = tune.grid_search([0.5, 0.97, 0.99])
+    config["num_sgd_iter"] = 10
     config['horizon'] = HORIZON
     config['observation_filter'] = 'NoFilter'
 
@@ -155,11 +158,11 @@ if __name__ == '__main__':
         flow_params['exp_tag']: {
             'run': alg_run,
             'env': env_name,
-            'checkpoint_freq': 1,
+            'checkpoint_freq': 50,
             'stop': {
-                'training_iteration': 1
+                'training_iteration': 101
             },
             'config': config,
-            # 'upload_dir': 's3://<BUCKET NAME>'
+            'upload_dir': "s3://kanaad.experiments/lotr_{}_rings".format(NUM_RINGS)
         },
     })
