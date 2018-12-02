@@ -186,20 +186,20 @@ def minicity_example(render=None,
                 # 'e_69': [('idm', 1)],
                 'e_64': [('idm', 2)],
                 'e_34': [('section5_track', 4), ('idm', 1)],
-                # 'e_13': [('idm', 2)],
-                # 'e_14': [('idm', 1)],
+                # 'e_13': [('idm', 1)],
+                'e_14': [('idm', 1)],
                 # 'e_27': [('idm', 2)],
-                # 'e_6': [('idm', 1)],
-                # 'e_12': [('idm', 2)],
+                'e_6': [('idm', 1)],
+                'e_12': [('idm', 2)],
                 # 'e_35': [('idm', 1)],
                 'e_39': [('section4_track', 5), ('idm', 1)],
-                # 'e_63': [('idm', 4)],
+                'e_63': [('idm', 4)],
                 # 'e_51': [('idm', 1)],
-                # 'e_94': [('idm', 2)],
+                'e_94': [('idm', 2)],
                 # 'e_29_u': [('idm', 1)],
-                'e_41': [('section3_track', 5), ('idm', 1)]}
-                # 'e_38': [('idm', 8)],
-                # 'e_54': [('idm', 6)]}     
+                'e_41': [('section3_track', 5), ('idm', 1)],
+                # 'e_38': [('idm', 1)],
+                'e_54': [('idm', 6)]}     
 
     experiment = section_ALL
     vehicle_data = {}
