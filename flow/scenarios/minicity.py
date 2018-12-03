@@ -120,7 +120,7 @@ class MiniCityScenario(Scenario):
                   'numLanes': 2, 'type': 'edgeType',
                   'shape': [
                       (-0.38 + 1.03 * cos(t), 1.80 + 1.03 * sin(t))
-                      for t in linspace(2 * pi, 2 * pi - 0.56 / 1.03, res)]
+                      for t in linspace(2 * pi, 2 * pi - 0.60 / 1.03, res)]
                   },
                  {'id': 'e_2', 'from': 'n_i1', 'to': 'n_s1', 'length': None,
                   'numLanes': 2, 'type': 'edgeType'},
@@ -339,7 +339,7 @@ class MiniCityScenario(Scenario):
                   'numLanes': 1, 'type': 'edgeType',
                   'shape': [
                       (4.51 + 0.57 * cos(t), 2.27 + 0.57 * sin(t))
-                      for t in reversed(linspace(- 0.42 / 0.57, 0, res))]
+                      for t in reversed(linspace(- 0.30 / 0.57, 0, res))]
                   },
                  {'id': 'e_69', 'from': 'n_b6', 'to': 'n_i6', 'length': None,
                   'numLanes': 1, 'type': 'edgeType'},
@@ -406,7 +406,7 @@ class MiniCityScenario(Scenario):
                   'numLanes': 2, 'type': 'edgeType',
                   'shape': [(0.90 + 0.53 * cos(t), 0.93 + 0.53 * sin(t))
                             for t in linspace(3 * pi / 2 + 1.46 / 0.53,
-                                              3.46 * pi / 2 + 1.46/0.53, res)]
+                                              3.52 * pi / 2 + 1.46/0.53, res)]
                   },
                  {'id': 'e_93', 'from': 'n_s7_l', 'to': 'n_s7_r',
                   'length': None, 'numLanes': 2, 'type': 'edgeType'},
