@@ -51,6 +51,8 @@ def minicity_example(render=None,
 
     vehicles = Vehicles()
     # section 1: bottom_left
+    section_0 = {'e_2': [('idm', 2)]}
+
     section_1 = {'e_2': [('section1_track', 3), ('idm', 2)],
                  'e_3': [('idm', 5)],
                  'e_25': [('idm', 4)],
@@ -151,7 +153,7 @@ def minicity_example(render=None,
                 'e_86': [('idm', 4)],
                 'e_75': [('idm', 1)]}       
 # all sections combined
-    section_ALL = {'e_2': [('section1_track', 3), ('idm', 2)],
+    section_combined0 = {'e_2': [('section1_track', 3), ('idm', 2)],
                 'e_25': [('idm', 4)],
                 'e_31': [('idm', 2)],
     			'e_3': [('section2_track', 3)],
@@ -201,7 +203,7 @@ def minicity_example(render=None,
                 # 'e_38': [('idm', 1)],
                 'e_54': [('idm', 6)]}     
 
-    experiment = section_ALL
+    experiment = section_0
     vehicle_data = {}
     # get all different vehicle types
     for _, pairs in experiment.items():

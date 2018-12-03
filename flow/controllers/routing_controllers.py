@@ -4,6 +4,9 @@ import random
 
 from flow.controllers.base_routing_controller import BaseRouter
 
+import numpy as np
+np.random.seed(204)
+
 
 class ContinuousRouter(BaseRouter):
     """A router used to continuously re-route of the vehicle in a closed loop.
