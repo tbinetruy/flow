@@ -4,6 +4,9 @@ import random
 
 from flow.controllers.base_routing_controller import BaseRouter
 
+import numpy as np
+np.random.seed(204)
+
 
 class ContinuousRouter(BaseRouter):
     """A router used to continuously re-route of the vehicle in a closed loop.
@@ -69,16 +72,23 @@ class MinicityTrainingRouter_9(MinicityRouter):
 
         if len(cur_route) > 1:
             route_assigned = True
+<<<<<<< HEAD
         if 'bottom_left' in type_id and not route_assigned:
             route = ['e_2', 'e_1', 'e_7', 'e_8_b', 'e_8_u', 'e_9', 'e_10',
                      'e_11']
         elif 'center_left' in type_id and not route_assigned:
+=======
+        if 'section1' in type_id and not route_assigned:
+            route = ['e_2', 'e_1', 'e_7', 'e_8_b', 'e_8_u', 'e_9', 'e_10', 'e_11']
+        elif 'section2' in type_id and not route_assigned:
+>>>>>>> 44465fed5cb8ae2fa7ae27d6d7721036b5fcd111
             route = ['e_3', 'e_25', 'e_30', 'e_31', 'e_32', 'e_21', 'e_8_u']
         elif 'section3' in type_id and not route_assigned:
             route = ['e_41', 'e_39', 'e_37', 'e_29_u', 'e_21', 'e_8_u', 'e_9']
         elif 'section4' in type_id and not route_assigned:
             route = ['e_39', 'e_37', 'e_29_u', 'e_21']
         elif 'section6' in type_id and not route_assigned:
+<<<<<<< HEAD
             route = ['e_60', 'e_69', 'e_72', 'e_68', 'e_66', 'e_63', 'e_94',
                      'e_52', 'e_38', 'e_50', 'e_60']
         elif 'section5' in type_id and not route_assigned:
@@ -87,6 +97,17 @@ class MinicityTrainingRouter_9(MinicityRouter):
             route = ['e_42', 'e_44', 'e_46', 'e_48', 'e_78', 'e_86', 'e_59']
         elif 'section8' in type_id and not route_assigned:
             route = ['e_73', 'e_75', 'e_77', 'e_81', 'e_84', 'e_85', 'e_90']
+=======
+            route = ['e_60', 'e_69','e_72','e_68','e_66','e_63','e_94','e_52','e_38','e_50','e_60']
+        elif 'section5' in type_id and not route_assigned:
+            route = ['e_34', 'e_23', 'e_15', 'e_16','e_20', 'e_47', 'e_34']
+        elif 'section7' in type_id and not route_assigned:
+            route = ['e_42', 'e_44','e_46','e_48','e_78','e_86', 'e_59']
+        # elif 'top_center_down' in type_id and not route_assigned:
+        #     route = ['e_79','e_47', 'e_45']
+        elif 'section8' in type_id and not route_assigned:
+            route = ['e_73','e_75','e_77','e_81','e_84','e_85','e_90']
+>>>>>>> 44465fed5cb8ae2fa7ae27d6d7721036b5fcd111
         elif 'idm' in type_id:
             route = MinicityRouter.choose_route(self, env)
         else:
