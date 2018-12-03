@@ -60,7 +60,7 @@ class MinicityRouter(BaseRouter):
         return next_route
 
 
-class MinicityTrainingRouter(MinicityRouter):
+class MinicityTrainingRouter_9(MinicityRouter):
 
     def choose_route(self, env):
         type_id = env.vehicles.get_state(self.veh_id, 'type')
@@ -74,19 +74,77 @@ class MinicityTrainingRouter(MinicityRouter):
                      'e_11']
         elif 'center_left' in type_id and not route_assigned:
             route = ['e_3', 'e_25', 'e_30', 'e_31', 'e_32', 'e_21', 'e_8_u']
-        elif 'center_center' in type_id and not route_assigned:
+        elif 'section3' in type_id and not route_assigned:
             route = ['e_41', 'e_39', 'e_37', 'e_29_u', 'e_21', 'e_8_u', 'e_9']
-        elif 'bottom_center' in type_id and not route_assigned:
+        elif 'section4' in type_id and not route_assigned:
             route = ['e_39', 'e_37', 'e_29_u', 'e_21']
-        elif 'center_right' in type_id and not route_assigned:
+        elif 'section6' in type_id and not route_assigned:
             route = ['e_60', 'e_69', 'e_72', 'e_68', 'e_66', 'e_63', 'e_94',
                      'e_52', 'e_38', 'e_50', 'e_60']
-        elif 'top_left' in type_id and not route_assigned:
+        elif 'section5' in type_id and not route_assigned:
             route = ['e_34', 'e_23', 'e_15', 'e_16', 'e_20', 'e_47', 'e_34']
-        elif 'top_center' in type_id and not route_assigned:
+        elif 'section7' in type_id and not route_assigned:
             route = ['e_42', 'e_44', 'e_46', 'e_48', 'e_78', 'e_86', 'e_59']
+        elif 'section8' in type_id and not route_assigned:
+            route = ['e_73', 'e_75', 'e_77', 'e_81', 'e_84', 'e_85', 'e_90']
         elif 'idm' in type_id:
             route = MinicityRouter.choose_route(self, env)
+        else:
+            route = None
+
+        return route
+
+
+class MinicityTrainingRouter_4(MinicityRouter):
+
+    def choose_route(self, env):
+        type_id = env.vehicles.get_state(self.veh_id, 'type')
+        edge = env.vehicles.get_edge(self.veh_id)
+        cur_route = env.vehicles.get_route(self.veh_id)
+        route_assigned = False
+        # print(cur_route)
+
+        routes = {}
+        overlap_routes = {}
+        some_routes = [['e_80', 'e_83', 'e_82', 'e_79', 'e_47', 'e_49', 'e_55',
+                        'e_56', 'e_89'],
+                       ['e_45', 'e_43', 'e_41', 'e_50', 'e_60', 'e_69', 'e_73',
+                        'e_75', 'e_86', 'e_59'],
+                       ['e_48', 'e_81', 'e_84', 'e_85', 'e_90', 'e_62', 'e_57',
+                        'e_59', 'e_46'],
+                       ['e_49', 'e_58', 'e_76', 'e_74', 'e_70', 'e_61', 'e_54',
+                        'e_40', 'e_42', 'e_44']
+                       # ['e_46', 'e_48', 'e_78', 'e_76', 'e_74', 'e_70', 'e_61',
+                       #  'e_54', 'e_40', 'e_42', 'e_44']
+                       ]
+        for some_route in some_routes:
+            for i in range(len(some_route)):
+                # Routes through the top edge going right will continue in the
+                # first path, while those in the center top edge will follow
+                # the second path. This is to prevent vehicles in these routes
+                # from converging onto one path.
+                if some_route[-i] in routes:
+                    overlap_routes[some_route[-i]] = \
+                        some_route[-i:] + some_route[:-i]
+                else:
+                    routes[some_route[-i]] = some_route[-i:] + some_route[:-i]
+
+        # if len(cur_route) > 1:
+        #     route_assigned = True
+        # if 'upper_right_cc_1' in type_id and not route_assigned:
+        #     route = routes['e_80']
+        # elif 'upper_right_cc_2' in type_id and not route_assigned:
+        #     route = routes['e_45']
+        if 'idm' in type_id:
+            route = MinicityRouter.choose_route(self, env)
+        elif edge == cur_route[-1]:
+            if edge in overlap_routes:
+                # pick randomly among possible choices given multiple routes
+                possible_routes = [overlap_routes[edge], routes[edge]]
+                route = random.choice(possible_routes)
+            else:
+                # choose the only available route
+                route = routes[edge]
         else:
             route = None
 
