@@ -1093,6 +1093,7 @@ class Scenario(Serializable):
                 veh_id = deepcopy(vehicle_ids[j])
                 veh_type = vehicles.get_state(veh_id, "type")
                 del vehicle_ids[j]
+            print(veh_id, edge, pos, lane)
 
             type_depart_speed = vehicles.get_initial_speed(veh_id)
             routes.append(

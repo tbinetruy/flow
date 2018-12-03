@@ -32,7 +32,7 @@ def minicity_example(render=None,
         A non-rl experiment demonstrating the performance of human-driven
         vehicles on the minicity scenario.
     """
-    sumo_params = SumoParams(render=False, sim_step=0.5,seed=seed)
+    sumo_params = SumoParams(render=False,seed=seed)
 
     if render is not None:
         sumo_params.render = render
@@ -185,8 +185,8 @@ def minicity_example(render=None,
                 # 'e_90': [('idm', 1)],
                 # 'e_78': [('idm', 1)],
                 # 'e_76': [('idm', 2)],
-                'e_86': [('idm', 4)],
-                'e_75': [('idm', 1)],
+                # 'e_86': [('idm', 4)],
+                # 'e_75': [('idm', 1)],
                 'e_42': [('section7_track', 3), ('idm', 1)],
                 'e_79': [('idm', 8)],
                 'e_59': [('idm', 3)],
@@ -217,15 +217,8 @@ def minicity_example(render=None,
                 # 'e_38': [('idm', 1)],
                 'e_54': [('idm', 6)]}
 
-<<<<<<< HEAD
     experiment = section_combined0
-=======
-    experiment = section_0
-<<<<<<< HEAD
-=======
->>>>>>> 44465fed5cb8ae2fa7ae27d6d7721036b5fcd111
->>>>>>> 55e966115bdfa6de066982ca8a7552a710eaa967
->>>>>>> 69e81068d6fa9ce0cc8f8a3ded44d9a5b8586c76
+
     vehicle_data = {}
     # get all different vehicle types
     for _, pairs in experiment.items():
@@ -251,7 +244,9 @@ def minicity_example(render=None,
 
     initial_config = InitialConfig(
         spacing='random',
-        edges_distribution=experiment)
+        edges_distribution=experiment,
+        # min_gap=2
+    )
     # initial_config = InitialConfig(
     #     spacing="random",
     #     min_gap=5
@@ -283,4 +278,4 @@ if __name__ == "__main__":
                            show_radius=True)
 
     # run for a set number of rollouts / time steps
-    exp.run(1, 1000)
+    exp.run(1, 3000)

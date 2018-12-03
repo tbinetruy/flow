@@ -58,7 +58,12 @@ def minicity_example(render=None,
                    'e_84', 'e_85', 'e_90', 'e_62', 'e_57', 'e_46', 'e_76',
                    'e_76', 'e_74', 'e_70', 'e_61', 'e_54', 'e_40', 'e_42',
                    'e_44']
-    # section 2:
+    # section 2: upper left
+    edge_starts_2 = ['e_12', 'e_18', 'e_19', 'e_24', 'e_33', 'e_45', 'e_43', 'e_41', 'e_88', 'e_26',
+                    'e_34', 'e_23', 'e_5','e_4', 'e_3', 'e_25', 'e_87', 'e_40', 'e_42', 'e_44',
+                    'e_15', 'e_16', 'e_20', 'e_47','e_46', 'e_35', 'e_27', 'e_6', 'e_22']
+    # section 3: bottom right corner
+    edge_starts_3 = ['e_50', 'e_60', 'e_69', 'e_72', 'e_68', 'e_66', 'e_63','e_52', 'e_38']
 
     # add vehicle
     vehicles.add(
@@ -67,7 +72,7 @@ def minicity_example(render=None,
         routing_controller=(MinicityTrainingRouter_4, {}),
         speed_mode='no_collide',
         lane_change_mode='strategic',
-        num_vehicles=35)
+        num_vehicles=40)
 
     env_params = EnvParams(additional_params=ADDITIONAL_ENV_PARAMS)
 
@@ -77,7 +82,8 @@ def minicity_example(render=None,
 
     initial_config = InitialConfig(
         spacing='random',
-        edges_distribution=edge_starts_1)
+        edges_distribution=edge_starts_3,
+        min_gap=2)
     # initial_config = InitialConfig(
     #     spacing="random",
     #     min_gap=5
@@ -105,7 +111,7 @@ if __name__ == "__main__":
     import time
     for _ in range(100):
         # t = time.time()
-        exp = minicity_example(render=True,
+        exp = minicity_example(render='drgb',
                                save_render=False,
                                sight_radius=50,
                                pxpm=3,
