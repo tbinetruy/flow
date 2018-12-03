@@ -192,3 +192,105 @@ class BottleneckScenario(Scenario):
     def get_bottleneck_lanes(self, lane):
         """Return the reduced number of lanes."""
         return [int(lane / 2), int(lane / 4)]
+
+class MiniBottleneckScenario(BottleneckScenario):
+    """Scenario class for mini bottleneck simulations."""
+
+    def specify_nodes(self, net_params):
+        """See parent class."""
+        nodes = [
+            {
+                "id": "1",
+                "x": "0",
+                "y": "0"
+            },  # pre-toll
+            {
+                "id": "2",
+                "x": "100",
+                "y": "0"
+            },  # toll
+            {
+                "id": "3",
+                "x": "200",
+                "y": "0"
+            },  # light
+            {
+                "id": "4",
+                "x": "300",
+                "y": "0",
+                "type": "zipper",
+                "radius": "20"
+            },  # merge1
+            {
+                "id": "5",
+                "x": "400",
+                "y": "0",
+                "type": "zipper",
+                "radius": "20"
+            },  # merge2
+            {
+                "id": "6",
+                "x": "500",
+                "y": "0"
+            }
+        ]  # post-merge2
+        return nodes
+
+    def specify_edges(self, net_params):
+        """See parent class."""
+        scaling = net_params.additional_params.get("scaling", 1)
+        assert (isinstance(scaling, int)), "Scaling must be an int"
+
+        edges = [
+            {
+                "id": "1",
+                "from": "1",
+                "to": "2",
+                "length": "100",  #
+                "spreadType": "center",
+                "numLanes": str(4 * scaling),
+                "speed": "23"
+            },
+            {
+                "id": "2",
+                "from": "2",
+                "to": "3",
+                "length": "100",  # DONE
+                "spreadType": "center",
+                "numLanes": str(4 * scaling),
+                "speed": "23"
+            },
+            {
+                "id": "3",
+                "from": "3",
+                "to": "4",
+                "length": "100",  # DONE
+                "spreadType": "center",
+                "numLanes": str(4 * scaling),
+                "speed": "23"
+            },
+            {
+                "id": "4",
+                "from": "4",
+                "to": "5",
+                "length": "100",  # DONE
+                "spreadType": "center",
+                "numLanes": str(2 * scaling),
+                "speed": "23"
+            },
+            {
+                "id": "5",
+                "from": "5",
+                "to": "6",
+                "length": "100",
+                "spreadType": "center",
+                "numLanes": str(scaling),
+                "speed": "23"
+            }
+        ]
+
+        return edges
+
+    def specify_edge_starts(self):
+        """See parent class."""
+        return [("1", 0), ("2", 50), ("3", 100), ("4", 125), ("5", 150)]

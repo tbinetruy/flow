@@ -10,10 +10,17 @@ from flow.envs.green_wave_env import TrafficLightGridEnv, \
 from flow.envs.loop.lane_changing import LaneChangeAccelEnv, \
     LaneChangeAccelPOEnv
 from flow.envs.loop.loop_accel import AccelEnv
+from flow.envs.loop.loop_accel import AccelCNNDebugEnv, AccelCNNEnv, \
+    AccelCNNIDMEnv
 from flow.envs.loop.loop_accel import MultiAgentAccelEnv
 from flow.envs.loop.loop_merges import TwoLoopsMergePOEnv
+from flow.envs.loop.loop_merges import TwoLoopsMergeCNNDebugEnv, \
+    TwoLoopsMergeCNNEnv, TwoLoopsMergeCNNIDMEnv
 from flow.envs.loop.wave_attenuation import WaveAttenuationEnv, \
-    WaveAttenuationPOEnv, MultiWaveAttenuationPOEnv
+    WaveAttenuationPOEnv
+from flow.envs.loop.wave_attenuation import WaveAttenuationCNNDebugEnv, \
+WaveAttenuationCNNEnv, WaveAttenuationCNNIDMEnv
+from flow.envs.loop.wave_attenuation import MultiWaveAttenuationPOEnv
 from flow.envs.merge import WaveAttenuationMergePOEnv
 from flow.envs.test import TestEnv
 
@@ -25,4 +32,8 @@ __all__ = [
     "WaveAttenuationEnv", "WaveAttenuationPOEnv", "MultiWaveAttenuationPOEnv",
     "TrafficLightGridEnv", "PO_TrafficLightGridEnv", "DesiredVelocityEnv",
     "TestEnv", "BayBridgeEnv", "MultiAgentAccelEnv",
+    "AccelCNNDebugEnv", "AccelCNNEnv", "AccelCNNIDMEnv",
+    "WaveAttenuationCNNDebugEnv", "WaveAttenuationCNNEnv", \
+    "WaveAttenuationCNNIDMEnv", "TwoLoopsMergeCNNDebugEnv", \
+    "TwoLoopsMergeCNNEnv", "TwoLoopsMergeCNNIDMEnv"
 ]

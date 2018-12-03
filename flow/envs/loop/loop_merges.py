@@ -2,14 +2,25 @@
 
 from flow.envs.base_env import Env
 from flow.core import rewards
+from flow.core.params import InitialConfig, NetParams, SumoCarFollowingParams
+from flow.controllers import IDMController, PISaturation
+
 from gym.spaces.box import Box
+from gym.spaces.tuple_space import Tuple
+
 import numpy as np
+import collections
+
+import os
+from os.path import expanduser
+HOME = expanduser("~")
+import time
 
 ADDITIONAL_ENV_PARAMS = {
     # maximum acceleration for autonomous vehicles, in m/s^2
     "max_accel": 3,
     # maximum deceleration for autonomous vehicles, in m/s^2
-    "max_decel": 3,
+    "max_decel": 5,
     # desired velocity for all vehicles in the network, in m/s
     "target_velocity": 10,
     # number of observable vehicles preceding the rl vehicle
@@ -80,11 +91,21 @@ class TwoLoopsMergePOEnv(Env):
     @property
     def observation_space(self):
         """See class definition."""
-        return Box(
+        speed = Box(
             low=0,
             high=np.inf,
-            shape=(2 * self.n_obs_vehicles + 3, ),
+            shape=(self.n_obs_vehicles, ),
             dtype=np.float32)
+        absolute_pos = Box(
+            low=0.,
+            high=np.inf,
+            shape=(self.n_obs_vehicles, ),
+            dtype=np.float32)
+        queue_length = Box(low=0, high=np.inf, shape=(1, ), dtype=np.float32)
+        vel_stats = Box(
+            low=-np.inf, high=np.inf, shape=(2, ), dtype=np.float32)
+
+        return Tuple((speed, absolute_pos, queue_length, vel_stats))
 
     @property
     def action_space(self):
@@ -194,8 +215,8 @@ class TwoLoopsMergePOEnv(Env):
         vel_stats[1] = np.mean(vel_all[num_inner:])
         vel_stats = np.nan_to_num(vel_stats)
 
-        return np.concatenate(
-            (normalized_vel, normalized_pos, queue_length, vel_stats))
+        return np.array(
+            [normalized_vel, normalized_pos, queue_length, vel_stats]).T
 
     def sort_by_position(self):
         """
@@ -222,3 +243,85 @@ class TwoLoopsMergePOEnv(Env):
         sorted_separated_ids = sorted_human_ids + sorted_rl_ids
 
         return sorted_separated_ids, sorted_ids
+
+class TwoLoopsMergeCNNDebugEnv(TwoLoopsMergePOEnv):
+    @property
+    def observation_space(self):
+        """See class definition."""
+        height = self.sights[0].shape[0]
+        width = self.sights[0].shape[1]
+        return Box(0., 1., [height, width, 5])
+
+    def get_state(self, **kwargs):
+        """See class definition."""
+        import matplotlib.pyplot as plt
+        import matplotlib
+        matplotlib.rc("font", family="FreeSans", size=12)
+
+        if False:
+            np.set_printoptions(threshold=np.nan)
+            print("get_state() frame shape:", self.frame.shape)
+            print("get_state() frame buffer length:", len(self.frame_buffer))
+            print("get_state() sights 0 shape:", self.sights[0].shape)
+            print("get_state() sights buffer length:", len(self.sights_buffer))
+
+        fig = plt.figure()
+        ax1 = fig.add_subplot(1,2,1)
+        ax1.imshow(np.squeeze(self.frame), interpolation=None,
+                   cmap="gray", vmin=0, vmax=255)
+        ax1.set_title("Global State")
+        ax2 = fig.add_subplot(1,2,2)
+        ax2.imshow(np.squeeze(self.sights[0]), interpolation=None,
+                   cmap="gray", vmin=0, vmax=255)
+        ax2.set_title("Local Observation")
+        plt.tight_layout()
+        if not os.path.exists(self.path):
+            os.mkdir(self.path)
+        plt.savefig("%s/frame_%06d.png" %
+                    (self.path, self.step_counter),
+                    bbox_inches="tight", dpi=300)
+        plt.close()
+        sights_buffer = np.squeeze(np.array(self.sights_buffer))
+        sights_buffer = np.moveaxis(sights_buffer, 0, -1)
+        return sights_buffer / 255.
+
+class TwoLoopsMergeCNNEnv(TwoLoopsMergePOEnv):
+    @property
+    def observation_space(self):
+        """See class definition."""
+        height = self.sights[0].shape[0]
+        width = self.sights[0].shape[1]
+        return Box(0., 1., [height, width, 5])
+
+    def get_state(self, **kwargs):
+        """See class definition."""
+        sights_buffer = np.squeeze(np.array(self.sights_buffer))
+        sights_buffer = np.moveaxis(sights_buffer, 0, -1)
+        return sights_buffer / 255.
+
+    def compute_reward(self, rl_actions, **kwargs):
+        """See class definition."""
+        max_speed = self.scenario.max_speed
+        speed = self.vehicles.get_speed(self.vehicles.get_ids())
+        return (0.8*np.mean(speed) - 0.2*np.std(speed))/max_speed
+
+class TwoLoopsMergeCNNIDMEnv(TwoLoopsMergeCNNEnv):
+    def __init__(self, env_params, sumo_params, scenario):
+       super().__init__(env_params, sumo_params, scenario)
+       self.default_controller = [
+           IDMController(vid, sumo_cf_params=SumoCarFollowingParams())
+           for vid in self.vehicles.get_rl_ids()]
+
+    def apply_acceleration(self, veh_ids, acc):
+       for i, vid in enumerate(veh_ids):
+           if acc[i] is not None:
+               this_vel = self.vehicles.get_speed(vid)
+               if "rl" in vid:
+                   low=-np.abs(self.env_params.additional_params["max_decel"])
+                   high=self.env_params.additional_params["max_accel"]
+                   alpha = self.env_params.additional_params["augmentation"]
+                   default_acc = self.default_controller[i].get_accel(self)
+                   acc[i] = alpha*acc[i] +\
+                            (1.0 - alpha)*np.clip(default_acc, low, high)
+               next_vel = max([this_vel + acc[i] * self.sim_step, 0])
+               self.traci_connection.vehicle.slowDown(vid, next_vel, 1)
