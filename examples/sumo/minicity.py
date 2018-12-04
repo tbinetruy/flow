@@ -6,6 +6,7 @@ from flow.core.params import SumoParams, EnvParams, NetParams, InitialConfig
 from flow.core.vehicles import Vehicles
 from flow.envs.loop.loop_accel import AccelEnv, ADDITIONAL_ENV_PARAMS
 from flow.scenarios.minicity import MiniCityScenario, ADDITIONAL_NET_PARAMS
+
 from flow.controllers.routing_controllers import MinicityTrainingRouter_9
 import numpy as np
 seed=204
@@ -217,7 +218,7 @@ def minicity_example(render=None,
                 # 'e_38': [('idm', 1)],
                 'e_54': [('idm', 6)]}
 
-    experiment = section_combined0
+    experiment = section_0
 
     vehicle_data = {}
     # get all different vehicle types

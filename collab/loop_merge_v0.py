@@ -85,7 +85,6 @@ vehicles.add(
     acceleration_controller=(IDMController, {
         "noise": 0.2
     }),
-    lane_change_controller=(SumoLaneChangeController, {}),
     routing_controller=(ContinuousRouter, {}),
     speed_mode="no_collide",
     num_vehicles=6,
@@ -95,7 +94,6 @@ vehicles.add(
 vehicles.add(
     veh_id="rl",
     acceleration_controller=(RLController, {}),
-    lane_change_controller=(SumoLaneChangeController, {}),
     routing_controller=(ContinuousRouter, {}),
     speed_mode="no_collide",
     num_vehicles=NUM_MERGE_RL,
@@ -107,7 +105,6 @@ vehicles.add(
     acceleration_controller=(IDMController, {
         "noise": 0.2
     }),
-    lane_change_controller=(SumoLaneChangeController, {}),
     routing_controller=(ContinuousRouter, {}),
     speed_mode="no_collide",
     num_vehicles=NUM_MERGE_HUMANS,

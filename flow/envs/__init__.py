@@ -23,6 +23,7 @@ WaveAttenuationCNNEnv, WaveAttenuationCNNIDMEnv
 from flow.envs.loop.wave_attenuation import MultiWaveAttenuationPOEnv
 from flow.envs.merge import WaveAttenuationMergePOEnv
 from flow.envs.test import TestEnv
+from flow.envs.minicity import MinicityCNNIDMEnv
 
 __all__ = [
     "Env", "MultiEnv", "AccelEnv", "LaneChangeAccelEnv",
@@ -35,5 +36,5 @@ __all__ = [
     "AccelCNNDebugEnv", "AccelCNNEnv", "AccelCNNIDMEnv",
     "WaveAttenuationCNNDebugEnv", "WaveAttenuationCNNEnv", \
     "WaveAttenuationCNNIDMEnv", "TwoLoopsMergeCNNDebugEnv", \
-    "TwoLoopsMergeCNNEnv", "TwoLoopsMergeCNNIDMEnv"
+    "TwoLoopsMergeCNNEnv", "TwoLoopsMergeCNNIDMEnv","MinicityCNNIDMEnv"
 ]
