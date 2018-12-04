@@ -32,7 +32,7 @@ NUM_RINGS = 1
 # number of rollouts per training iteration
 N_ROLLOUTS = 15  # int(20/NUM_RINGS)
 # number of parallel workers
-N_CPUS = 3  # int(20/NUM_RINGS)
+N_CPUS = 15  # int(20/NUM_RINGS)
 
 # We place one autonomous vehicle and 21 human-driven vehicles in the network
 vehicles = Vehicles()
@@ -152,7 +152,8 @@ def setup_exps():
 
 if __name__ == '__main__':
     alg_run, env_name, config = setup_exps()
-    # ray.init(redis_address="localhost:6379")
+    # ray.init()
+    ray.init(redis_address="localhost:6379")
 
     run_experiments({
         flow_params['exp_tag']: {

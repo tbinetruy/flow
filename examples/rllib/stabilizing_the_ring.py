@@ -23,7 +23,7 @@ HORIZON = 3000
 # number of rollouts per training iteration
 N_ROLLOUTS = 15
 # number of parallel workers
-N_CPUS = 3
+N_CPUS = 15
 
 # We place one autonomous vehicle and 22 human-driven vehicles in the network
 vehicles = Vehicles()
@@ -122,8 +122,8 @@ def setup_exps():
 
 if __name__ == "__main__":
     alg_run, gym_name, config = setup_exps()
-    ray.init()
-    # ray.init(redis_address="localhost:6379")
+    # ray.init()
+    ray.init(redis_address="localhost:6379")
     trials = run_experiments({
         flow_params["exp_tag"]: {
             "run": alg_run,
@@ -136,7 +136,7 @@ if __name__ == "__main__":
             "stop": {
                 "training_iteration": 601,
             },
-            'upload_dir': "s3://kanaad.experiments/lotr"
+            'upload_dir': "s3://kanaad.experiments/single_ring_stabilize"
 
         }
     })
