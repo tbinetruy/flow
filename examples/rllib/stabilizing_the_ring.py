@@ -7,6 +7,7 @@ vehicles in a variable length ring road.
 import json
 
 import ray
+from ray import tune
 from ray.rllib.agents.agent import get_agent_class
 from ray.tune import run_experiments
 from ray.tune.registry import register_env
@@ -20,9 +21,9 @@ from flow.controllers import RLController, IDMController, ContinuousRouter
 # time horizon of a single rollout
 HORIZON = 3000
 # number of rollouts per training iteration
-N_ROLLOUTS = 20
+N_ROLLOUTS = 15
 # number of parallel workers
-N_CPUS = 2
+N_CPUS = 3
 
 # We place one autonomous vehicle and 22 human-driven vehicles in the network
 vehicles = Vehicles()
@@ -60,9 +61,10 @@ flow_params = dict(
         horizon=HORIZON,
         warmup_steps=750,
         additional_params={
-            "max_accel": 1,
-            "max_decel": 1,
-            "ring_length": [220, 270],
+            'max_accel': 1,
+            'max_decel': 1,
+            'ring_length': [230, 230],
+            'target_velocity': 4
         },
     ),
 
@@ -70,7 +72,7 @@ flow_params = dict(
     # scenario's documentation or ADDITIONAL_NET_PARAMS component)
     net=NetParams(
         additional_params={
-            "length": 260,
+            "length": 230,
             "lanes": 1,
             "speed_limit": 30,
             "resolution": 40,
@@ -95,12 +97,15 @@ def setup_exps():
     config["num_workers"] = N_CPUS
     config["train_batch_size"] = HORIZON * N_ROLLOUTS
     config["gamma"] = 0.999  # discount rate
-    config["model"].update({"fcnet_hiddens": [16, 16]})
+    config["model"].update({"fcnet_hiddens": [32, 32]})
+    config['kl_coeff'] = tune.grid_search([0.002, 0.2])
+    config["num_sgd_iter"] = tune.grid_search([10, 50])
+    config['lr'] = tune.grid_search([5e-6, 5e-5])
     config["use_gae"] = True
     config["lambda"] = 0.97
-    config["kl_target"] = 0.02
-    config["num_sgd_iter"] = 10
+    config["num_sgd_iter"] = tune.grid_search([10, 50])
     config["horizon"] = HORIZON
+    config['observation_filter'] = 'NoFilter'
 
     # save the flow params for replay
     flow_json = json.dumps(
@@ -117,7 +122,8 @@ def setup_exps():
 
 if __name__ == "__main__":
     alg_run, gym_name, config = setup_exps()
-    ray.init(num_cpus=N_CPUS + 1, redirect_output=False)
+    ray.init()
+    # ray.init(redis_address="localhost:6379")
     trials = run_experiments({
         flow_params["exp_tag"]: {
             "run": alg_run,
@@ -125,10 +131,12 @@ if __name__ == "__main__":
             "config": {
                 **config
             },
-            "checkpoint_freq": 20,
+            "checkpoint_freq": 100,
             "max_failures": 999,
             "stop": {
-                "training_iteration": 200,
+                "training_iteration": 601,
             },
+            'upload_dir': "s3://kanaad.experiments/lotr"
+
         }
     })

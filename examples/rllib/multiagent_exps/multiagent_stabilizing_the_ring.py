@@ -28,11 +28,11 @@ from flow.utils.rllib import FlowParamsEncoder
 # time horizon of a single rollout
 HORIZON = 3000
 # Number of rings
-NUM_RINGS = 4
+NUM_RINGS = 1
 # number of rollouts per training iteration
-N_ROLLOUTS = 20  # int(20/NUM_RINGS)
+N_ROLLOUTS = 15  # int(20/NUM_RINGS)
 # number of parallel workers
-N_CPUS = 16  # int(20/NUM_RINGS)
+N_CPUS = 3  # int(20/NUM_RINGS)
 
 # We place one autonomous vehicle and 21 human-driven vehicles in the network
 vehicles = Vehicles()
@@ -106,10 +106,10 @@ def setup_exps():
     config['num_workers'] = N_CPUS
     config['train_batch_size'] = HORIZON * N_ROLLOUTS
     config['simple_optimizer'] = True
-    config['kl_coeff'] = tune.grid_search([0.2, 350])
+    config['kl_coeff'] = tune.grid_search([0.002, 0.2])
     config['gamma'] = 0.999  # discount rate
     config['model'].update({'fcnet_hiddens': [32, 32]})
-    config['lr'] = 1e-5
+    config['lr'] = tune.grid_search([5e-6, 5e-5])
     config["use_gae"] = True
     config["num_sgd_iter"] = tune.grid_search([10, 50])
     config['horizon'] = HORIZON
@@ -152,7 +152,7 @@ def setup_exps():
 
 if __name__ == '__main__':
     alg_run, env_name, config = setup_exps()
-    ray.init(num_cpus=N_CPUS + 1)
+    # ray.init(redis_address="localhost:6379")
 
     run_experiments({
         flow_params['exp_tag']: {
@@ -163,6 +163,6 @@ if __name__ == '__main__':
                 'training_iteration': 601
             },
             'config': config,
-            'upload_dir': "s3://kanaad.experiments/lotr_{}_rings".format(NUM_RINGS)
+            'upload_dir': "s3://kanaad.experiments/lotr_{}_rings_v1".format(NUM_RINGS)
         },
     })
