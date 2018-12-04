@@ -28,7 +28,7 @@ from flow.utils.rllib import FlowParamsEncoder
 # time horizon of a single rollout
 HORIZON = 3000
 # Number of rings
-NUM_RINGS = 4
+NUM_RINGS = 1
 # number of rollouts per training iteration
 N_ROLLOUTS = 20  # int(20/NUM_RINGS)
 # number of parallel workers
@@ -106,12 +106,12 @@ def setup_exps():
     config['num_workers'] = N_CPUS
     config['train_batch_size'] = HORIZON * N_ROLLOUTS
     config['simple_optimizer'] = True
+    config['kl_coeff'] = tune.grid_search([0.2, 350])
     config['gamma'] = 0.999  # discount rate
-    config['model'].update({'fcnet_hiddens': [64, 64, 64]})
-    config['lr'] = tune.grid_search([1e-6, 1e-5, 1e-4])
+    config['model'].update({'fcnet_hiddens': [32, 32]})
+    config['lr'] = 1e-5
     config["use_gae"] = True
-    config["lambda"] = tune.grid_search([0.5, 0.97, 0.99])
-    config["num_sgd_iter"] = 10
+    config["num_sgd_iter"] = tune.grid_search([10, 50])
     config['horizon'] = HORIZON
     config['observation_filter'] = 'NoFilter'
 
@@ -160,7 +160,7 @@ if __name__ == '__main__':
             'env': env_name,
             'checkpoint_freq': 50,
             'stop': {
-                'training_iteration': 101
+                'training_iteration': 601
             },
             'config': config,
             'upload_dir': "s3://kanaad.experiments/lotr_{}_rings".format(NUM_RINGS)
