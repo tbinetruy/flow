@@ -1,10 +1,10 @@
-from flow.envs.loop.wave_attenuation import WaveAttenuationCNNIDMEnv
+from flow.envs.loop.loop_accel import AccelCNNIDMEnv
 from flow.core.params import SumoCarFollowingParams
 from flow.controllers import IDMController
 
 import numpy as np
 
-class MinicityCNNIDMEnv(WaveAttenuationCNNIDMEnv):
+class MinicityCNNIDMEnv(AccelCNNIDMEnv):
     def __init__(self, env_params, sumo_params, scenario):
        super().__init__(env_params, sumo_params, scenario)
        self.default_controller = [
