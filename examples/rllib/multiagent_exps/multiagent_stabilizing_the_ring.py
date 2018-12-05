@@ -28,7 +28,7 @@ from flow.utils.rllib import FlowParamsEncoder
 # time horizon of a single rollout
 HORIZON = 3000
 # Number of rings
-NUM_RINGS = 2
+NUM_RINGS = 1
 # number of rollouts per training iteration
 N_ROLLOUTS = 15  # int(20/NUM_RINGS)
 # number of parallel workers
