@@ -132,7 +132,7 @@ vehicles = Vehicles()
 # section 1: bottom_left
 
 #import pdb; pdb.set_trace()
-section_1 = {'e_2': [('section1_track', 1)]}
+section_1 = {'e_2': [('section1_track', 3)]}
 #section_1 = {'e_2': [('section1_track', 3), ('idm', 2)],
 #             'e_3': [('idm', 5)],
 #             'e_25': [('idm', 4)],
@@ -152,22 +152,19 @@ for _, pairs in experiment.items():
 # add vehicle
 for v_type, v_num in vehicle_data.items():
     if v_type is not 'idm':
-        print(v_type)
         vehicles.add(
-            veh_id=v_type,
+            veh_id='rl',
             acceleration_controller=(RLController, {}),
             routing_controller=(MinicityTrainingRouter_9, {}),
             speed_mode='no_collide',
-            lane_change_mode='strategic',
-            num_vehicles=v_num)
+            num_vehicles=1)
     else:
         vehicles.add(
             veh_id=v_type,
             acceleration_controller=(IDMController, {}),
             routing_controller=(MinicityTrainingRouter_9, {}),
             speed_mode='no_collide',
-            lane_change_mode='strategic',
-            num_vehicles=v_num)
+            num_vehicles=1)
 
 flow_params = dict(
     # name of the experiment
