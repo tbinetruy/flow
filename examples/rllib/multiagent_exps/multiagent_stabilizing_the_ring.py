@@ -152,7 +152,7 @@ def setup_exps():
 
 if __name__ == '__main__':
     alg_run, env_name, config = setup_exps()
-    # ray.init()
+    # ray.init(num_cpus=2, redirect_output=False)
     ray.init(redis_address="localhost:6379")
 
     run_experiments({
@@ -164,6 +164,6 @@ if __name__ == '__main__':
                 'training_iteration': 601
             },
             'config': config,
-            'upload_dir': "s3://kanaad.experiments/lotr_{}_rings_v1".format(NUM_RINGS)
+            'upload_dir': "s3://kanaad.experiments/lotr_{}_rings_v2".format(NUM_RINGS)
         },
     })
