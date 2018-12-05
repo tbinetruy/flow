@@ -28,7 +28,7 @@ from flow.utils.rllib import FlowParamsEncoder
 # time horizon of a single rollout
 HORIZON = 3000
 # Number of rings
-NUM_RINGS = 4
+NUM_RINGS = 1
 # number of rollouts per training iteration
 N_ROLLOUTS = 15  # int(20/NUM_RINGS)
 # number of parallel workers
@@ -111,6 +111,7 @@ def setup_exps():
     config['model'].update({'fcnet_hiddens': [32, 32]})
     config['lr'] = tune.grid_search([5e-6, 5e-5])
     config["use_gae"] = True
+    config["lambda"] = 0.97
     config["num_sgd_iter"] = tune.grid_search([10, 50])
     config['horizon'] = HORIZON
     config['observation_filter'] = 'NoFilter'
@@ -159,11 +160,12 @@ if __name__ == '__main__':
         flow_params['exp_tag']: {
             'run': alg_run,
             'env': env_name,
-            'checkpoint_freq': 50,
+            'checkpoint_freq': 100,
             'stop': {
                 'training_iteration': 601
             },
             'config': config,
-            'upload_dir': "s3://kanaad.experiments/lotr_{}_rings_v2".format(NUM_RINGS)
+            'upload_dir': "s3://kanaad.experiments/lotr_{}_rings_v3".format(NUM_RINGS),
+            'num_repeats': 2
         },
     })
