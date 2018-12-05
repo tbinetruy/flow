@@ -78,7 +78,7 @@ def minicity_example(render=None,
     edge_starts += ['e_50', 'e_60', 'e_69', 'e_72', 'e_68', 'e_66', 'e_63',
                     'e_94', 'e_52', 'e_38']
 
-    # edge_starts = list(set(edge_starts))
+    edge_starts = list(set(edge_starts))
 
     # add vehicle
     vehicles.add(
@@ -97,7 +97,8 @@ def minicity_example(render=None,
 
     initial_config = InitialConfig(
         spacing='random',
-        edges_distribution=edge_starts)
+        edges_distribution=edge_starts,
+        min_gap=2)
     # initial_config = InitialConfig(
     #     spacing="random",
     #     min_gap=5
@@ -125,7 +126,7 @@ if __name__ == "__main__":
     import time
     for _ in range(100):
         # t = time.time()
-        exp = minicity_example(render=True,
+        exp = minicity_example(render='drgb',
                                save_render=False,
                                sight_radius=50,
                                pxpm=3,
