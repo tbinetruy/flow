@@ -1,4 +1,4 @@
-from flow.envs.loop.loop_accel import AccelCNNIDMEnv
+from flow.envs.loop.loop_accel import AccelCNNIDMEnv,AccelEnv
 from flow.core.params import SumoCarFollowingParams
 from flow.controllers import IDMController
 
