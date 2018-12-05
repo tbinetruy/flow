@@ -131,14 +131,14 @@ exp: flow.core.SumoExperiment type
 vehicles = Vehicles()
 # section 1: bottom_left
 
-
-
-section_1 = {'e_2': [('section1_track', 3), ('idm', 2)],
-             'e_3': [('idm', 5)],
-             'e_25': [('idm', 4)],
-             'e_31': [('idm', 2)],
-             'e_39': [('idm', 3)],
-             'e_41': [('idm', 3)]}
+#import pdb; pdb.set_trace()
+section_1 = {'e_2': [('section1_track', 1)]}
+#section_1 = {'e_2': [('section1_track', 3), ('idm', 2)],
+#             'e_3': [('idm', 5)],
+#             'e_25': [('idm', 4)],
+#             'e_31': [('idm', 2)],
+#             'e_39': [('idm', 3)],
+#             'e_41': [('idm', 3)]}
 
 experiment = section_1
 
