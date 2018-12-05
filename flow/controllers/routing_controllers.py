@@ -5,6 +5,7 @@ import random
 from flow.controllers.base_routing_controller import BaseRouter
 
 import numpy as np
+
 np.random.seed(204)
 
 
@@ -72,23 +73,16 @@ class MinicityTrainingRouter_9(MinicityRouter):
 
         if len(cur_route) > 1:
             route_assigned = True
-<<<<<<< HEAD
-        if 'bottom_left' in type_id and not route_assigned:
+        if 'section1' in type_id and not route_assigned:
             route = ['e_2', 'e_1', 'e_7', 'e_8_b', 'e_8_u', 'e_9', 'e_10',
                      'e_11']
-        elif 'center_left' in type_id and not route_assigned:
-=======
-        if 'section1' in type_id and not route_assigned:
-            route = ['e_2', 'e_1', 'e_7', 'e_8_b', 'e_8_u', 'e_9', 'e_10', 'e_11']
         elif 'section2' in type_id and not route_assigned:
->>>>>>> 44465fed5cb8ae2fa7ae27d6d7721036b5fcd111
             route = ['e_3', 'e_25', 'e_30', 'e_31', 'e_32', 'e_21', 'e_8_u']
         elif 'section3' in type_id and not route_assigned:
             route = ['e_41', 'e_39', 'e_37', 'e_29_u', 'e_21', 'e_8_u', 'e_9']
         elif 'section4' in type_id and not route_assigned:
             route = ['e_39', 'e_37', 'e_29_u', 'e_21']
         elif 'section6' in type_id and not route_assigned:
-<<<<<<< HEAD
             route = ['e_60', 'e_69', 'e_72', 'e_68', 'e_66', 'e_63', 'e_94',
                      'e_52', 'e_38', 'e_50', 'e_60']
         elif 'section5' in type_id and not route_assigned:
@@ -97,17 +91,6 @@ class MinicityTrainingRouter_9(MinicityRouter):
             route = ['e_42', 'e_44', 'e_46', 'e_48', 'e_78', 'e_86', 'e_59']
         elif 'section8' in type_id and not route_assigned:
             route = ['e_73', 'e_75', 'e_77', 'e_81', 'e_84', 'e_85', 'e_90']
-=======
-            route = ['e_60', 'e_69','e_72','e_68','e_66','e_63','e_94','e_52','e_38','e_50','e_60']
-        elif 'section5' in type_id and not route_assigned:
-            route = ['e_34', 'e_23', 'e_15', 'e_16','e_20', 'e_47', 'e_34']
-        elif 'section7' in type_id and not route_assigned:
-            route = ['e_42', 'e_44','e_46','e_48','e_78','e_86', 'e_59']
-        # elif 'top_center_down' in type_id and not route_assigned:
-        #     route = ['e_79','e_47', 'e_45']
-        elif 'section8' in type_id and not route_assigned:
-            route = ['e_73','e_75','e_77','e_81','e_84','e_85','e_90']
->>>>>>> 44465fed5cb8ae2fa7ae27d6d7721036b5fcd111
         elif 'idm' in type_id:
             route = MinicityRouter.choose_route(self, env)
         else:
@@ -122,22 +105,59 @@ class MinicityTrainingRouter_4(MinicityRouter):
         type_id = env.vehicles.get_state(self.veh_id, 'type')
         edge = env.vehicles.get_edge(self.veh_id)
         cur_route = env.vehicles.get_route(self.veh_id)
-        route_assigned = False
-        # print(cur_route)
 
         routes = {}
-        overlap_routes = {}
-        some_routes = [['e_80', 'e_83', 'e_82', 'e_79', 'e_47', 'e_49', 'e_55',
-                        'e_56', 'e_89'],
-                       ['e_45', 'e_43', 'e_41', 'e_50', 'e_60', 'e_69', 'e_73',
-                        'e_75', 'e_86', 'e_59'],
-                       ['e_48', 'e_81', 'e_84', 'e_85', 'e_90', 'e_62', 'e_57',
-                        'e_59', 'e_46'],
-                       ['e_49', 'e_58', 'e_76', 'e_74', 'e_70', 'e_61', 'e_54',
-                        'e_40', 'e_42', 'e_44']
-                       # ['e_46', 'e_48', 'e_78', 'e_76', 'e_74', 'e_70', 'e_61',
-                       #  'e_54', 'e_40', 'e_42', 'e_44']
-                       ]
+        overlap_routes = {}  # assuming we only have
+        # # top
+        # some_routes = [
+        #     ['e_80', 'e_83', 'e_82', 'e_79', 'e_35', 'e_27', 'e_6', 'e_22',
+        #      'e_33', 'e_49', 'e_55', 'e_56', 'e_89']
+        # ]
+        # upper-right
+        some_routes = [
+            ['e_80', 'e_83', 'e_82', 'e_79', 'e_47', 'e_49', 'e_55', 'e_56',
+             'e_89'],
+            ['e_45', 'e_43', 'e_41', 'e_50', 'e_60', 'e_69', 'e_73', 'e_75',
+             'e_86', 'e_59'],
+            ['e_48', 'e_81', 'e_84', 'e_85', 'e_90', 'e_62', 'e_57', 'e_59',
+             'e_46'],
+            ['e_49', 'e_58', 'e_76', 'e_74', 'e_70', 'e_61', 'e_54', 'e_40',
+             'e_42', 'e_44']
+            # ['e_46', 'e_48', 'e_78', 'e_76', 'e_74', 'e_70', 'e_61',
+            #  'e_54', 'e_40', 'e_42', 'e_44']
+        ]
+        # bottom-left
+        some_routes += [
+            ['e_25', 'e_30', 'e_31', 'e_32', 'e_21', 'e_8_u', 'e_9', 'e_10',
+             'e_11'],
+            ['e_87', 'e_39', 'e_37', 'e_29_u', 'e_21', 'e_8_u', 'e_9', 'e_92',
+             'e_7', 'e_8_b', 'e_8_u', 'e_9', 'e_10', 'e_11', 'e_25']
+        ]
+        # top left corner
+        some_routes += [
+            ['e_12', 'e_18', 'e_19', 'e_24', 'e_33', 'e_45', 'e_43', 'e_41',
+             'e_88', 'e_26'],
+            ['e_34', 'e_23', 'e_5', 'e_4', 'e_3', 'e_25', 'e_87', 'e_40',
+             'e_42', 'e_44'],
+            ['e_15', 'e_16', 'e_20', 'e_47', 'e_45', 'e_43', 'e_41', 'e_88',
+             'e_26', 'e_12', 'e_13', 'e_14'],
+            # ['e_46', 'e_35', 'e_27', 'e_6', 'e_22', 'e_33']
+        ]
+        # bottom right corner
+        some_routes += [
+            ['e_50', 'e_60', 'e_69', 'e_72', 'e_68', 'e_66', 'e_63', 'e_94',
+             'e_52', 'e_38']]
+        # bottom half outer loop
+        some_routes += [
+            ['e_67', 'e_71', 'e_70', 'e_61', 'e_54', 'e_88', 'e_26', 'e_2',
+             'e_1', 'e_7', 'e_17', 'e_28_b', 'e_36', 'e_93', 'e_53', 'e_64']
+        ]
+        # bottom right inner loop
+        some_routes += [
+            ['e_50', 'e_60', 'e_69', 'e_72', 'e_68', 'e_66', 'e_63', 'e_94',
+             'e_52', 'e_38']
+        ]
+
         for some_route in some_routes:
             for i in range(len(some_route)):
                 # Routes through the top edge going right will continue in the
@@ -150,12 +170,6 @@ class MinicityTrainingRouter_4(MinicityRouter):
                 else:
                     routes[some_route[-i]] = some_route[-i:] + some_route[:-i]
 
-        # if len(cur_route) > 1:
-        #     route_assigned = True
-        # if 'upper_right_cc_1' in type_id and not route_assigned:
-        #     route = routes['e_80']
-        # elif 'upper_right_cc_2' in type_id and not route_assigned:
-        #     route = routes['e_45']
         if 'idm' in type_id:
             route = MinicityRouter.choose_route(self, env)
         elif edge == cur_route[-1]:
