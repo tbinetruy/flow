@@ -166,6 +166,6 @@ if __name__ == '__main__':
             },
             'config': config,
             'upload_dir': "s3://kanaad.experiments/lotr_{}_rings_v3".format(NUM_RINGS),
-            'num_repeats': 2
+            'num_samples': 2
         },
     })

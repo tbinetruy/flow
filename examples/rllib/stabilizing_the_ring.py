@@ -138,6 +138,6 @@ if __name__ == "__main__":
                 "training_iteration": 601,
             },
             'upload_dir': "s3://kanaad.experiments/single_ring_stabilize_v3",
-            'num_repeats': 2
+            'num_samples': 2
         }
     })
