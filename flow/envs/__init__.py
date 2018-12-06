@@ -36,5 +36,5 @@ __all__ = [
     "AccelCNNDebugEnv", "AccelCNNEnv", "AccelCNNIDMEnv",
     "WaveAttenuationCNNDebugEnv", "WaveAttenuationCNNEnv", \
     "WaveAttenuationCNNIDMEnv", "TwoLoopsMergeCNNDebugEnv", \
-    "TwoLoopsMergeCNNEnv", "TwoLoopsMergeCNNIDMEnv","MinicityCNNIDMEnv",'MinicityIDMEnv'
+    "TwoLoopsMergeCNNEnv", "TwoLoopsMergeCNNIDMEnv","MinicityCNNIDMEnv","MinicityIDMEnv"
 ]
