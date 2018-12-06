@@ -13,7 +13,7 @@ from flow.core.vehicles import Vehicles
 from flow.envs.loop.loop_accel import AccelEnv, ADDITIONAL_ENV_PARAMS
 from flow.envs.minicity import MinicityCNNIDMEnv
 from flow.scenarios.minicity import MiniCityScenario, ADDITIONAL_NET_PARAMS
-from flow.controllers.routing_controllers import MinicityTrainingRouter_9
+from flow.controllers.routing_controllers import MinicityTrainingRouter_4
 from flow.utils.registry import make_create_env
 from flow.utils.rllib import FlowParamsEncoder
 import json
@@ -140,31 +140,31 @@ section_1 = {'e_2': [('section1_track', 4)]}
 #             'e_39': [('idm', 3)],
 #             'e_41': [('idm', 3)]}
 
-experiment = section_1
+vehicles = Vehicles()
 
-vehicle_data = {}
-# get all different vehicle types
-for _, pairs in experiment.items():
-    for pair in pairs:
-        cur_num = vehicle_data.get(pair[0], 0)
-        vehicle_data[pair[0]] = cur_num + pair[1]
+edge_starts = ['e_80', 'e_83', 'e_82', 'e_79']
 
-# add vehicle
-for v_type, v_num in vehicle_data.items():
-    if v_type is not 'idm':
-        vehicles.add(
-            veh_id=v_type,
-            acceleration_controller=(RLController, {}),
-            routing_controller=(MinicityTrainingRouter_9, {}),
-            speed_mode='no_collide',
-            num_vehicles=1)
-    else:
-        vehicles.add(
-            veh_id=v_type,
-            acceleration_controller=(IDMController, {}),
-            routing_controller=(MinicityTrainingRouter_9, {}),
-            speed_mode='no_collide',
-            num_vehicles=1)
+
+edge_starts = list(set(edge_starts))
+
+
+vehicles.add(
+    veh_id='rl',
+    acceleration_controller=(RLController, {}),
+    routing_controller=(MinicityTrainingRouter_4, {}),
+    speed_mode='no_collide',
+    lane_change_mode='strategic',
+    num_vehicles=1)
+
+
+vehicles.add(
+    veh_id='human',
+    acceleration_controller=(IDMController, {}),
+    routing_controller=(MinicityTrainingRouter_4, {}),
+    speed_mode='no_collide',
+    lane_change_mode='strategic',
+    num_vehicles=4)
+
 
 flow_params = dict(
     # name of the experiment
@@ -204,7 +204,7 @@ flow_params = dict(
     # reset (see flow.core.params.InitialConfig)
     initial_config = InitialConfig(
         spacing='random',
-        edges_distribution=experiment),
+        edges_distribution=edge_starts),
 )
 
 # initial_config = InitialConfig(

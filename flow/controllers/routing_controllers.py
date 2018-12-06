@@ -125,7 +125,7 @@ class MinicityTrainingRouter_4(MinicityRouter):
             #  'e_54', 'e_40', 'e_42', 'e_44']
         ]
         # bottom-left
-        """some_routes += [
+        some_routes += [
             ['e_25', 'e_30', 'e_31', 'e_32', 'e_21', 'e_8_u', 'e_9', 'e_10',
              'e_11'],
             ['e_87', 'e_39', 'e_37', 'e_29_u', 'e_21', 'e_8_u', 'e_9', 'e_92',
@@ -155,7 +155,7 @@ class MinicityTrainingRouter_4(MinicityRouter):
             ['e_50', 'e_60', 'e_69', 'e_72', 'e_68', 'e_66', 'e_63', 'e_94',
              'e_52', 'e_38']
         ]
-        """
+        
 
         for some_route in some_routes:
             for i in range(len(some_route)):
