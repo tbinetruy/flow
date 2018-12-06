@@ -183,15 +183,15 @@ def setup_exps():
 if __name__ == '__main__':
 
     alg_run, env_name, config = setup_exps()
-    ray.init(num_cpus=N_CPUS+1)
+    ray.init(redis_address="localhost:6379")
 
     run_experiments({
         'lifegoals': {
             'run': alg_run,
             'env': env_name,
-            'checkpoint_freq': 1,
+            'checkpoint_freq': 50,
             'stop': {
-                'training_iteration': 1
+                'training_iteration': 600
             },
             'config': config,
             'upload_dir': 's3://eugene.experiments/multiagent_merge_v1'
