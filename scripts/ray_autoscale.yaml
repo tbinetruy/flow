@@ -74,7 +74,23 @@ worker_nodes:
 setup_commands:
     # checkout your desired branch on all worker nodes
     - cd flow && git fetch && git checkout lotr_testing_kanaad
-    - cd ray && git fetch origin && git checkout ray_master && git pull origin ray_master
+
+    # trick for copying ray
+    - pip install ray==0.6.0
+    - pip install redis~=2.10.6
+    # Copy over local rllib changes (testing branch)
+    - mkdir ray_build
+    - pushd ray_build
+    -     git clone https://github.com/flow-project/ray.git
+    -     cd ray && git fetch && git checkout ray_master && cd ..
+    -     pushd ray
+    -         RAY_SITE_DIR=`python -c "import ray; print(ray.__path__[0])"`
+    -         rm -rf $RAY_SITE_DIR/rllib
+    -         ls $RAY_SITE_DIR
+    -         cp -r python/ray/rllib $RAY_SITE_DIR/rllib
+    -     popd
+    - popd
+
     - echo 'export PATH="/home/ubuntu/sumo/bin:$PATH"' >> ~/.bashrcb
     - echo 'export SUMO_HOME="/home/ubuntu/sumo"' >> ~/.bashrc
     - echo 'export PYTHONPATH="/home/ubuntu/sumo/tools:$PYTHONPATH"' >> ~/.bashrc
