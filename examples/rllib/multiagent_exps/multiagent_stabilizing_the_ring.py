@@ -105,7 +105,6 @@ def setup_exps():
     config = agent_cls._default_config.copy()
     config['num_workers'] = N_CPUS
     config['train_batch_size'] = HORIZON * N_ROLLOUTS
-    config['simple_optimizer'] = True
     config['kl_coeff'] = tune.grid_search([0.002, 0.2])
     config['gamma'] = 0.999  # discount rate
     config['model'].update({'fcnet_hiddens': [32, 32]})
@@ -165,7 +164,7 @@ if __name__ == '__main__':
                 'training_iteration': 601
             },
             'config': config,
-            'upload_dir': "s3://kanaad.experiments/lotr_{}_rings_v3".format(NUM_RINGS),
+            'upload_dir': "s3://eugene.experiments/lotr_{}_rings_v3".format(NUM_RINGS),
             'num_samples': 2
         },
     })
