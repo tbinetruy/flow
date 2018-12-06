@@ -5,11 +5,11 @@ cluster_name: test #<YOUR NAME>
 
 # The minimum number of workers nodes to launch in addition to the head
 # node. This number should be >= 0.
-min_workers: 0 #<NUM WORKERS IN CLUSTER>
+min_workers: 15 #<NUM WORKERS IN CLUSTER>
 
 # The maximum number of workers nodes to launch in addition to the head
 # node. This takes precedence over min_workers.
-max_workers: 0
+max_workers: 15
 
 # The autoscaler will scale up the cluster to this target fraction of resource
 # usage. For example, if a cluster of 10 nodes is 100% busy and
@@ -86,6 +86,8 @@ setup_commands:
     - echo $RAY_SITE_DIR
     - rm -rf /home/ubuntu/anaconda3/lib/python3.5/site-packages/ray/rllib
     - cd $HOME/ray_build/ray && cp -r python/ray/rllib /home/ubuntu/anaconda3/lib/python3.5/site-packages/ray/rllib
+    - rm /home/ubuntu/anaconda3/lib/python3.5/site-packages/ray/tune/logger.py
+    - cd $HOME/ray_build/ray && cp -r python/ray/tune/logger.py /home/ubuntu/anaconda3/lib/python3.5/site-packages/ray/tune
 
     - echo 'export PATH="/home/ubuntu/sumo/bin:$PATH"' >> ~/.bashrcb
     - echo 'export SUMO_HOME="/home/ubuntu/sumo"' >> ~/.bashrc
