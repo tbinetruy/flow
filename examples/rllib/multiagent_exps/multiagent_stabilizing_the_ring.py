@@ -164,7 +164,7 @@ if __name__ == '__main__':
                 'training_iteration': 601
             },
             'config': config,
-            'upload_dir': "s3://eugene.experiments/lotr_{}_rings_v3_nopenalty".format(NUM_RINGS),
-            'num_samples': 1
+            'upload_dir': "s3://eugene.experiments/lotr_{}_rings_v3".format(NUM_RINGS),
+            'num_samples': 2
         },
     })
