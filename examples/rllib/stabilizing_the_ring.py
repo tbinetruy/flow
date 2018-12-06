@@ -137,6 +137,6 @@ if __name__ == "__main__":
                 "training_iteration": 601,
             },
             'upload_dir': "s3://eugene.experiments/single_ring_stabilize_v4`",
-            'num_samples': 1
+            'num_samples': 2
         }
     })
