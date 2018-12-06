@@ -6,7 +6,6 @@ from flow.core.params import SumoParams, EnvParams, NetParams, InitialConfig
 from flow.core.vehicles import Vehicles
 from flow.envs.loop.loop_accel import AccelEnv, ADDITIONAL_ENV_PARAMS
 from flow.scenarios.minicity import MiniCityScenario, ADDITIONAL_NET_PARAMS
-
 from flow.controllers.routing_controllers import MinicityTrainingRouter_9
 import numpy as np
 seed=204
@@ -21,12 +20,10 @@ def minicity_example(render=None,
     """
     Perform a simulation of vehicles on modified minicity of University of
     Delaware.
-
     Parameters
     ----------
     render: bool, optional
         specifies whether to use sumo's gui during execution
-
     Returns
     -------
     exp: flow.core.SumoExperiment type
@@ -53,11 +50,9 @@ def minicity_example(render=None,
     # sumo_params.sim_step = 0.2
 
     vehicles = Vehicles()
+
     # section 1: bottom_left
-
     section_0 = {'e_2': [('idm', 2)]}
-
-
     section_1 = {'e_2': [('section1_track', 3), ('idm', 2)],
                  'e_3': [('idm', 5)],
                  'e_25': [('idm', 4)],
@@ -84,8 +79,6 @@ def minicity_example(render=None,
                  'e_94': [('idm', 2)],
                  'e_29_u': [('idm', 1)]}
     # section 5: top left
-
-
     section_5 = {'e_34': [('section5_track', 4), ('idm', 1)],
                  'e_23': [('section5_track', 2), ('idm', 3)],
                  'e_13': [('idm', 2)],
@@ -107,8 +100,6 @@ def minicity_example(render=None,
                  'e_69': [('idm', 1)],
                  'e_64': [('idm', 2)]}
     # section 7: top center
-
-
     section_7 = {'e_42': [('section7_track', 3), ('idm', 1)],
                  'e_44': [('section7_track', 2), ('idm', 1)],
                  'e_79': [('idm', 8)],
@@ -120,7 +111,6 @@ def minicity_example(render=None,
                  'e_22': [('idm', 3)],
                  'e_40': [('idm', 2)]}
     # top right
-
     section_8 = {'e_84': [('idm', 1)],
                  'e_73': [('section8_track', 3)],
                  'e_77': [('idm', 1)],
@@ -218,8 +208,7 @@ def minicity_example(render=None,
                 # 'e_38': [('idm', 1)],
                 'e_54': [('idm', 6)]}
 
-    experiment = section_0
-
+    experiment = section_combined0
     vehicle_data = {}
     # get all different vehicle types
     for _, pairs in experiment.items():
