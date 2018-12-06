@@ -73,6 +73,7 @@ worker_nodes:
 
 setup_commands:
     # checkout your desired branch on all worker nodes
+    - cd ray && git fetch && git checkout ray_master && git pull origin ray_master
     - cd flow && git fetch && git checkout lotr_testing_kanaad && git pull origin lotr_testing_kanaad
     - echo 'export PATH="/home/ubuntu/sumo/bin:$PATH"' >> ~/.bashrcb
     - echo 'export SUMO_HOME="/home/ubuntu/sumo"' >> ~/.bashrc
