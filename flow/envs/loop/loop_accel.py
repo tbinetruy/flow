@@ -107,12 +107,38 @@ class AccelEnv(Env):
                 self.vehicles.set_observed(veh_id)
 
 
-class MultiAgentAccelEnv(AccelEnv, MultiEnv):
+class MultiAgentAccelEnv(MultiEnv):
     """Adversarial multi-agent env.
 
     Multi-agent env with an adversarial agent perturbing
     the accelerations of the autonomous vehicle
     """
+    def __init__(self, env_params, sumo_params, scenario):
+        for p in ADDITIONAL_ENV_PARAMS.keys():
+            if p not in env_params.additional_params:
+                raise KeyError(
+                    'Environment parameter \'{}\' not supplied'.format(p))
+
+        super().__init__(env_params, sumo_params, scenario)
+
+    @property
+    def action_space(self):
+        """See class definition."""
+        return Box(
+            low=-abs(self.env_params.additional_params['max_decel']),
+            high=self.env_params.additional_params['max_accel'],
+            shape=(self.vehicles.num_rl_vehicles, ),
+            dtype=np.float32)
+
+    @property
+    def observation_space(self):
+        """See class definition."""
+        self.obs_var_labels = ['Velocity', 'Absolute_pos']
+        return Box(
+            low=0,
+            high=1,
+            shape=(2 * self.vehicles.num_vehicles, ),
+            dtype=np.float32)
     def _apply_rl_actions(self, rl_actions):
         """See class definition."""
         sorted_rl_ids = [
@@ -151,3 +177,10 @@ class MultiAgentAccelEnv(AccelEnv, MultiEnv):
         ] for veh_id in self.sorted_ids])
         state = np.ndarray.flatten(state)
         return {'av': state, 'adversary': state}
+
+    def additional_command(self):
+        """Define which vehicles are observed for visualization purposes."""
+        # specify observed vehicles
+        if self.vehicles.num_rl_vehicles > 0:
+            for veh_id in self.vehicles.get_human_ids():
+                self.vehicles.set_observed(veh_id)

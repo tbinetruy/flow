@@ -14,7 +14,8 @@ from flow.envs.loop.loop_accel import AccelEnv
 from flow.envs.loop.loop_merges import TwoLoopsMergePOEnv
 from flow.envs.loop.wave_attenuation import WaveAttenuationEnv, \
     WaveAttenuationPOEnv
-from flow.envs.merge import WaveAttenuationMergePOEnv
+from flow.envs.merge import WaveAttenuationMergePOEnv, \
+    MultiWaveAttenuationMergePOEnv
 from flow.envs.test import TestEnv
 
 env_list = [
@@ -36,7 +37,8 @@ except Exception:
 if multi_flag:
     from flow.envs.loop.wave_attenuation import MultiWaveAttenuationPOEnv
     from flow.envs.loop.loop_accel import MultiAgentAccelEnv
-    env_list += ['MultiAgentAccelEnv', 'MultiWaveAttenuationPOEnv']
+    env_list += ['MultiAgentAccelEnv', 'MultiWaveAttenuationPOEnv',
+                 "MultiWaveAttenuationMergePOEnv"]
     __all__ = env_list
 else:
     __all__ = env_list

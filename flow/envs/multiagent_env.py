@@ -15,6 +15,9 @@ from flow.envs.base_env import Env
 
 class MultiEnv(MultiAgentEnv, Env):
     """Multi-agent version of base env. See parent class for info"""
+    def __init__(self, env_params, sumo_params, scenario):
+
+        super().__init__(env_params, sumo_params, scenario)
 
     def step(self, rl_actions):
         """Advance the environment by one step.
