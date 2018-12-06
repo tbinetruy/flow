@@ -136,7 +136,7 @@ if __name__ == "__main__":
             "stop": {
                 "training_iteration": 601,
             },
-            'upload_dir': "s3://eugene.experiments/single_ring_stabilize_v4`",
+            'upload_dir': "s3://eugene.experiments/single_ring_stabilize_v5",
             'num_samples': 2
         }
     })
