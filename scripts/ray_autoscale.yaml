@@ -40,7 +40,7 @@ auth:
 # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
 head_node:
     InstanceType: c4.4xlarge
-    ImageId: ami-060b3311dd2b675ee # Flow AMI (Ubuntu)
+    ImageId: ami-04f657dca6b362590 # Flow AMI (Ubuntu)
     InstanceMarketOptions:
         MarketType: spot
          #Additional options can be found in the boto docs, e.g.
@@ -55,7 +55,7 @@ head_node:
 # http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
 worker_nodes:
     InstanceType: c4.4xlarge
-    ImageId: ami-060b3311dd2b675ee # Flow AMI (Ubuntu)
+    ImageId: ami-04f657dca6b362590 # Flow AMI (Ubuntu)
 
     #Run workers on spot by default. Comment this out to use on-demand.
     InstanceMarketOptions:
@@ -74,21 +74,6 @@ worker_nodes:
 setup_commands:
     # checkout your desired branch on all worker nodes
     - cd flow && git fetch && git checkout lotr_testing_kanaad
-
-    # trick for copying ray
-    - pip install ray==0.6.0
-    - pip install redis~=2.10.6
-    # Copy over local rllib changes (testing branch)
-    - mkdir $HOME/ray_build
-    - cd $HOME/ray_build && git clone https://github.com/flow-project/ray.git
-    - cd $HOME/ray_build/ray && git fetch && git checkout ray_master
-    - RAY_SITE_DIR=`python -c "import ray; print(ray.__path__[0])"`
-    - echo $RAY_SITE_DIR
-    - rm -rf /home/ubuntu/anaconda3/lib/python3.5/site-packages/ray/rllib
-    - cd $HOME/ray_build/ray && cp -r python/ray/rllib /home/ubuntu/anaconda3/lib/python3.5/site-packages/ray/rllib
-    - rm /home/ubuntu/anaconda3/lib/python3.5/site-packages/ray/tune/logger.py
-    - cd $HOME/ray_build/ray && cp -r python/ray/tune/logger.py /home/ubuntu/anaconda3/lib/python3.5/site-packages/ray/tune
-
     - echo 'export PATH="/home/ubuntu/sumo/bin:$PATH"' >> ~/.bashrcb
     - echo 'export SUMO_HOME="/home/ubuntu/sumo"' >> ~/.bashrc
     - echo 'export PYTHONPATH="/home/ubuntu/sumo/tools:$PYTHONPATH"' >> ~/.bashrc
