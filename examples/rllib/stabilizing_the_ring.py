@@ -125,18 +125,18 @@ if __name__ == "__main__":
     # ray.init()
     ray.init(redis_address="localhost:6379")
     trials = run_experiments({
-        flow_params["exp_tag"]: {
+        "local_test": {
             "run": alg_run,
             "env": gym_name,
             "config": {
                 **config
             },
-            "checkpoint_freq": 100,
+            "checkpoint_freq": 25,
             "max_failures": 999,
             "stop": {
                 "training_iteration": 601,
             },
-            'upload_dir': "s3://eugene.experiments/single_ring_stabilize_v3",
-            'num_samples': 2
+            'upload_dir': "s3://eugene.experiments/single_ring_stabilize_nopenalty`",
+            'num_samples': 1
         }
     })
