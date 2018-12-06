@@ -20,8 +20,8 @@ class MinicityCNNIDMEnv(AccelCNNIDMEnv):
                    high=self.env_params.additional_params["max_accel"]
                    alpha = self.env_params.additional_params["augmentation"]
                    default_acc = self.default_controller[i].get_accel(self)
-                   acc[i] = alpha*acc[i] +\
-                            (1.0 - alpha)*np.clip(default_acc, low, high)
+                   #acc[i] = alpha*acc[i] +(1.0 - alpha)*np.clip(default_acc, low, high)
+                   acc[i] = (float(alpha)*np.array([acc[i]]).astype(np.float32) +(1.0 - float(alpha)) * np.array([np.clip(default_acc, low, high)]).astype(np.float32))
                next_vel = max([this_vel + acc[i] * self.sim_step, 0])
                self.traci_connection.vehicle.slowDown(vid, next_vel, 1)
 
@@ -41,7 +41,8 @@ class MinicityIDMEnv(AccelEnv):
                    high=self.env_params.additional_params["max_accel"]
                    alpha = self.env_params.additional_params["augmentation"]
                    default_acc = self.default_controller[i].get_accel(self)
-                   acc[i] = alpha*acc[i] +\
-                            (1.0 - alpha)*np.clip(default_acc, low, high)
+                   #acc[i] = alpha*acc[i] +(1.0 - alpha)*np.clip(default_acc, low, high)
+                   #import pdb; pdb.set_trace()
+                   acc[i] = (float(alpha)*np.array([acc[i]]).astype(np.float32) +(1.0 - float(alpha)) * np.array([np.clip(default_acc, low, high)]).astype(np.float32))
                next_vel = max([this_vel + acc[i] * self.sim_step, 0])
                self.traci_connection.vehicle.slowDown(vid, next_vel, 1)
