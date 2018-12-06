@@ -118,8 +118,8 @@ class WaveAttenuationEnv(Env):
         rl_actions = np.array(rl_actions)
         accel_threshold = 0
 
-        if np.mean(np.abs(rl_actions)) > accel_threshold:
-            reward += eta * (accel_threshold - np.mean(np.abs(rl_actions)))
+        # if np.mean(np.abs(rl_actions)) > accel_threshold:
+        #     reward += eta * (accel_threshold - np.mean(np.abs(rl_actions)))
 
         return float(reward)
 
@@ -361,9 +361,9 @@ class MultiWaveAttenuationPOEnv(MultiEnv):
                 eta = 8  # 0.25
                 accel_threshold = 0
 
-                if np.abs(rl_action) > accel_threshold:
-                    reward += eta * (
-                    accel_threshold - np.abs(rl_action))
+                # if np.abs(rl_action) > accel_threshold:
+                #     reward += eta * (
+                #     accel_threshold - np.abs(rl_action))
 
                 rew[rl_id] = float(reward)
         return rew
