@@ -39,12 +39,12 @@ vehicles = Vehicles()
 vehicles.add(
     veh_id="human",
     acceleration_controller=(SumoCarFollowingController, {}),
-    speed_mode=7,
+    speed_mode="no_collide",
     num_vehicles=5)
 vehicles.add(
     veh_id="rl",
     acceleration_controller=(RLController, {}),
-    speed_mode=7,
+    speed_mode="no_collide",
     num_vehicles=0)
 
 # Vehicles are introduced from both sides of merge, with RL vehicles entering
