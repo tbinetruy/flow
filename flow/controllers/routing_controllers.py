@@ -4,9 +4,7 @@ import random
 
 from flow.controllers.base_routing_controller import BaseRouter
 
-import numpy as np
 
-np.random.seed(204)
 
 
 class ContinuousRouter(BaseRouter):
@@ -155,7 +153,7 @@ class MinicityTrainingRouter_4(MinicityRouter):
             ['e_50', 'e_60', 'e_69', 'e_72', 'e_68', 'e_66', 'e_63', 'e_94',
              'e_52', 'e_38']
         ]
-        
+
 
         for some_route in some_routes:
             for i in range(len(some_route)):
@@ -171,20 +169,24 @@ class MinicityTrainingRouter_4(MinicityRouter):
 
         if 'idm' in type_id:
             route = MinicityRouter.choose_route(self, env)
+        elif len(cur_route) < 1:
+            route = routes[edge]
         elif edge == cur_route[-1]:
-            try:
-                if edge in overlap_routes:
-                    # pick randomly among possible choices given multiple routes
-                    possible_routes = [overlap_routes[edge], routes[edge]]
-                    route = random.choice(possible_routes)
-                else:
-                    # choose the only available route
-                    route = routes[edge]
-            except KeyError:
-                route = MinicityRouter.choose_route(self, env)
+            #try:
+            if edge in overlap_routes:
+                # pick randomly among possible choices given multiple routes
+                possible_routes = [overlap_routes[edge], routes[edge]]
+                route = random.choice(possible_routes)
+            else:
+                # choose the only available route
+
+                #route = routes[edge]
+                route =MinicityRouter.choose_route(self, env)
+            #except KeyError:
+                #route = MinicityRouter.choose_route(self, env)
         else:
-            #route = None
             route = MinicityRouter.choose_route(self, env)
+            #route = MinicityRouter.choose_route(self, env)
 
         return route
 

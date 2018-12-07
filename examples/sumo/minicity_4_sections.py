@@ -57,7 +57,7 @@ def minicity_example(render=None,
                    'e_76', 'e_74', 'e_70', 'e_61', 'e_54', 'e_40', 'e_42',
                    'e_44']
     # bottom-left
-    """edge_starts += ['e_25', 'e_30', 'e_31', 'e_32', 'e_21', 'e_8_u', 'e_9',
+    edge_starts += ['e_25', 'e_30', 'e_31', 'e_32', 'e_21', 'e_8_u', 'e_9',
                     'e_10', 'e_11', 'e_87', 'e_39', 'e_37', 'e_29_u', 'e_92',
                     'e_7', 'e_8_b', 'e_10']
     # upper left

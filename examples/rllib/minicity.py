@@ -11,7 +11,7 @@ from flow.core.experiment import SumoExperiment
 from flow.core.params import SumoParams, EnvParams, NetParams, InitialConfig
 from flow.core.vehicles import Vehicles
 from flow.envs.loop.loop_accel import AccelEnv, ADDITIONAL_ENV_PARAMS
-from flow.envs.minicity import MinicityCNNIDMEnv
+from flow.envs.minicity import MinicityIDMEnv
 from flow.scenarios.minicity import MiniCityScenario, ADDITIONAL_NET_PARAMS
 from flow.controllers.routing_controllers import MinicityTrainingRouter_9
 from flow.utils.registry import make_create_env
@@ -30,14 +30,9 @@ import numpy as np
 augmentation = sys.argv[1]
 ADDITIONAL_ENV_PARAMS['augmentation']=augmentation
 
-render='drgb',
-save_render=False,
-sight_radius=20,
-pxpm=3,
-show_radius=True
 
 # time horizon of a single rollout
-HORIZON = 100
+HORIZON = 10
 # number of rollouts per training iteration
 N_ROLLOUTS = 1
 # number of parallel workers
@@ -85,7 +80,32 @@ exp: flow.core.SumoExperiment type
 
 vehicles = Vehicles()
 
-edge_starts = ['e_79']
+edge_starts = ['e_80', 'e_83', 'e_82', 'e_79', 'e_47', 'e_49', 'e_55',
+               'e_56', 'e_89', 'e_45', 'e_43', 'e_41', 'e_50', 'e_60',
+               'e_69', 'e_73', 'e_75', 'e_86', 'e_59', 'e_48', 'e_81',
+               'e_84', 'e_85', 'e_90', 'e_62', 'e_57', 'e_46', 'e_76',
+               'e_76', 'e_74', 'e_70', 'e_61', 'e_54', 'e_40', 'e_42',
+               'e_44']
+# bottom-left
+edge_starts += ['e_25', 'e_30', 'e_31', 'e_32', 'e_21', 'e_8_u', 'e_9',
+                'e_10', 'e_11', 'e_87', 'e_39', 'e_37', 'e_29_u', 'e_92',
+                'e_7', 'e_8_b', 'e_10']
+# upper left
+edge_starts += ['e_12', 'e_18', 'e_19', 'e_24', 'e_45', 'e_43',
+                'e_41', 'e_88', 'e_26', 'e_34', 'e_23', 'e_5', 'e_4',
+                'e_3', 'e_25', 'e_87', 'e_40', 'e_42', 'e_44', 'e_15',
+                'e_16', 'e_20', 'e_47', 'e_46']
+# bottom right corner
+edge_starts += ['e_50', 'e_60', 'e_69', 'e_72', 'e_68', 'e_66', 'e_63',
+                'e_94', 'e_52', 'e_38']
+# bottom half outer loop
+edge_starts += ['e_67', 'e_71', 'e_70', 'e_61', 'e_54', 'e_88', 'e_26',
+                'e_2', 'e_1', 'e_7', 'e_17', 'e_28_b', 'e_36', 'e_93',
+                'e_53', 'e_64']
+# bottom right inner loop
+edge_starts += ['e_50', 'e_60', 'e_69', 'e_72', 'e_68', 'e_66', 'e_63',
+                'e_94', 'e_52', 'e_38']
+
 
 
 edge_starts = list(set(edge_starts))
@@ -106,7 +126,7 @@ vehicles.add(
     routing_controller=(MinicityTrainingRouter_4, {}),
     speed_mode='no_collide',
     lane_change_mode='strategic',
-    num_vehicles=1)
+    num_vehicles=60)
 
 flow_params = dict(
     # name of the experiment
@@ -121,11 +141,7 @@ flow_params = dict(
 
 
     # sumo-related parameters (see flow.core.params.SumoParams)
-    sumo=SumoParams(render=True,
-    save_render=False,
-    sight_radius=20,
-    pxpm=3,
-    show_radius=True),
+    sumo=SumoParams(render=True,sim_step=1),
 
     # environment related parameters (see flow.core.params.EnvParams)
     env=EnvParams(additional_params=ADDITIONAL_ENV_PARAMS,
@@ -173,9 +189,10 @@ if __name__ == "__main__":
     config["num_workers"] = N_ROLLOUTS
     config["eval_prob"] = 0.05
     config["noise_stdev"] = 0.01
+
     config["stepsize"] = 0.01
     config["observation_filter"] = "NoFilter"
-
+    config['horizon']=HORIZON
 
     # save the flow params for replay
     flow_json = json.dumps(
