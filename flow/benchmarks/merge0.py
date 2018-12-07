@@ -19,7 +19,7 @@ from flow.core.vehicles import Vehicles
 from flow.controllers import SumoCarFollowingController, RLController
 
 # time horizon of a single rollout
-HORIZON = 750
+HORIZON = 600
 # inflow rate at the highway
 FLOW_RATE = 2000
 # percent of autonomous vehicles
@@ -39,12 +39,12 @@ vehicles = Vehicles()
 vehicles.add(
     veh_id="human",
     acceleration_controller=(SumoCarFollowingController, {}),
-    speed_mode="no_collide",
+    speed_mode=9,
     num_vehicles=5)
 vehicles.add(
     veh_id="rl",
     acceleration_controller=(RLController, {}),
-    speed_mode="no_collide",
+    speed_mode=9,
     num_vehicles=0)
 
 # Vehicles are introduced from both sides of merge, with RL vehicles entering
