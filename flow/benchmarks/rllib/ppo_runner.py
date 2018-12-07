@@ -68,6 +68,6 @@ if __name__ == "__main__":
                 "training_iteration": 500
             },
             "num_samples": 6,
-            "upload_dir": "s3://eugene.experiments/sa_merge_test_oldsumo"
+            "upload_dir": "s3://eugene.experiments/sa_merge_test_oldsumo_raymaster"
         },
     })
