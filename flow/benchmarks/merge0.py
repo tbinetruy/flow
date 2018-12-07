@@ -71,7 +71,7 @@ inflow.add(
 
 flow_params = dict(
     # name of the experiment
-    exp_tag="merge_0",
+    exp_tag="resolve_multiagent",
 
     # name of the flow environment the experiment is running on
     env_name="WaveAttenuationMergePOEnv",
