@@ -58,7 +58,8 @@ flow_params = dict(
     env_name='MultiWaveAttenuationPOEnv',
 
     # name of the scenario class the experiment is running on
-    scenario='MultiLoopScenario',
+    scenario='LoopScenario',
+    # scenario = 'MultiLoopScenario
 
     # sumo-related parameters (see flow.core.params.SumoParams)
     sumo=SumoParams(
@@ -86,7 +87,7 @@ flow_params = dict(
             'lanes': 1,
             'speed_limit': 30,
             'resolution': 40,
-            'num_rings': NUM_RINGS
+            # 'num_rings': NUM_RINGS
         }, ),
 
     # vehicles to be placed in the network at the start of a rollout (see
@@ -95,7 +96,7 @@ flow_params = dict(
 
     # parameters specifying the positioning of vehicles upon initialization/
     # reset (see flow.core.params.InitialConfig)
-    initial=InitialConfig(bunching=20.0, spacing='custom'),
+    initial=InitialConfig(bunching=20.0)#, spacing='custom'),
 )
 
 
@@ -161,7 +162,7 @@ if __name__ == '__main__':
                 'training_iteration': 500
             },
             'config': config,
-            'upload_dir': 's3://eugene.experiments/ma_ring_stabilize_1_ring',
+            'upload_dir': 's3://eugene.experiments/ma_ring_stabilize_1_ring_loop',
             'num_samples': 3
         },
     })
