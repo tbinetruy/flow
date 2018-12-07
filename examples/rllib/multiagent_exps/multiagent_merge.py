@@ -193,7 +193,7 @@ if __name__ == '__main__':
                 'training_iteration': 400
             },
             'config': config,
-            'upload_dir': 's3://eugene.experiments/oldsumo_ma_merge',
+            'upload_dir': 's3://eugene.experiments/ma_merge_test_oldsumo',
             'num_samples': 3
         },
 
