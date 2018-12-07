@@ -47,7 +47,7 @@ def merge_example(render=None):
         acceleration_controller=(IDMController, {
             "noise": 0.2
         }),
-        speed_mode="no_collide",
+        speed_mode=7,
         num_vehicles=5)
 
     env_params = EnvParams(
