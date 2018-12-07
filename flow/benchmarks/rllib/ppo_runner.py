@@ -59,7 +59,7 @@ if __name__ == "__main__":
                 'training_iteration': 600
             },
             'config': config,
-            'upload_dir': 's3://eugene.experiments/newsumo_sa_merge',
+            'upload_dir': 's3://eugene.experiments/newsumo_sa_merge_raymaster',
             'num_samples': 3
         },
 
