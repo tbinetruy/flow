@@ -19,7 +19,7 @@ from flow.utils.rllib import FlowParamsEncoder
 from flow.benchmarks.merge0 import flow_params
 
 # number of rollouts per training iteration
-N_ROLLOUTS = 30
+N_ROLLOUTS = 15
 # number of parallel workers
 N_CPUS = 15
 
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     agent_cls = get_agent_class(alg_run)
     config = agent_cls._default_config.copy()
     config["num_workers"] = min(N_CPUS, N_ROLLOUTS)
-    config["horizon"] = 600
+    config["horizon"] = 750
     config["train_batch_size"] = horizon * N_ROLLOUTS
     config["use_gae"] = True
     config["horizon"] = horizon
