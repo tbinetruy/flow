@@ -137,13 +137,13 @@ def setup_exps():
     config = agent_cls._default_config.copy()
     config['num_workers'] = N_CPUS
     config['train_batch_size'] = HORIZON * N_ROLLOUTS
-    config['kl_coeff'] = tune.grid_search([0.002, 0.2])
+    #config['kl_coeff'] = tune.grid_search([0.002, 0.2])
     config['gamma'] = 0.999  # discount rate
-    config['model'].update({'fcnet_hiddens': [32, 32]})
-    config['lr'] = tune.grid_search([5e-6, 5e-5])
+    config['model'].update({'fcnet_hiddens': [100, 50, 25]})
+    config['lr'] = tune.grid_search([5e-4, 5e-5])
     config["use_gae"] = True
     config["lambda"] = 0.97
-    config["num_sgd_iter"] = tune.grid_search([10, 30])
+    #config["num_sgd_iter"] = tune.grid_search([10, 30])
     config['horizon'] = HORIZON
     config['observation_filter'] = 'NoFilter'
 
