@@ -19,7 +19,7 @@ from flow.core.vehicles import Vehicles
 from flow.controllers import SumoCarFollowingController, RLController
 
 # time horizon of a single rollout
-HORIZON = 750
+HORIZON = 600
 # inflow rate at the highway
 FLOW_RATE = 2000
 # percent of autonomous vehicles

@@ -16,19 +16,19 @@ from flow.utils.registry import make_create_env
 from flow.utils.rllib import FlowParamsEncoder
 
 # use this to specify the environment to run
-from flow.benchmarks.grid0 import flow_params
+from flow.benchmarks.merge0 import flow_params
 
 # number of rollouts per training iteration
-N_ROLLOUTS = 50
+N_ROLLOUTS = 30
 # number of parallel workers
-N_CPUS = 60
+N_CPUS = 15
 
 if __name__ == "__main__":
     # get the env name and a creator for the environment
     create_env, env_name = make_create_env(params=flow_params, version=0)
 
     # initialize a ray instance
-    ray.init(redirect_output=True)
+    ray.init("localhost:6379")
 
     alg_run = "PPO"
 
@@ -36,12 +36,12 @@ if __name__ == "__main__":
     agent_cls = get_agent_class(alg_run)
     config = agent_cls._default_config.copy()
     config["num_workers"] = min(N_CPUS, N_ROLLOUTS)
+    config["horizon"] = 600
     config["train_batch_size"] = horizon * N_ROLLOUTS
     config["use_gae"] = True
     config["horizon"] = horizon
-    config["lambda"] = grid_search([0.97, 1.0])
+    config["lambda"] = .97 #grid_search([0.97, 1.0])
     config["lr"] = grid_search([5e-4, 5e-5])
-    config["vf_clip_param"] = 1e6
     config["num_sgd_iter"] = 10
     config["model"]["fcnet_hiddens"] = [100, 50, 25]
     config["observation_filter"] = "NoFilter"
@@ -68,6 +68,6 @@ if __name__ == "__main__":
                 "training_iteration": 500
             },
             "num_samples": 3,
-            "upload_dir": "s3://<BUCKET NAME>"
+            "upload_dir": "s3://eugene.experiments/sa_merge_test_oldsumo"
         },
     })
