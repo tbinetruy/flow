@@ -27,19 +27,18 @@ N_CPUS = 15
 
 # We place one autonomous vehicle and 21 human-driven vehicles in the network
 vehicles = Vehicles()
-for i in range(NUM_RINGS):
-    vehicles.add(
-        veh_id='human_{}'.format(i),
-        acceleration_controller=(IDMController, {
-            'noise': 0.2
-        }),
-        routing_controller=(ContinuousRouter, {}),
-        num_vehicles=21)
-    vehicles.add(
-        veh_id='rl_{}'.format(i),
-        acceleration_controller=(RLController, {}),
-        routing_controller=(ContinuousRouter, {}),
-        num_vehicles=1)
+vehicles.add(
+    veh_id='human_{}'.format(i),
+    acceleration_controller=(IDMController, {
+        'noise': 0.2
+    }),
+    routing_controller=(ContinuousRouter, {}),
+    num_vehicles=21)
+vehicles.add(
+    veh_id='rl_{}'.format(i),
+    acceleration_controller=(RLController, {}),
+    routing_controller=(ContinuousRouter, {}),
+    num_vehicles=1)
 
 flow_params = dict(
     # name of the experiment
