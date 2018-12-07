@@ -60,7 +60,7 @@ if __name__ == "__main__":
             },
             'config': config,
             'upload_dir': 's3://eugene.experiments/singleagent_merge_v1',
-            'num_samples': 2
+            'num_samples': 3
         },
 
     })
