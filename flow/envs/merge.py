@@ -375,11 +375,11 @@ class MultiWaveAttenuationMergePOEnv(MultiEnv):
             return {}
 
         if self.env_params.evaluate:
-            return np.mean(self.vehicles.get_speed(self.vehicles.get_ids()))
+            return {'av': np.mean(self.vehicles.get_speed(self.vehicles.get_ids()))}
         else:
             # return a reward of 0 if a collision occurred
             if kwargs["fail"]:
-                return 0
+                return {'av': 0}
 
             # reward high system-level velocities
             cost1 = rewards.desired_velocity(self, fail=kwargs["fail"])

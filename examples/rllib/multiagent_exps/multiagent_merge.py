@@ -27,7 +27,7 @@ EXP_NUM = 0
 # time horizon of a single rollout
 HORIZON = 600
 # number of rollouts per training iteration
-N_ROLLOUTS = 15
+N_ROLLOUTS = 30
 # number of parallel workers
 N_CPUS = 15
 
@@ -52,12 +52,12 @@ vehicles.add(
     acceleration_controller=(IDMController, {
         "noise": 0.2
     }),
-    speed_mode="no_collide",
+    speed_mode=9,
     num_vehicles=5)
 vehicles.add(
     veh_id="rl",
     acceleration_controller=(RLController, {}),
-    speed_mode="no_collide",
+    speed_mode=9,
     num_vehicles=0)
 
 # Vehicles are introduced from both sides of merge, with RL vehicles entering
@@ -166,7 +166,7 @@ def setup_exps():
         return (PPOPolicyGraph, obs_space, act_space, {})
 
     # Setup PG with an ensemble of `num_policies` different policy graphs
-    policy_graphs = {'av': gen_policy(), 'adversary': gen_policy()}
+    policy_graphs = {'av': gen_policy()}
 
     def policy_mapping_fn(agent_id):
         return agent_id
@@ -184,9 +184,8 @@ if __name__ == '__main__':
 
     alg_run, env_name, config = setup_exps()
     ray.init(redis_address="localhost:6379")
-
     run_experiments({
-        'lifegoals': {
+        flow_params['exp_tag']: {
             'run': alg_run,
             'env': env_name,
             'checkpoint_freq': 50,
