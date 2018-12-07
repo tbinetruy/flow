@@ -10,7 +10,7 @@ from flow.controllers import RLController
 from flow.core.experiment import SumoExperiment
 from flow.core.params import SumoParams, EnvParams, NetParams, InitialConfig
 from flow.core.vehicles import Vehicles
-from flow.envs.loop.loop_accel import AccelEnv, ADDITIONAL_ENV_PARAMS
+from flow.envs.loop.loop_accel import AccelEnv
 from flow.envs.minicity import MinicityIDMEnv
 from flow.scenarios.minicity import MiniCityScenario, ADDITIONAL_NET_PARAMS
 from flow.controllers.routing_controllers import MinicityTrainingRouter_9
@@ -26,13 +26,21 @@ import sys
 
 import numpy as np
 
+ADDITIONAL_ENV_PARAMS = {
+    # maximum acceleration for autonomous vehicles, in m/s^2
+    'max_accel': 3,
+    # maximum deceleration for autonomous vehicles, in m/s^2
+    'max_decel': 3,
+    # desired velocity for all vehicles in the network, in m/s
+    'target_velocity': 10,
+}
 
 augmentation = sys.argv[1]
 ADDITIONAL_ENV_PARAMS['augmentation']=augmentation
 
 
 # time horizon of a single rollout
-HORIZON = 10
+HORIZON = 1
 # number of rollouts per training iteration
 N_ROLLOUTS = 1
 # number of parallel workers
@@ -118,16 +126,15 @@ vehicles.add(
     speed_mode='no_collide',
     lane_change_mode='strategic',
     num_vehicles=1)
-
-
+"""
 vehicles.add(
     veh_id='human',
     acceleration_controller=(IDMController, {}),
     routing_controller=(MinicityTrainingRouter_4, {}),
     speed_mode='no_collide',
     lane_change_mode='strategic',
-    num_vehicles=60)
-
+    num_vehicles=30)
+"""
 flow_params = dict(
     # name of the experiment
     exp_tag="mincity_v0_%s" % augmentation,
@@ -141,7 +148,7 @@ flow_params = dict(
 
 
     # sumo-related parameters (see flow.core.params.SumoParams)
-    sumo=SumoParams(render=True,sim_step=1),
+    sumo=SumoParams(render=False,sim_step=1,restart_instance=True),
 
     # environment related parameters (see flow.core.params.EnvParams)
     env=EnvParams(additional_params=ADDITIONAL_ENV_PARAMS,
