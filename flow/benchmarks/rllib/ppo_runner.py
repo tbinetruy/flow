@@ -41,7 +41,7 @@ if __name__ == "__main__":
     config["use_gae"] = True
     config["horizon"] = horizon
     config["lambda"] = .97 #grid_search([0.97, 1.0])
-    config["lr"] = grid_search([5e-4, 5e-5])
+    config["lr"] = 5e-4
     config["num_sgd_iter"] = 10
     config["model"]["fcnet_hiddens"] = [100, 50, 25]
     config["observation_filter"] = "NoFilter"
@@ -67,7 +67,7 @@ if __name__ == "__main__":
             "stop": {
                 "training_iteration": 500
             },
-            "num_samples": 3,
+            "num_samples": 6,
             "upload_dir": "s3://eugene.experiments/sa_merge_test_oldsumo"
         },
     })
