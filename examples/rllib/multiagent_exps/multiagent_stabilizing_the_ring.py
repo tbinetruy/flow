@@ -110,6 +110,7 @@ def setup_exps():
     config['lr'] = tune.grid_search([5e-4, 5e-5])
     config['horizon'] = HORIZON
     config['observation_filter'] = 'NoFilter'
+    config['clip_actions'] = False
     config['vf_clip_param'] = tune.grid_search([10, 100])
 
     # save the flow params for replay

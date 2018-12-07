@@ -43,6 +43,7 @@ if __name__ == "__main__":
     config["lambda"] = .97 #grid_search([0.97, 1.0])
     config["lr"] = 5e-4
     config["num_sgd_iter"] = 10
+    config['clip_actions'] = False
     config["model"]["fcnet_hiddens"] = [100, 50, 25]
     config["observation_filter"] = "NoFilter"
 

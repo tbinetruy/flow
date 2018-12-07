@@ -145,6 +145,7 @@ def setup_exps():
     config["lambda"] = 0.97
     #config["num_sgd_iter"] = tune.grid_search([10, 30])
     config['horizon'] = HORIZON
+    config['clip_actions'] = False
     config['observation_filter'] = 'NoFilter'
 
     # save the flow params for replay
