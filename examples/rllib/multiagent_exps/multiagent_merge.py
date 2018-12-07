@@ -193,6 +193,8 @@ if __name__ == '__main__':
                 'training_iteration': 600
             },
             'config': config,
-            'upload_dir': 's3://eugene.experiments/multiagent_merge_v1'
+            'upload_dir': 's3://eugene.experiments/multiagent_merge_v1',
+            'num_samples': 2
         },
+
     })
