@@ -25,30 +25,31 @@ N_ROLLOUTS = 15
 # number of parallel workers
 N_CPUS = 15
 
-# We place one autonomous vehicle and 22 human-driven vehicles in the network
+# We place one autonomous vehicle and 21 human-driven vehicles in the network
 vehicles = Vehicles()
-vehicles.add(
-    veh_id="human",
-    acceleration_controller=(IDMController, {
-        "noise": 0.2
-    }),
-    routing_controller=(ContinuousRouter, {}),
-    num_vehicles=21)
-vehicles.add(
-    veh_id="rl",
-    acceleration_controller=(RLController, {}),
-    routing_controller=(ContinuousRouter, {}),
-    num_vehicles=1)
+for i in range(NUM_RINGS):
+    vehicles.add(
+        veh_id='human_{}'.format(i),
+        acceleration_controller=(IDMController, {
+            'noise': 0.2
+        }),
+        routing_controller=(ContinuousRouter, {}),
+        num_vehicles=21)
+    vehicles.add(
+        veh_id='rl_{}'.format(i),
+        acceleration_controller=(RLController, {}),
+        routing_controller=(ContinuousRouter, {}),
+        num_vehicles=1)
 
 flow_params = dict(
     # name of the experiment
-    exp_tag="stabilizing_the_ring",
+    exp_tag='single_ring_stabilize',
 
     # name of the flow environment the experiment is running on
     env_name="WaveAttenuationPOEnv",
 
     # name of the scenario class the experiment is running on
-    scenario="LoopScenario",
+    scenario='LoopScenario',
 
     # sumo-related parameters (see flow.core.params.SumoParams)
     sumo=SumoParams(
@@ -61,9 +62,10 @@ flow_params = dict(
         horizon=HORIZON,
         warmup_steps=750,
         additional_params={
-            "max_accel": 1,
-            "max_decel": 1,
-            "ring_length": [220, 270],
+            'max_accel': 1,
+            'max_decel': 1,
+            'ring_length': [230, 230],
+            'target_velocity': 4
         },
     ),
 
@@ -71,10 +73,10 @@ flow_params = dict(
     # scenario's documentation or ADDITIONAL_NET_PARAMS component)
     net=NetParams(
         additional_params={
-            "length": 260,
-            "lanes": 1,
-            "speed_limit": 30,
-            "resolution": 40,
+            'length': 230,
+            'lanes': 1,
+            'speed_limit': 30,
+            'resolution': 40,
         }, ),
 
     # vehicles to be placed in the network at the start of a rollout (see
@@ -83,7 +85,7 @@ flow_params = dict(
 
     # parameters specifying the positioning of vehicles upon initialization/
     # reset (see flow.core.params.InitialConfig)
-    initial=InitialConfig(),
+    initial=InitialConfig(bunching=20.0, spacing='custom'),
 )
 
 
