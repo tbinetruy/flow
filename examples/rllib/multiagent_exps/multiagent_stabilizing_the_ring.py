@@ -30,9 +30,9 @@ HORIZON = 3000
 # Number of rings
 NUM_RINGS = 1
 # number of rollouts per training iteration
-N_ROLLOUTS = 20  # int(20/NUM_RINGS)
+N_ROLLOUTS = 15  # int(20/NUM_RINGS)
 # number of parallel workers
-N_CPUS = 2  # int(20/NUM_RINGS)
+N_CPUS = 15  # int(20/NUM_RINGS)
 
 # We place one autonomous vehicle and 21 human-driven vehicles in the network
 vehicles = Vehicles()
@@ -107,10 +107,11 @@ def setup_exps():
     config['train_batch_size'] = HORIZON * N_ROLLOUTS
     config['simple_optimizer'] = True
     config['gamma'] = 0.999  # discount rate
-    config['model'].update({'fcnet_hiddens': [32, 32]})
-    config['lr'] = tune.grid_search([1e-5])
+    config['model'].update({'fcnet_hiddens': [100, 50, 25]})
+    config['lr'] = tune.grid_search([5e-4, 5e-5])
     config['horizon'] = HORIZON
     config['observation_filter'] = 'NoFilter'
+    config['vf_clip_param'] = tune.grid_search([10, 100])
 
     # save the flow params for replay
     flow_json = json.dumps(
@@ -155,11 +156,12 @@ if __name__ == '__main__':
         flow_params['exp_tag']: {
             'run': alg_run,
             'env': env_name,
-            'checkpoint_freq': 1,
+            'checkpoint_freq': 25,
             'stop': {
-                'training_iteration': 1
+                'training_iteration': 500
             },
             'config': config,
-            # 'upload_dir': 's3://<BUCKET NAME>'
+            'upload_dir': 's3://eugene.experiments/ma_ring_stabilize_1_ring',
+            'num_samples': 3
         },
     })

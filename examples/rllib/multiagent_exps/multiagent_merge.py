@@ -140,7 +140,7 @@ def setup_exps():
     #config['kl_coeff'] = tune.grid_search([0.002, 0.2])
     config['gamma'] = 0.999  # discount rate
     config['model'].update({'fcnet_hiddens': [100, 50, 25]})
-    config['lr'] = tune.grid_search([5e-4, 5e-5])
+    config['lr'] = 5e-4
     config["use_gae"] = True
     config["lambda"] = 0.97
     #config["num_sgd_iter"] = tune.grid_search([10, 30])
@@ -194,7 +194,7 @@ if __name__ == '__main__':
             },
             'config': config,
             'upload_dir': 's3://eugene.experiments/ma_merge_test_oldsumo',
-            'num_samples': 3
+            'num_samples': 6
         },
 
     })
