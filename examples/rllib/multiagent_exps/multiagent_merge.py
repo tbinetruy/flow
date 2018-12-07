@@ -143,7 +143,7 @@ def setup_exps():
     config['lr'] = tune.grid_search([5e-6, 5e-5])
     config["use_gae"] = True
     config["lambda"] = 0.97
-    config["num_sgd_iter"] = tune.grid_search([10, 50])
+    config["num_sgd_iter"] = tune.grid_search([10, 30])
     config['horizon'] = HORIZON
     config['observation_filter'] = 'NoFilter'
 
