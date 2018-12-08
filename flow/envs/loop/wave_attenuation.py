@@ -356,7 +356,7 @@ class MultiWaveAttenuationPOEnv(MultiEnv):
             action = rl_actions[rl_id]
             accel_threshold = 0
 
-            if np.mean(np.abs(rl_actions)) > accel_threshold:
+            if np.mean(np.abs(action)) > accel_threshold:
                 reward += eta * (accel_threshold - np.mean(np.abs(action)))
 
             rew[rl_id] = reward
