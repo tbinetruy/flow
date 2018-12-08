@@ -30,9 +30,9 @@ HORIZON = 3000
 # Number of rings
 NUM_RINGS = 2
 # number of rollouts per training iteration
-N_ROLLOUTS = 15  # int(20/NUM_RINGS)
+N_ROLLOUTS = int(16/NUM_RINGS)
 # number of parallel workers
-N_CPUS = 15  # int(20/NUM_RINGS)
+N_CPUS = int(16/NUM_RINGS)
 
 # We place one autonomous vehicle and 21 human-driven vehicles in the network
 vehicles = Vehicles()
