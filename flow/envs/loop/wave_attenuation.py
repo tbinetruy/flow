@@ -339,26 +339,27 @@ class MultiWaveAttenuationPOEnv(MultiEnv):
 
         rew = {}
         for rl_id in rl_actions.keys():
-            #FIXME(EV) uncomment
-            # edge_id = rl_id.split('_')[1]
-            # edges = self.gen_edges(edge_id)
-            # vehs_on_edge = self.vehicles.get_ids_by_edge(edges)
-            vehs_on_edge = self.vehicles.get_ids()
             vel = np.array([
                 self.vehicles.get_speed(veh_id)
-                for veh_id in vehs_on_edge
+                for veh_id in self.vehicles.get_ids()
             ])
+
             if any(vel < -100) or kwargs['fail']:
                 return 0.
 
-            target_vel = self.env_params.additional_params['target_velocity']
-            max_cost = np.array([target_vel] * len(vehs_on_edge))
-            max_cost = np.linalg.norm(max_cost)
+            # reward average velocity
+            eta_2 = 4.
+            reward = eta_2 * np.mean(vel) / 20
 
-            cost = vel - target_vel
-            cost = np.linalg.norm(cost)
+            # punish accelerations (should lead to reduced stop-and-go waves)
+            eta = 8  # 0.25
+            action = rl_actions[rl_id]
+            accel_threshold = 0
 
-            rew[rl_id] = max(max_cost - cost, 0) / max_cost
+            if np.mean(np.abs(rl_actions)) > accel_threshold:
+                reward += eta * (accel_threshold - np.mean(np.abs(action)))
+
+            rew[rl_id] = reward
         return rew
 
     def additional_command(self):
