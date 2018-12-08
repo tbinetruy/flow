@@ -339,9 +339,11 @@ class MultiWaveAttenuationPOEnv(MultiEnv):
 
         rew = {}
         for rl_id in rl_actions.keys():
-            edge_id = rl_id.split('_')[1]
-            edges = self.gen_edges(edge_id)
-            vehs_on_edge = self.vehicles.get_ids_by_edge(edges)
+            #FIXME(EV) uncomment
+            # edge_id = rl_id.split('_')[1]
+            # edges = self.gen_edges(edge_id)
+            # vehs_on_edge = self.vehicles.get_ids_by_edge(edges)
+            vehs_on_edge = self.vehicles.get_ids()
             vel = np.array([
                 self.vehicles.get_speed(veh_id)
                 for veh_id in vehs_on_edge

@@ -108,11 +108,11 @@ def setup_exps():
     config['train_batch_size'] = HORIZON * N_ROLLOUTS
     config['gamma'] = 0.999  # discount rate
     config['model'].update({'fcnet_hiddens': [100, 50, 25]})
-    #config['lr'] = tune.grid_search([5e-4, 5e-5])
+    config['lr'] = tune.grid_search([5e-4, 5e-5])
     config['horizon'] = HORIZON
     config['observation_filter'] = 'NoFilter'
     config['clip_actions'] = False
-    #config['vf_clip_param'] = tune.grid_search([10, 100])
+    config['vf_clip_param'] = tune.grid_search([10, 100])
 
     # save the flow params for replay
     flow_json = json.dumps(
