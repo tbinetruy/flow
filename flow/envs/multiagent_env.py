@@ -341,7 +341,6 @@ class MultiEnv(MultiAgentEnv, Env):
                     action,
                     a_min=self.action_space.low,
                     a_max=self.action_space.high)
-
         return rl_actions
 
     def apply_rl_actions(self, rl_actions=None):
