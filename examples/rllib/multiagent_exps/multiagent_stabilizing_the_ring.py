@@ -28,7 +28,7 @@ from flow.utils.rllib import FlowParamsEncoder
 # time horizon of a single rollout
 HORIZON = 3000
 # Number of rings
-NUM_RINGS = 1
+NUM_RINGS = 2
 # number of rollouts per training iteration
 N_ROLLOUTS = 15  # int(20/NUM_RINGS)
 # number of parallel workers
@@ -58,8 +58,7 @@ flow_params = dict(
     env_name='MultiWaveAttenuationPOEnv',
 
     # name of the scenario class the experiment is running on
-    scenario='LoopScenario', # FIXME(EV) REVERT
-    # scenario = 'MultiLoopScenario
+    scenario='MultiLoopScenario',
 
     # sumo-related parameters (see flow.core.params.SumoParams)
     sumo=SumoParams(
@@ -87,7 +86,7 @@ flow_params = dict(
             'lanes': 1,
             'speed_limit': 30,
             'resolution': 40,
-            # 'num_rings': NUM_RINGS # FIXME(EV) REVERT
+            'num_rings': NUM_RINGS
         }, ),
 
     # vehicles to be placed in the network at the start of a rollout (see
@@ -161,7 +160,7 @@ if __name__ == '__main__':
                 'training_iteration': 500
             },
             'config': config,
-            'upload_dir': 's3://eugene.experiments/ma_ring_stabilize_1_ring_loop',
+            'upload_dir': 's3://eugene.experiments/lord_of_{}rings'.format(NUM_RINGS),
             'num_samples': 3
         },
     })

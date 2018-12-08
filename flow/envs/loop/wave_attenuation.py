@@ -295,8 +295,7 @@ class MultiWaveAttenuationPOEnv(MultiEnv):
     def action_space(self):
         """See class definition."""
         add_params = self.scenario.net_params.additional_params
-        #num_rings = add_params['num_rings']
-        num_rings = 1 # FIXME(ev) REMOVE
+        num_rings = add_params['num_rings']
         return Box(
             low=-np.abs(self.env_params.additional_params['max_decel']),
             high=self.env_params.additional_params['max_accel'],
@@ -339,9 +338,12 @@ class MultiWaveAttenuationPOEnv(MultiEnv):
 
         rew = {}
         for rl_id in rl_actions.keys():
+            edge_id = rl_id.split('_')[1]
+            edges = self.gen_edges(edge_id)
+            vehs_on_edge = self.vehicles.get_ids_by_edge(edges)
             vel = np.array([
                 self.vehicles.get_speed(veh_id)
-                for veh_id in self.vehicles.get_ids()
+                for veh_id in vehs_on_edge
             ])
 
             if any(vel < -100) or kwargs['fail']:
