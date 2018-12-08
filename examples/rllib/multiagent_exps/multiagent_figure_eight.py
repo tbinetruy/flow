@@ -91,7 +91,7 @@ flow_params = dict(
 
     # parameters specifying the positioning of vehicles upon initialization/
     # reset (see flow.core.params.InitialConfig)
-    initial=InitialConfig(),
+    initial=InitialConfig(bunching=20),
 )
 
 

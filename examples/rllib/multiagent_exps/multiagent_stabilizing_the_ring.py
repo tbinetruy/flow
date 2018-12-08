@@ -58,7 +58,7 @@ flow_params = dict(
     env_name='MultiWaveAttenuationPOEnv',
 
     # name of the scenario class the experiment is running on
-    scenario='LoopScenario',
+    scenario='LoopScenario', # FIXME(EV) REVERT
     # scenario = 'MultiLoopScenario
 
     # sumo-related parameters (see flow.core.params.SumoParams)
@@ -87,7 +87,7 @@ flow_params = dict(
             'lanes': 1,
             'speed_limit': 30,
             'resolution': 40,
-            # 'num_rings': NUM_RINGS
+            # 'num_rings': NUM_RINGS # FIXME(EV) REVERT
         }, ),
 
     # vehicles to be placed in the network at the start of a rollout (see
@@ -108,11 +108,11 @@ def setup_exps():
     config['train_batch_size'] = HORIZON * N_ROLLOUTS
     config['gamma'] = 0.999  # discount rate
     config['model'].update({'fcnet_hiddens': [100, 50, 25]})
-    config['lr'] = tune.grid_search([5e-4, 5e-5])
+    #config['lr'] = tune.grid_search([5e-4, 5e-5])
     config['horizon'] = HORIZON
     config['observation_filter'] = 'NoFilter'
     config['clip_actions'] = False
-    config['vf_clip_param'] = tune.grid_search([10, 100])
+    #config['vf_clip_param'] = tune.grid_search([10, 100])
 
     # save the flow params for replay
     flow_json = json.dumps(
@@ -152,7 +152,6 @@ def setup_exps():
 if __name__ == '__main__':
     alg_run, env_name, config = setup_exps()
     ray.init(redis_address='localhost:6379')
-
     run_experiments({
         flow_params['exp_tag']: {
             'run': alg_run,

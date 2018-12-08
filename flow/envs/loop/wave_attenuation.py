@@ -295,7 +295,8 @@ class MultiWaveAttenuationPOEnv(MultiEnv):
     def action_space(self):
         """See class definition."""
         add_params = self.scenario.net_params.additional_params
-        num_rings = add_params['num_rings']
+        #num_rings = add_params['num_rings']
+        num_rings = 1 # FIXME(ev) REMOVE
         return Box(
             low=-np.abs(self.env_params.additional_params['max_decel']),
             high=self.env_params.additional_params['max_accel'],
