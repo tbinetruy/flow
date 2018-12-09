@@ -34,10 +34,12 @@ except Exception:
     multi_flag = False
 
 if multi_flag:
-    from flow.envs.loop.wave_attenuation import MultiWaveAttenuationPOEnv
     from flow.envs.loop.loop_accel import MultiAgentAccelEnv
+    from flow.envs.loop.wave_attenuation import MultiWaveAttenuationPOEnv
+    from flow.envs.bottleneck_env import MultiBottleneckEnv
     env_list += ['MultiAgentAccelEnv', 'MultiWaveAttenuationPOEnv',
-                 "MultiWaveAttenuationMergePOEnv"]
+                 "MultiWaveAttenuationMergePOEnv",
+                 "MultiBottleneckEnv"]
     __all__ = env_list
 else:
     __all__ = env_list
