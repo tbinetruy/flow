@@ -68,17 +68,14 @@ worker_nodes:
 
 setup_commands:
     # checkout your desired branch on all worker nodes
-    - pip install dill
-    - pip install imutils
     - cd flow && git fetch && git checkout ray_test && git pull origin ray_test
     - cd ray && git fetch flow_upstream && git checkout flow_upstream/ray_master && git pull flow_upstream ray_master
     - echo 'export PATH="/home/ubuntu/sumo/bin:$PATH"' >> ~/.bashrc
     - echo 'export SUMO_HOME="/home/ubuntu/sumo"' >> ~/.bashrc
     - echo 'export PYTHONPATH="/home/ubuntu/sumo/tools:$PYTHONPATH"' >> ~/.bashrc
     - echo 'export PATH="/home/ubuntu/anaconda3/bin:$PATH"' >> ~/.bashrc
-
     - pip install matplotlib
-    - pip install imutils
+    - pip install --upgrade pyzmq notebook
 # Custom commands that will be run on the head node after common setup.
 head_setup_commands:
     - PATH="/home/ubuntu/anaconda3/bin:$PATH" yes | ~/anaconda3/bin/conda install boto3=1.4.8  # 1.4.8 adds InstanceMarketOptions
