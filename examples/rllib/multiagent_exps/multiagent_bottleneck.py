@@ -155,7 +155,7 @@ flow_params = dict(
 )
 
 if __name__ == '__main__':
-    ray.init()
+    ray.init(redis_address="localhost:6379")
 
     config = ppo.DEFAULT_CONFIG.copy()
     config['num_workers'] = N_CPUS
