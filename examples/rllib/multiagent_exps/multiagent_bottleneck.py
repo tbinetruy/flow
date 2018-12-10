@@ -22,7 +22,7 @@ from flow.controllers import RLController, ContinuousRouter, \
     SumoLaneChangeController
 
 # time horizon of a single rollout
-HORIZON = 2000
+HORIZON = 1500
 # number of parallel workers
 N_CPUS = 15
 # number of rollouts per training iteration
@@ -156,23 +156,23 @@ flow_params = dict(
 
 if __name__ == '__main__':
     ray.init(redis_address="localhost:6379")
-
     config = ppo.DEFAULT_CONFIG.copy()
     config['num_workers'] = N_CPUS
     config['train_batch_size'] = HORIZON * N_ROLLOUTS
     config['gamma'] = 0.999  # discount rate
     config['model'].update({'fcnet_hiddens': [100, 50, 25]})
-    config['clip_actions'] = False
-    config['model']['use_lstm'] = True
+    # config['clip_actions'] = False
+    # #config['model']['use_lstm'] = True
     config['lr'] = tune.grid_search([1e-4,1e-5, 1e-6])
-    #config['vf_loss_coeff'] = tune.grid_search([1, 10, 100])
+    # #config['vf_loss_coeff'] = tune.grid_search([1, 10, 100])
     config['num_sgd_iter'] = tune.grid_search([10, 30])
-    config['horizon'] = HORIZON
-    config['observation_filter'] = 'NoFilter'
+    # config['observation_filter'] = 'NoFilter'
     #config['model']['squash_to_range'] = True
-    config['model']["max_seq_len"] = 10
+    #config['model']["max_seq_len"] = 10
     # Size of the LSTM cell
-    config['model']["lstm_cell_size"] = 32
+    #config['model']["lstm_cell_size"] = 32
+    config['horizon'] = HORIZON
+
 
     # save the flow params for replay
     flow_json = json.dumps(
@@ -210,7 +210,7 @@ if __name__ == '__main__':
         flow_params['exp_tag']: {
             'run': 'PPO',
             'env': env_name,
-            'checkpoint_freq': 50,
+            'checkpoint_freq': 25,
             'stop': {
                 'training_iteration': 400
             },
