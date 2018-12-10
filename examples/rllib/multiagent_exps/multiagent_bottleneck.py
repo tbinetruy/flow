@@ -171,9 +171,9 @@ def setup_exps():
     config['num_sgd_iter'] = tune.grid_search([10, 30])
 
     # LSTM Things
-    # config['model']['use_lstm'] = True
-    # config['model']["max_seq_len"] = tune.grid_search([5, 10])
-    # config['model']["lstm_cell_size"] = 256
+    config['model']['use_lstm'] = True
+    config['model']["max_seq_len"] = tune.grid_search([5, 10])
+    config['model']["lstm_cell_size"] = 256
 
     # save the flow params for replay
     flow_json = json.dumps(
@@ -216,7 +216,7 @@ if __name__ == '__main__':
                 'training_iteration': 400
             },
             'config': config,
-            'upload_dir': "s3://eugene.experiments/bottleneck_exps/12-9-18-nocommunicate",
+            'upload_dir': "s3://eugene.experiments/bottleneck_exps/12-9-18-nocommunicate-lstm",
             'num_samples': 2
         },
     })
