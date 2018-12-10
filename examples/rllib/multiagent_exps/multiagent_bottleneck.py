@@ -168,7 +168,7 @@ def setup_exps():
     config['lr'] = tune.grid_search([1e-4,1e-5, 1e-6])
     # #config['vf_loss_coeff'] = tune.grid_search([1, 10, 100])
     config['num_sgd_iter'] = tune.grid_search([10, 30])
-    # config['observation_filter'] = 'NoFilter'
+    config['observation_filter'] = 'NoFilter'
     #config['model']['squash_to_range'] = True
     #config['model']["max_seq_len"] = 10
     # Size of the LSTM cell
