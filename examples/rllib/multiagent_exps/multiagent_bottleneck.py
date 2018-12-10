@@ -66,7 +66,7 @@ additional_env_params = {
     'max_accel': 3,
     'max_decel': 3,
     'inflow_range': [1000, 2000],
-    'communicate': True
+    'communicate': False
 }
 
 # flow rate
@@ -216,7 +216,7 @@ if __name__ == '__main__':
                 'training_iteration': 400
             },
             'config': config,
-            'upload_dir': "s3://eugene.experiments/bottleneck_exps/12-9-18-communicate-lstm",
+            'upload_dir': "s3://eugene.experiments/bottleneck_exps/12-9-18-nocommunicate-lstm",
             'num_samples': 2
         },
     })
