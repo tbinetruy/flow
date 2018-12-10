@@ -24,7 +24,7 @@ from flow.controllers import RLController, ContinuousRouter, \
 # time horizon of a single rollout
 HORIZON = 1500
 # number of parallel workers
-N_CPUS = 15
+N_CPUS = 14
 # number of rollouts per training iteration
 N_ROLLOUTS = 2*N_CPUS
 
@@ -156,7 +156,6 @@ flow_params = dict(
 
 
 def setup_exps():
-
     alg_run = 'PPO'
     config = ppo.DEFAULT_CONFIG.copy()
     config['num_workers'] = N_CPUS
@@ -175,7 +174,6 @@ def setup_exps():
     #config['model']["lstm_cell_size"] = 32
     config['horizon'] = HORIZON
 
-
     # save the flow params for replay
     flow_json = json.dumps(
         flow_params, cls=FlowParamsEncoder, sort_keys=True, indent=4)
@@ -190,11 +188,8 @@ def setup_exps():
     obs_space = test_env.observation_space
     act_space = test_env.action_space
 
-    def gen_policy():
-        return (PPOPolicyGraph, obs_space, act_space, {})
-
     # Setup PG with an ensemble of `num_policies` different policy graphs
-    policy_graphs = {'av': gen_policy()}
+    policy_graphs = {'av': (PPOPolicyGraph, obs_space, act_space, {})}
 
     def policy_mapping_fn(agent_id):
         return 'av'
@@ -209,13 +204,13 @@ def setup_exps():
     return alg_run, env_name, config
 
 if __name__ == '__main__':
-    ray.init(redis_address="localhost:6379", redirect_output=False)
     alg_run, env_name, config = setup_exps()
+    ray.init(redis_address='localhost:6379', redirect_output=False)
     run_experiments({
         flow_params['exp_tag']: {
             'run': alg_run,
             'env': env_name,
-            'checkpoint_freq': 1,
+            'checkpoint_freq': 25,
             'stop': {
                 'training_iteration': 400
             },
