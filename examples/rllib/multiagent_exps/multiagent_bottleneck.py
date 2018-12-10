@@ -164,10 +164,6 @@ if __name__ == '__main__':
     config['model'].update({'fcnet_hiddens': [100, 50, 25]})
     config['clip_actions'] = False
     #config['model']['use_lstm'] = True
-    config['use_gae'] = True
-    config['lambda'] = 0.97
-    config['kl_target'] = 0.02
-    config['vf_clip_param'] = 10000
     config['lr'] = tune.grid_search([1e-4,1e-5, 1e-6])
     #config['vf_loss_coeff'] = tune.grid_search([1, 10, 100])
     config['num_sgd_iter'] = tune.grid_search([10, 30])
