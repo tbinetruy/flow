@@ -154,9 +154,10 @@ flow_params = dict(
     tls=traffic_lights,
 )
 
-if __name__ == '__main__':
-    #ray.init(redis_address="localhost:6379")
-    ray.init()
+
+def setup_exps():
+
+    alg_run = 'PPO'
     config = ppo.DEFAULT_CONFIG.copy()
     config['num_workers'] = N_CPUS
     config['train_batch_size'] = HORIZON * N_ROLLOUTS
@@ -198,7 +199,6 @@ if __name__ == '__main__':
     def policy_mapping_fn(agent_id):
         return 'av'
 
-    policy_ids = list(policy_graphs.keys())
     config.update({
         'multiagent': {
             'policy_graphs': policy_graphs,
@@ -206,10 +206,14 @@ if __name__ == '__main__':
             "policies_to_train": ["av"]
         }
     })
+    return alg_run, env_name, config
 
+if __name__ == '__main__':
+    ray.init(redis_address="localhost:6379")
+    alg_run, env_name, config = setup_exps()
     run_experiments({
         flow_params['exp_tag']: {
-            'run': 'PPO',
+            'run': alg_run,
             'env': env_name,
             'checkpoint_freq': 1,
             'stop': {
