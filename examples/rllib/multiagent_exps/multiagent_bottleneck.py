@@ -163,7 +163,7 @@ if __name__ == '__main__':
     config['gamma'] = 0.999  # discount rate
     config['model'].update({'fcnet_hiddens': [100, 50, 25]})
     config['clip_actions'] = False
-    config['model']['use_lstm'] = True
+    #config['model']['use_lstm'] = True
     config['use_gae'] = True
     config['lambda'] = 0.97
     config['kl_target'] = 0.02
