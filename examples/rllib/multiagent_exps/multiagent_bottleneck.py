@@ -22,11 +22,11 @@ from flow.controllers import RLController, ContinuousRouter, \
     SumoLaneChangeController
 
 # time horizon of a single rollout
-HORIZON = 1500
+HORIZON = 200
 # number of parallel workers
-N_CPUS = 14
+N_CPUS = 1
 # number of rollouts per training iteration
-N_ROLLOUTS = 2*N_CPUS
+N_ROLLOUTS = N_CPUS
 
 SCALING = 1
 NUM_LANES = 4 * SCALING  # number of lanes in the widest highway
@@ -66,7 +66,7 @@ additional_env_params = {
     'max_accel': 3,
     'max_decel': 3,
     'inflow_range': [1000, 2000],
-    'communicate': False
+    'communicate': True
 }
 
 # flow rate
@@ -167,18 +167,19 @@ def setup_exps():
     config['horizon'] = HORIZON
 
     # Grid search things
-    config['lr'] = tune.grid_search([1e-4,1e-5, 1e-6])
-    config['num_sgd_iter'] = tune.grid_search([10, 30])
+    # config['lr'] = tune.grid_search([1e-4,1e-5, 1e-6])
+    # config['num_sgd_iter'] = tune.grid_search([10, 30])
 
     # LSTM Things
-    config['model']['use_lstm'] = True
-    config['model']["max_seq_len"] = tune.grid_search([5, 10])
-    config['model']["lstm_cell_size"] = 256
+    # config['model']['use_lstm'] = True
+    # config['model']["max_seq_len"] = tune.grid_search([5, 10])
+    # config['model']["lstm_cell_size"] = 256
 
     # save the flow params for replay
     flow_json = json.dumps(
         flow_params, cls=FlowParamsEncoder, sort_keys=True, indent=4)
     config['env_config']['flow_params'] = flow_json
+    config['env_config']['run'] = alg_run
 
     create_env, env_name = make_create_env(params=flow_params, version=0)
 
@@ -206,17 +207,18 @@ def setup_exps():
 
 if __name__ == '__main__':
     alg_run, env_name, config = setup_exps()
-    ray.init(redis_address='localhost:6379')
+    #ray.init(redis_address='localhost:6379')
+    ray.init(num_cpus=3, redirect_output=False)
     run_experiments({
         flow_params['exp_tag']: {
             'run': alg_run,
             'env': env_name,
-            'checkpoint_freq': 25,
+            'checkpoint_freq': 1,
             'stop': {
                 'training_iteration': 400
             },
             'config': config,
-            'upload_dir': "s3://eugene.experiments/bottleneck_exps/12-9-18-nocommunicate-lstm",
-            'num_samples': 2
+            #'upload_dir': "s3://eugene.experiments/bottleneck_exps/12-9-18-nocommunicate-lstm",
+            'num_samples': 1
         },
     })

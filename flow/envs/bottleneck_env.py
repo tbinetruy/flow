@@ -983,7 +983,7 @@ class MultiBottleneckEnv(MultiEnv, BottleneckEnv):
         if self.env_params.additional_params.get('communicate', False):
             accel = Box(
                 low=-1.5, high=1.0, shape=(1,), dtype=np.float32)
-            communicate = Discrete(4)
+            communicate = Discrete(2)
             return Tuple((accel, communicate))
         else:
             return Box(
@@ -1031,6 +1031,7 @@ class MultiBottleneckEnv(MultiEnv, BottleneckEnv):
         if self.env_params.evaluate:
             if self.time_counter == self.env_params.horizon:
                 reward = self.vehicles.get_outflow_rate(500)
+                return reward
             else:
                 return 0
 
