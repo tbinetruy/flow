@@ -1019,7 +1019,10 @@ class MultiBottleneckEnv(MultiEnv, BottleneckEnv):
         if rl_actions:
             rl_ids = list(rl_actions.keys())
             actions = list(rl_actions.values())
-            accel = np.concatenate([action[0] for action in actions])
+            if self.env_params.additional_params.get('communicate', False):
+                accel = np.concatenate([action[0] for action in actions])
+            else:
+                accel = actions
             self.apply_acceleration(rl_ids, accel)
 
     def compute_reward(self, rl_actions, **kwargs):
