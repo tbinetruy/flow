@@ -163,16 +163,16 @@ if __name__ == '__main__':
     config['gamma'] = 0.999  # discount rate
     config['model'].update({'fcnet_hiddens': [100, 50, 25]})
     config['clip_actions'] = False
-    #config['model']['use_lstm'] = True
+    config['model']['use_lstm'] = True
     config['lr'] = tune.grid_search([1e-4,1e-5, 1e-6])
     #config['vf_loss_coeff'] = tune.grid_search([1, 10, 100])
     config['num_sgd_iter'] = tune.grid_search([10, 30])
     config['horizon'] = HORIZON
     config['observation_filter'] = 'NoFilter'
     #config['model']['squash_to_range'] = True
-    #config['model']["max_seq_len"] = 10
+    config['model']["max_seq_len"] = 10
     # Size of the LSTM cell
-    #config['model']["lstm_cell_size"] = 32
+    config['model']["lstm_cell_size"] = 32
 
     # save the flow params for replay
     flow_json = json.dumps(
