@@ -37,7 +37,7 @@ AV_FRAC = 0.10
 vehicles = Vehicles()
 vehicles.add(
     veh_id='human',
-    speed_mode='all_checks',
+    speed_mode=9,
     lane_change_controller=(SumoLaneChangeController, {}),
     routing_controller=(ContinuousRouter, {}),
     lane_change_mode=0,
@@ -162,16 +162,16 @@ if __name__ == '__main__':
     config['train_batch_size'] = HORIZON * N_ROLLOUTS
     config['simple_optimizer'] = True
     config['gamma'] = 0.999  # discount rate
-    config['model'].update({'fcnet_hiddens': [32, 32]})
+    config['model'].update({'fcnet_hiddens': [100, 50, 25]})
     config['clip_actions'] = False
     config['model']['use_lstm'] = True
     config['use_gae'] = True
     config['lambda'] = 0.97
     config['kl_target'] = 0.02
     config['vf_clip_param'] = 10000
-    #config['lr'] = tune.grid_search([1e-3,1e-4,1e-5, 1e-6])
+    config['lr'] = tune.grid_search([1e-4,1e-5, 1e-6])
     #config['vf_loss_coeff'] = tune.grid_search([1, 10, 100])
-    #config['num_sgd_iter'] = tune.grid_search([10, 30])
+    config['num_sgd_iter'] = tune.grid_search([10, 30])
     config['horizon'] = HORIZON
     config['observation_filter'] = 'NoFilter'
     #config['model']['squash_to_range'] = True
@@ -220,6 +220,7 @@ if __name__ == '__main__':
                 'training_iteration': 400
             },
             'config': config,
-            #'upload_dir': "s3://eugene.experiments/10-24-18/comm_test4"
+            'upload_dir': "s3://eugene.experiments/bottleneck_exps/12-9-18-no-communicate",
+            'num_samples': 2
         },
     })
