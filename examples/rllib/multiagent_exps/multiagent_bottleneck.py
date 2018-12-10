@@ -164,16 +164,16 @@ def setup_exps():
     config['model'].update({'fcnet_hiddens': [100, 50, 25]})
     config['clip_actions'] = False
     config['observation_filter'] = 'NoFilter'
+    config['horizon'] = HORIZON
 
     # Grid search things
     config['lr'] = tune.grid_search([1e-4,1e-5, 1e-6])
     config['num_sgd_iter'] = tune.grid_search([10, 30])
 
     # LSTM Things
-    # config['model']['use_lstm'] = True
-    # config['model']["max_seq_len"] = 10
-    # config['model']["lstm_cell_size"] = 256
-    # config['horizon'] = HORIZON
+    config['model']['use_lstm'] = True
+    config['model']["max_seq_len"] = tune.grid_search([5, 10])
+    config['model']["lstm_cell_size"] = 256
 
     # save the flow params for replay
     flow_json = json.dumps(
@@ -206,7 +206,7 @@ def setup_exps():
 
 if __name__ == '__main__':
     alg_run, env_name, config = setup_exps()
-    ray.init(redis_address='localhost:6379', redirect_output=False)
+    ray.init(redis_address='localhost:6379')
     run_experiments({
         flow_params['exp_tag']: {
             'run': alg_run,
@@ -216,7 +216,7 @@ if __name__ == '__main__':
                 'training_iteration': 400
             },
             'config': config,
-            'upload_dir': "s3://eugene.experiments/bottleneck_exps/12-9-18-communicate",
+            'upload_dir': "s3://eugene.experiments/bottleneck_exps/12-9-18-communicate-lstm",
             'num_samples': 2
         },
     })
