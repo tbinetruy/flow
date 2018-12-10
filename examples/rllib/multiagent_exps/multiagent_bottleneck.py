@@ -209,7 +209,7 @@ def setup_exps():
     return alg_run, env_name, config
 
 if __name__ == '__main__':
-    ray.init(redis_address="localhost:6379")
+    ray.init(redis_address="localhost:6379", redirect_output=False)
     alg_run, env_name, config = setup_exps()
     run_experiments({
         flow_params['exp_tag']: {
