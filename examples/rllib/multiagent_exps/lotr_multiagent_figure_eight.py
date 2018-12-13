@@ -1,9 +1,11 @@
-"""Ring road example.
+"""Example of a multi-agent environment containing a figure eight with
+one autonomous vehicle and an adversary that is allowed to perturb
+the accelerations of figure eight."""
 
-Creates a set of stabilizing the ring experiments to test if
- more agents -> fewer needed batches
-"""
+# WARNING: Expected total reward is zero as adversary reward is
+# the negative of the AV reward
 
+from copy import deepcopy
 import json
 
 import ray
@@ -21,20 +23,20 @@ from flow.core.params import InitialConfig
 from flow.core.params import NetParams
 from flow.core.params import SumoParams
 from flow.core.vehicles import Vehicles
+from flow.scenarios.figure_eight import ADDITIONAL_NET_PARAMS
 from flow.utils.registry import make_create_env
 from flow.utils.rllib import FlowParamsEncoder
 
-# make sure (sample_batch_size * num_workers ~= train_batch_size)
 # time horizon of a single rollout
-HORIZON = 3000
-# Number of rings
-NUM_RINGS = 4
+HORIZON = 1500
 # number of rollouts per training iteration
-N_ROLLOUTS = int(15/NUM_RINGS)
+N_ROLLOUTS = 4
 # number of parallel workers
-N_CPUS = int(15/NUM_RINGS)
+N_CPUS = 2
+# number of figure 8s
+NUM_RINGS = 4
 
-# We place one autonomous vehicle and 21 human-driven vehicles in the network
+# We place one autonomous vehicle and 13 human-driven vehicles in the network
 vehicles = Vehicles()
 for i in range(NUM_RINGS):
     vehicles.add(
@@ -43,51 +45,51 @@ for i in range(NUM_RINGS):
             'noise': 0.2
         }),
         routing_controller=(ContinuousRouter, {}),
-        num_vehicles=21)
+        speed_mode='no_collide',
+        num_vehicles=13)
     vehicles.add(
         veh_id='rl_{}'.format(i),
         acceleration_controller=(RLController, {}),
         routing_controller=(ContinuousRouter, {}),
+        speed_mode='no_collide',
         num_vehicles=1)
+
+    additonal_net_params = deepcopy(ADDITIONAL_NET_PARAMS)
+    additonal_net_params["num_rings"] = NUM_RINGS
 
 flow_params = dict(
     # name of the experiment
-    exp_tag='lord_of_numrings_{}'.format(NUM_RINGS),
+    exp_tag='multiagent_figure_eight_{}'.format(NUM_RINGS),
 
     # name of the flow environment the experiment is running on
-    env_name='MultiWaveAttenuationPOEnv',
+    env_name='MultiAccelEnv',
 
     # name of the scenario class the experiment is running on
-    scenario='MultiLoopScenario',
+    scenario='MultiFigure8Scenario',
 
     # sumo-related parameters (see flow.core.params.SumoParams)
     sumo=SumoParams(
         sim_step=0.1,
-        render=False,
+        render=True,
     ),
 
     # environment related parameters (see flow.core.params.EnvParams)
     env=EnvParams(
         horizon=HORIZON,
-        warmup_steps=750,
         additional_params={
-            'max_accel': 1,
-            'max_decel': 1,
-            'ring_length': [230, 230],
-            'target_velocity': 4
+            'target_velocity': 20,
+            'max_accel': 3,
+            'max_decel': 3,
+            'perturb_weight': 0.03
         },
     ),
 
     # network-related parameters (see flow.core.params.NetParams and the
     # scenario's documentation or ADDITIONAL_NET_PARAMS component)
     net=NetParams(
-        additional_params={
-            'length': 230,
-            'lanes': 1,
-            'speed_limit': 30,
-            'resolution': 40,
-            'num_rings': NUM_RINGS
-        }, ),
+        no_internal_links=False,
+        additional_params=additonal_net_params,
+    ),
 
     # vehicles to be placed in the network at the start of a rollout (see
     # flow.core.vehicles.Vehicles)
@@ -95,23 +97,28 @@ flow_params = dict(
 
     # parameters specifying the positioning of vehicles upon initialization/
     # reset (see flow.core.params.InitialConfig)
-    initial=InitialConfig(bunching=20.0, spacing='custom'),
+    initial=InitialConfig(bunching=20, spacing='custom'),
 )
 
 
 def setup_exps():
+
     alg_run = 'PPO'
     agent_cls = get_agent_class(alg_run)
     config = agent_cls._default_config.copy()
     config['num_workers'] = N_CPUS
     config['train_batch_size'] = HORIZON * N_ROLLOUTS
+    config['simple_optimizer'] = True
     config['gamma'] = 0.999  # discount rate
     config['model'].update({'fcnet_hiddens': [100, 50, 25]})
-    config['lr'] = tune.grid_search([5e-4, 5e-5])
+    config['use_gae'] = True
+    config['lambda'] = 0.97
+    config['sgd_minibatch_size'] = 128
+    config['kl_target'] = 0.02
+    config['num_sgd_iter'] = 10
     config['horizon'] = HORIZON
-    config['observation_filter'] = 'NoFilter'
     config['clip_actions'] = False
-    config['vf_clip_param'] = tune.grid_search([10, 100])
+    config['observation_filter'] = 'NoFilter'
 
     # save the flow params for replay
     flow_json = json.dumps(
@@ -132,35 +139,34 @@ def setup_exps():
         return (PPOPolicyGraph, obs_space, act_space, {})
 
     # Setup PG with an ensemble of `num_policies` different policy graphs
-    policy_graphs = {'av': gen_policy()}
+    policy_graphs = {'av': gen_policy(), 'adversary': gen_policy()}
 
-    def policy_mapping_fn(_):
-        return 'av'
+    def policy_mapping_fn(agent_id):
+        return agent_id
 
     config.update({
         'multiagent': {
             'policy_graphs': policy_graphs,
-            'policy_mapping_fn': tune.function(policy_mapping_fn),
-            'policies_to_train': ['av']
+            'policy_mapping_fn': tune.function(policy_mapping_fn)
         }
     })
-
     return alg_run, env_name, config
 
 
 if __name__ == '__main__':
+
     alg_run, env_name, config = setup_exps()
-    ray.init(redis_address='localhost:6379', redirect_output=False)
+    ray.init(num_cpus=N_CPUS+1)
+
     run_experiments({
         flow_params['exp_tag']: {
             'run': alg_run,
             'env': env_name,
-            'checkpoint_freq': 25,
+            'checkpoint_freq': 1,
             'stop': {
-                'training_iteration': 500
+                'training_iteration': 1
             },
             'config': config,
-            'upload_dir': 's3://eugene.experiments/lord_of_{}rings'.format(NUM_RINGS),
-            'num_samples': 3
+            # 'upload_dir': 's3://<BUCKET NAME>'
         },
     })

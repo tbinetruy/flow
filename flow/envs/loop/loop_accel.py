@@ -107,7 +107,41 @@ class AccelEnv(Env):
                 self.vehicles.set_observed(veh_id)
 
 
-class MultiAgentAccelEnv(AccelEnv, MultiEnv):
+class MultiAccelEnv(AccelEnv, MultiEnv):
+    """Multiagent accel env
+    """
+    def _apply_rl_actions(self, rl_actions):
+        """See class definition."""
+        if rl_actions:
+            rl_ids = list(rl_actions.keys())
+            accel = list(rl_actions.values())
+            self.apply_acceleration(rl_ids, accel)
+
+    def compute_reward(self, rl_actions, **kwargs):
+        """See class definition."""
+        rewards = {}
+        for rl_id in self.vehicles.get_rl_ids():
+            route_edges = self.vehicles.get_edge(rl_id, []) + self.vehicles.get_route(rl_id)
+            vehs_on_route = self.vehicles.get_ids_by_edge(route_edges)
+            rewards[rl_id] = np.mean(self.vehicles.get_speed(vehs_on_route))
+        return rewards
+
+    def get_state(self):
+        """See class definition."""
+        obs = {}
+        for rl_id in self.vehicles.get_rl_ids():
+            route_edges = self.vehicles.get_edge(rl_id, []) + self.vehicles.get_route(rl_id)
+            vehs_on_route = self.vehicles.get_ids_by_edge(route_edges)
+            speed = [self.vehicles.get_speed(veh_id) / self.scenario.max_speed
+                     for veh_id in self.sorted_ids if veh_id in vehs_on_route]
+            pos = [(self.get_x_by_id(veh_id) % self.scenario.length) / self.scenario.length
+                   for veh_id in self.sorted_ids if veh_id in vehs_on_route]
+            obs[rl_id] = np.array(speed + pos)
+
+        return obs
+
+
+class AdversarialMultiAccelEnv(AccelEnv, MultiEnv):
     """Adversarial multi-agent env.
 
     Multi-agent env with an adversarial agent perturbing
