@@ -126,7 +126,7 @@ if __name__ == "__main__":
     import time
     for _ in range(100):
         # t = time.time()
-        exp = minicity_example(render='drgb',
+        exp = minicity_example(render=True,
                                save_render=False,
                                sight_radius=50,
                                pxpm=3,

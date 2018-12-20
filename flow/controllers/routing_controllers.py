@@ -69,17 +69,39 @@ class MinicityTrainingRouter_9(MinicityRouter):
     def choose_route(self, env):
         type_id = env.vehicles.get_state(self.veh_id, 'type')
         cur_route = env.vehicles.get_route(self.veh_id)
+        cur_edge = env.vehicles.get_edge(self.veh_id)
+        cur_lane = env.vehicles.get_lane(self.veh_id)
         route_assigned = False
 
         if len(cur_route) > 1:
             route_assigned = True
         if 'section1' in type_id and not route_assigned:
-            route = ['e_2', 'e_1', 'e_7', 'e_8_b', 'e_8_u', 'e_9', 'e_10',
-                     'e_11']
+            if cur_edge == 'e_3':
+                route = ['e_3', 'e_2', 'e_1', 'e_7', 'e_8_b', 'e_8_u', 'e_9',
+                        'e_10','e_11']
+            # elif cur_edge == 'e_2':
+            #     route = ['e_2', 'e_1', 'e_7', 'e_8_b', 'e_8_u', 'e_9', 'e_92']
+            # elif cur_edge == 'e_7':
+            #     route = ['e_7', 'e_8_b', 'e_8_u', 'e_9', 'e_92', 'e_7']
+            # elif cur_edge == 'e_29_u':
+            #     route = ['e_29_u', 'e_21', 'e_8_b', 'e_8_u', 'e_9', 'e_10']
         elif 'section2' in type_id and not route_assigned:
             route = ['e_3', 'e_25', 'e_30', 'e_31', 'e_32', 'e_21', 'e_8_u']
         elif 'section3' in type_id and not route_assigned:
-            route = ['e_41', 'e_39', 'e_37', 'e_29_u', 'e_21', 'e_8_u', 'e_9']
+            if cur_edge == 'e_41':
+                if cur_lane == 0:
+                    route = ['e_41', 'e_88']
+                else:
+                    route = ['e_41', 'e_39', 'e_37']
+            elif cur_edge == 'e_25':
+                route = ['e_25', 'e_87', 'e_50']
+            elif cur_edge == 'e_54':
+                route = ['e_54', 'e_88', 'e_26']
+            elif cur_edge == 'e_38':
+                if cur_lane == 0:
+                    route = ['e_38', 'e_50']
+                else:
+                    route = ['e_38', 'e_40', 'e_42']
         elif 'section4' in type_id and not route_assigned:
             route = ['e_39', 'e_37', 'e_29_u', 'e_21']
         elif 'section6' in type_id and not route_assigned:
