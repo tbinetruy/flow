@@ -107,9 +107,30 @@ class AccelEnv(Env):
                 self.vehicles.set_observed(veh_id)
 
 
-class MultiAccelEnv(AccelEnv, MultiEnv):
+class MultiAccelEnv(MultiEnv):
     """Multiagent accel env
     """
+
+    @property
+    def action_space(self):
+        """See class definition."""
+        return Box(
+            low=-abs(self.env_params.additional_params['max_decel']),
+            high=self.env_params.additional_params['max_accel'],
+            shape=(1, ),
+            dtype=np.float32)
+
+    @property
+    def observation_space(self):
+        """See class definition."""
+        self.obs_var_labels = ['Velocity', 'Absolute_pos']
+        return Box(
+            low=0,
+            high=1,
+            shape=(int(2 * (self.vehicles.num_vehicles / self.scenario.num_rings)), ),
+            # shape=(3, ),
+            dtype=np.float32)
+
     def _apply_rl_actions(self, rl_actions):
         """See class definition."""
         if rl_actions:
@@ -121,7 +142,7 @@ class MultiAccelEnv(AccelEnv, MultiEnv):
         """See class definition."""
         rewards = {}
         for rl_id in self.vehicles.get_rl_ids():
-            route_edges = self.vehicles.get_edge(rl_id, []) + self.vehicles.get_route(rl_id)
+            route_edges = [self.vehicles.get_edge(rl_id, [])] + self.vehicles.get_route(rl_id)
             vehs_on_route = self.vehicles.get_ids_by_edge(route_edges)
             rewards[rl_id] = np.mean(self.vehicles.get_speed(vehs_on_route))
         return rewards
@@ -130,14 +151,14 @@ class MultiAccelEnv(AccelEnv, MultiEnv):
         """See class definition."""
         obs = {}
         for rl_id in self.vehicles.get_rl_ids():
-            route_edges = self.vehicles.get_edge(rl_id, []) + self.vehicles.get_route(rl_id)
-            vehs_on_route = self.vehicles.get_ids_by_edge(route_edges)
+            edge_id = rl_id.split('_')[1]
+            vehs_on_edge = [veh_id for veh_id in self.sorted_ids if veh_id.split('_')[1] == edge_id]
             speed = [self.vehicles.get_speed(veh_id) / self.scenario.max_speed
-                     for veh_id in self.sorted_ids if veh_id in vehs_on_route]
+                     for veh_id in vehs_on_edge]
             pos = [(self.get_x_by_id(veh_id) % self.scenario.length) / self.scenario.length
-                   for veh_id in self.sorted_ids if veh_id in vehs_on_route]
+                   for veh_id in vehs_on_edge]
             obs[rl_id] = np.array(speed + pos)
-
+            # obs[rl_id] = np.array([1, 1, 1])
         return obs
 
 

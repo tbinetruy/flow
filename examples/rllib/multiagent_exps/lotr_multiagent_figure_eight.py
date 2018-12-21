@@ -32,9 +32,9 @@ HORIZON = 1500
 # number of rollouts per training iteration
 N_ROLLOUTS = 4
 # number of parallel workers
-N_CPUS = 2
+N_CPUS = 1
 # number of figure 8s
-NUM_RINGS = 4
+NUM_RINGS = 2
 
 # We place one autonomous vehicle and 13 human-driven vehicles in the network
 vehicles = Vehicles()
@@ -70,7 +70,7 @@ flow_params = dict(
     # sumo-related parameters (see flow.core.params.SumoParams)
     sumo=SumoParams(
         sim_step=0.1,
-        render=True,
+        render=False,
     ),
 
     # environment related parameters (see flow.core.params.EnvParams)
@@ -139,15 +139,16 @@ def setup_exps():
         return (PPOPolicyGraph, obs_space, act_space, {})
 
     # Setup PG with an ensemble of `num_policies` different policy graphs
-    policy_graphs = {'av': gen_policy(), 'adversary': gen_policy()}
+    policy_graphs = {'av': gen_policy()}
 
-    def policy_mapping_fn(agent_id):
-        return agent_id
+    def policy_mapping_fn(_):
+        return 'av'
 
     config.update({
         'multiagent': {
             'policy_graphs': policy_graphs,
-            'policy_mapping_fn': tune.function(policy_mapping_fn)
+            'policy_mapping_fn': tune.function(policy_mapping_fn),
+            'policies_to_train': ['av']
         }
     })
     return alg_run, env_name, config

@@ -133,7 +133,6 @@ class Scenario(Serializable):
         # together
         self.internal_edgestarts += self.intersection_edgestarts
         seen = set()
-        import ipdb; ipdb.set_trace()
         self.internal_edgestarts = \
             [item for item in self.internal_edgestarts
              if item[1] not in seen and not seen.add(item[1])]
@@ -656,7 +655,6 @@ class Scenario(Serializable):
         try:
             return self._edges[edge_id]["lanes"]
         except KeyError:
-            import ipdb; ipdb.set_trace()
             print('Error in num lanes with key', edge_id)
             return -1001
 

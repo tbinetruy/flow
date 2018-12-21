@@ -383,7 +383,7 @@ class MultiFigure8Scenario(Scenario):
         edgestarts = []
 
         for i in range(self.num_rings):
-            edgestarts = \
+            edgestarts += \
                 [("bottom_lower_ring_{}".format(i),
                   0 + self.inner_space_len + i * self.length),
                  ("right_lower_ring_in_{}".format(i),
@@ -426,7 +426,6 @@ class MultiFigure8Scenario(Scenario):
                  (":center_intersection_"+str(i)+"_1",
                   4 * self.ring_edgelen + 3 / 2 * self.intersection_len +
                   self.junction_len + 8 * self.inner_space_len)]
-
         return intersection_edgestarts
 
     def specify_internal_edge_starts(self):
@@ -471,7 +470,6 @@ class MultiFigure8Scenario(Scenario):
                   5 * self.ring_edgelen + 2 * self.intersection_len +
                   2 * self.junction_len +
                   9 * self.inner_space_len + i * self.length)]
-
         return internal_edgestarts
 
 
@@ -505,6 +503,11 @@ class MultiFigure8Scenario(Scenario):
          available_edges, initial_config) = \
             self._get_start_pos_util(initial_config, num_vehicles, **kwargs)
 
+        # return an empty list of starting positions and lanes if there are no
+        # vehicles to be placed
+        if num_vehicles == 0:
+            return [], []
+
         increment = available_length / num_vehicles
         vehs_per_ring = num_vehicles / self.num_rings
 
@@ -516,33 +519,45 @@ class MultiFigure8Scenario(Scenario):
         while car_count < num_vehicles:
             # collect the position and lane number of each new vehicle
             pos = self.get_edge(x)
-            print(pos)
+
+            # ensures that vehicles are not placed in an internal junction
+            while pos[0] in dict(self.internal_edgestarts).keys():
+                # find the location of the internal edge in total_edgestarts,
+                # which has the edges ordered by position
+                edges = [tup[0] for tup in self.total_edgestarts]
+                indx_edge = next(
+                    i for i, edge in enumerate(edges) if edge == pos[0])
+
+                # take the next edge in the list, and place the car at the
+                # beginning of this edge
+                if indx_edge == len(edges) - 1:
+                    next_edge_pos = self.total_edgestarts[0]
+                else:
+                    next_edge_pos = self.total_edgestarts[indx_edge + 1]
+
+                x = next_edge_pos[1]
+                pos = (next_edge_pos[0], 0)
+
+            # ensures that you are in an acceptable edge
+            while pos[0] not in available_edges:
+                x = (x + self.edge_length(pos[0]))
+                pos = self.get_edge(x)
+
             # place vehicles side-by-side in all available lanes on this edge
             for lane in range(min([self.num_lanes(pos[0]), lanes_distr])):
                 car_count += 1
                 startpositions.append(pos)
-                edge, pos = startpositions[-1]
-                startpositions[-1] = edge, pos % self.length
                 startlanes.append(lane)
 
                 if car_count == num_vehicles:
                     break
 
-            # 1e-13 prevents an extra car from being added in wrong place
             x = (x + increment + VEHICLE_LENGTH + min_gap) + 1e-13
+
             if (car_count % vehs_per_ring) == 0:
                 # if we have put in the right number of cars,
                 # move onto the next ring
                 ring_num = int(car_count / vehs_per_ring)
                 x = self.length * ring_num + 1e-13
-
-        # add a perturbation to each vehicle, while not letting the vehicle
-        # leave its current edge
-        # if initial_config.perturbation > 0:
-        #     for i in range(num_vehicles):
-        #         perturb = np.random.normal(0, initial_config.perturbation)
-        #         edge, pos = startpositions[i]
-        #         pos = max(0, min(self.edge_length(edge), pos + perturb))
-        #         startpositions[i] = (edge, pos)
 
         return startpositions, startlanes
