@@ -53,10 +53,10 @@ def intersection_example(render=None,
 
     vehicles = Vehicles()
 
-    experiment = {'e_1': [('rl', 6)],
-                  'e_3': [('rl', 6)],
-                  'e_5': [('rl', 6)],
-                  'e_7': [('rl', 6)]}
+    experiment = {'e_1': [('rl', 10)],
+                  'e_3': [('rl', 10)],
+                  'e_5': [('rl', 10)],
+                  'e_7': [('rl', 10)]}
     vehicle_data = {}
     # get all different vehicle types
     for _, pairs in experiment.items():
@@ -70,8 +70,8 @@ def intersection_example(render=None,
             veh_id=v_type,
             acceleration_controller=(RLController, {}),
             routing_controller=(IntersectionRouter, {}),
-            speed_mode=0, #'no_collide',
-            lane_change_mode='strategic',
+            speed_mode=0,#'no_collide',
+            lane_change_mode=0,
             num_vehicles=v_num)
 
     env_params = EnvParams(additional_params=ADDITIONAL_ENV_PARAMS)
@@ -116,4 +116,4 @@ if __name__ == "__main__":
                            show_radius=False)
 
     # run for a set number of rollouts / time steps
-    exp.run(1, 1000)
+    exp.run(1, 1500)
