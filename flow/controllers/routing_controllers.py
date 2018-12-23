@@ -63,6 +63,30 @@ class MinicityRouter(BaseRouter):
 
         return next_route
 
+class IntersectionRouter(MinicityRouter):
+
+    def choose_route(self, env):
+        type_id = env.vehicles.get_state(self.veh_id, 'type')
+        cur_route = env.vehicles.get_route(self.veh_id)
+        cur_edge = env.vehicles.get_edge(self.veh_id)
+        cur_lane = env.vehicles.get_lane(self.veh_id)
+        route_assigned = False
+
+        if len(cur_route) > 1:
+            route_assigned = True
+        if 'xiao' in type_id and not route_assigned:
+            if cur_edge == 'e_7':
+                if cur_lane == 0:
+                    route = ['e_7', 'e_6']
+            elif cur_edge == 'e_3':
+                if cur_lane == 0:
+                    route = ['e_3', 'e_2']
+        elif 'idm' in type_id:
+            route = MinicityRouter.choose_route(self, env)
+        else:
+            route = None
+
+        return route
 
 class MinicityTrainingRouter_9(MinicityRouter):
 
