@@ -28,8 +28,8 @@ def grid_example(render=None):
     inner_length = 300
     long_length = 500
     short_length = 300
-    N_ROWS = 2
-    N_COLUMNS = 3
+    N_ROWS = 1
+    N_COLUMNS = 1
     num_cars_left = 1
     num_cars_right = 1
     num_cars_top = 1
@@ -80,7 +80,8 @@ def grid_example(render=None):
             min_gap=2.5,
             decel=7.5,  # avoid collisions at emergency stops
         ),
-        num_vehicles=tot_cars)
+        num_vehicles=tot_cars,
+        speed_mode=23)
 
     env_params = EnvParams(additional_params=ADDITIONAL_ENV_PARAMS)
 
