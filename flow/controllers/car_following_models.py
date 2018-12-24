@@ -436,7 +436,7 @@ class ConstAccController(BaseController):
             see parent class
         """
         super().__init__(veh_id, sumo_cf_params)
-        self.const_acc = 0.5
+        self.const_acc = 5
 
     def get_accel(self, env):
         """See parent class."""
