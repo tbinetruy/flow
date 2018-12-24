@@ -108,7 +108,7 @@ class IntersectionScenario(Scenario):
 
     def specify_types(self, net_params):
         """See parent class."""
-        types = [{'id': 'edgeType', 'speed': repr(5)}]
+        types = [{'id': 'edgeType', 'speed': repr(12)}]
         return types
 
     def specify_routes(self, net_params):
