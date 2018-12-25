@@ -1,4 +1,4 @@
-"""Contains the bottleneck scenario class."""
+"""Contains the intersection scenario class."""
 
 from flow.core.params import InitialConfig
 from flow.scenarios.base_scenario import Scenario
