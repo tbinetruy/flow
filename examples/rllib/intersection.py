@@ -1,9 +1,8 @@
 """Example of modified intersection network with human-driven vehicles."""
 from flow.controllers import IDMController
-from flow.controllers import RLController, IDMController, ConstAccController
+from flow.controllers import RLController
 from flow.core.experiment import SumoExperiment
-from flow.core.params import SumoParams, EnvParams, NetParams, InitialConfig,\
-    SumoCarFollowingParams
+from flow.core.params import SumoParams, EnvParams, NetParams, InitialConfig
 from flow.core.vehicles import Vehicles
 from flow.envs.loop.loop_accel import AccelEnv, ADDITIONAL_ENV_PARAMS
 from flow.scenarios.intersection import IntersectionScenario, ADDITIONAL_NET_PARAMS
@@ -69,11 +68,8 @@ def intersection_example(render=None,
     for v_type, v_num in vehicle_data.items():
         vehicles.add(
             veh_id=v_type,
-            acceleration_controller=(ConstAccController, {}),
+            acceleration_controller=(RLController, {}),
             routing_controller=(IntersectionRouter, {}),
-            sumo_car_following_params=SumoCarFollowingParams(
-                min_gap=0,
-            ),
             speed_mode=0,#'no_collide',
             lane_change_mode=0,
             num_vehicles=v_num)

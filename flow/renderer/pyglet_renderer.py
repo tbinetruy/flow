@@ -329,7 +329,7 @@ class PygletRenderer():
             x, y, ang = orientation
             x = (x-self.x_shift)*self.x_scale*self.pxpm
             y = (y-self.y_shift)*self.y_scale*self.pxpm
-            self._add_vehicle_poly_triangle((x, y), ang, 4.5, color)
+            self._add_vehicle_poly_triangle((x, y), ang, 5, color)
             self._add_vehicle_poly_circle((x, y), sight_radius, color)
 
     def _add_vehicle_poly_triangle(self, center, angle, size, color):
