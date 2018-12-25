@@ -4,6 +4,7 @@ from flow.core.params import InitialConfig
 from flow.scenarios.base_scenario import Scenario
 import numpy as np
 from numpy import linspace, pi, sin, cos
+from copy import deepcopy
 
 ADDITIONAL_NET_PARAMS = {}
 SCALING = 40
@@ -113,15 +114,19 @@ class LoopyEightScenario(Scenario):
                   'numLanes': 2, 'type': 'edgeType'}
                 ]
 
-        for edge in edges:
-            oppo_edge = {'id': edge['id'],
+        num_edge = len(edges)
+        for i in range(num_edge):
+            edge = edges[i]
+            oppo_edge = {'id': edge['id'] + '_op',
                          'from': edge['to'],
                          'to': edge['from'],
                          'length': edge['length'],
                          'numLanes': edge['numLanes'],
                          'type': edge['type']}
             if edge.get('shape') is not None:
-                oppo_edge['shape'] = [reversed(edge['shape'])]
+                print(edge['id'])
+                oppo_edge['shape'] = edge['shape'][::-1]
+                print("reversing...")
             edges.append(oppo_edge)
 
         for edge in edges:
@@ -214,4 +219,19 @@ class LoopyEightScenario(Scenario):
                'e13': ['e13'],
                'e14': ['e14']}
 
+        rts_op = {'e1_op': ['e1_op'],
+                  'e2_op': ['e2_op'],
+                  'e3_op': ['e3_op'],
+                  'e4_op': ['e4_op'],
+                  'e5_op': ['e5_op'],
+                  'e6_op': ['e6_op'],
+                  'e7_op': ['e7_op'],
+                  'e8_op': ['e8_op'],
+                  'e9_op': ['e9_op'],
+                  'e10_op': ['e10_op'],
+                  'e11_op': ['e11_op'],
+                  'e12_op': ['e12_op'],
+                  'e13_op': ['e13_op'],
+                  'e14_op': ['e14_op']}
+        rts = {**rts, **rts_op}
         return rts

@@ -242,10 +242,22 @@ class LoopyEightRouter(BaseRouter):
         overlap_routes = {}  # assuming we only have
 
         all_routes = [
-        ['e1', 'e2', 'e3', 'e4'],
-        ['e2', 'e5', 'e8', 'e9', 'e12', 'e13', 'e14', 'e10', 'e11', 'e6', 'e1'],
-        ['e8', 'e9', 'e12', 'e13', 'e14', 'e10', 'e11', 'e7']
+                ['e1', 'e2', 'e3', 'e4'],
+                ['e2', 'e5', 'e8', 'e9', 'e12', 'e13', 'e14', 'e10', 'e11',
+                 'e6', 'e1'],
+                ['e8', 'e9', 'e12', 'e13', 'e14', 'e10', 'e11', 'e7']
         ]
+
+        # the other direction
+        all_routes_op = [
+                ['e4_op', 'e3_op', 'e2_op', 'e1_op'],
+                ['e1_op', 'e6_op', 'e11_op', 'e10_op', 'e14_op', 'e13_op',
+                 'e12_op', 'e9_op', 'e8_op', 'e5_op', 'e2_op'],
+                ['e7_op', 'e11_op', 'e10_op', 'e14_op', 'e13_op', 'e12_op',
+                 'e9_op', 'e8_op']
+        ]
+
+        all_routes += all_routes_op
 
         for route in all_routes:
             for i in range(len(route)):
