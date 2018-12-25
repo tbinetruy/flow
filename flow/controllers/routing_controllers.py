@@ -231,6 +231,46 @@ class MinicityTrainingRouter_4(MinicityRouter):
 
         return route
 
+class LoopyEightRouter(BaseRouter):
+
+    def choose_route(self, env):
+        type_id = env.vehicles.get_state(self.veh_id, 'type')
+        edge = env.vehicles.get_edge(self.veh_id)
+        cur_route = env.vehicles.get_route(self.veh_id)
+
+        routes = {}
+        overlap_routes = {}  # assuming we only have
+
+        all_routes = [
+        ['e1', 'e2', 'e3', 'e4'],
+        ['e2', 'e5', 'e8', 'e9', 'e12', 'e13', 'e14', 'e10', 'e11', 'e6', 'e1'],
+        ['e8', 'e9', 'e12', 'e13', 'e14', 'e10', 'e11', 'e7']
+        ]
+
+        for route in all_routes:
+            for i in range(len(route)):
+                # Routes through the top edge going right will continue in the
+                # first path, while those in the center top edge will follow
+                # the second path. This is to prevent vehicles in these routes
+                # from converging onto one path.
+                if route[-i] in routes:
+                    overlap_routes[route[-i]] = route[-i:] + route[:-i]
+                else:
+                    routes[route[-i]] = route[-i:] + route[:-i]
+
+        if edge == cur_route[-1]:
+            if edge in overlap_routes:
+                # pick randomly among possible choices given multiple routes
+                possible_routes = [overlap_routes[edge], routes[edge]]
+                route = random.choice(possible_routes)
+            else:
+                # choose the only available route
+                route = routes[edge]
+        else:
+            route = None
+
+        return route
+
 
 class GridRouter(BaseRouter):
     """A router used to re-route a vehicle within a grid environment."""
