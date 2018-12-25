@@ -7,7 +7,7 @@ from numpy import linspace, pi, sin, cos
 
 ADDITIONAL_NET_PARAMS = {}
 SCALING = 40
-RADIUS = 1.5
+RADIUS = 1
 
 class LoopyEightScenario(Scenario):
     """Scenario class for bottleneck simulations."""
@@ -52,7 +52,7 @@ class LoopyEightScenario(Scenario):
                  {'id': 'n9', 'x': 3 + rt/2, 'y': -rt/2},
                  {'id': 'n10', 'x': 3 + rt/2, 'y': rt/2},
                  {'id': 'n11', 'x': 3+1.5*rt, 'y': rt/2},
-                 {'id': 'n12', 'x': 3+1.5*rt, 'y': -rt/2},]
+                 {'id': 'n12', 'x': 3+1.5*rt, 'y': -rt/2}]
 
         for node in nodes:
             self.nodes[node['id']] = np.array([node['x'] * RADIUS * SCALING,
@@ -114,17 +114,6 @@ class LoopyEightScenario(Scenario):
                 ]
 
         for edge in edges:
-            oppo_edge = {'id': edge['id'],
-                         'from': edge['to'],
-                         'to': edge['from'],
-                         'length': edge['length'],
-                         'numLanes': edge['numLanes'],
-                         'type': edge['type']}
-            if edge.get('shape') is not None:
-                oppo_edge['shape'] = [reversed(edge['shape'])]
-            edges.append(oppo_edge)
-
-        for edge in edges:
             edge['numLanes'] = str(edge['numLanes'])
             if 'shape' in edge:
                 edge['length'] = sum(
@@ -143,6 +132,18 @@ class LoopyEightScenario(Scenario):
             # junctions = {'e_8_b': 2}
             # if edge['id'] in junctions:
             #     edge['length'] = str(junctions[edge['id']])
+
+        # add the other direction
+        for edge in edges:
+            oppo_edge = {'id': edge['id'] + '_op',
+                         'from': edge['to'],
+                         'to': edge['from'],
+                         'length': edge['length'],
+                         'numLanes': edge['numLanes'],
+                         'type': edge['type']}
+            if edge['shape'] is not None:
+                oppo_edge['shape'] = reversed(edge['shape'])
+            edges += oppo_edge
 
         return edges
 
