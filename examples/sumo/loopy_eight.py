@@ -38,30 +38,11 @@ def loopy_eight_example(render=None,
 
     vehicles = Vehicles()
 
-    # experiment = {'e2': [('section7_track', 3), ('idm', 1)],
-    #               'e13': [('section7_track', 2), ('idm', 1)]}
-
-    # vehicle_data = {}
-    # # get all different vehicle types
-    # for _, pairs in experiment.items():
-    #     for pair in pairs:
-    #         cur_num = vehicle_data.get(pair[0], 0)
-    #         vehicle_data[pair[0]] = cur_num + pair[1]
-    #
-    # # add vehicle
-    # for v_type, v_num in vehicle_data.items():
-    #     vehicles.add(
-    #         veh_id=v_type,
-    #         acceleration_controller=(RLController, {}),
-    #         routing_controller=(LoopyEightRouter, {}),
-    #         speed_mode='no_collide',
-    #         lane_change_mode='strategic',
-    #         num_vehicles=v_num)
     vehicles.add(
         veh_id = 'rl',
         acceleration_controller = (RLController, {}),
         routing_controller = (LoopyEightRouter, {}),
-        speed_mode = 'no_collide',
+        speed_mode = 23,#'no_collide',
         lane_change_mode = 'strategic',
         num_vehicles = 50)
 
