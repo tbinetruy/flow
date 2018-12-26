@@ -31,11 +31,11 @@ parser = argparse.ArgumentParser(
 
 # required input parameters
 parser.add_argument(
-    "--benchmark_name", type=str, help="File path to solution environment.")
+    "--upload_dir", type=str, help="S3 Bucket to upload to.")
 
 # required input parameters
 parser.add_argument(
-    "--upload_dir", type=str, help="S3 Bucket to upload to.")
+    "--benchmark_name", type=str, help="File path to solution environment.")
 
 # optional input parameters
 parser.add_argument(
@@ -88,8 +88,8 @@ if __name__ == "__main__":
     config["model"]["fcnet_hiddens"] = [100, 50, 25]
     config["observation_filter"] = "NoFilter"
     # save the flow params for replay
-    flow_json = json.dumps(flow_params, cls=FlowParamsEncoder, sort_keys=True,
-                           indent=4)
+    flow_json = json.dumps(
+        flow_params, cls=FlowParamsEncoder, sort_keys=True, indent=4)
     config['env_config']['flow_params'] = flow_json
     config['env_config']['run'] = alg_run
 
@@ -97,16 +97,18 @@ if __name__ == "__main__":
     register_env(env_name, create_env)
 
     exp_tag = {
-            "run": alg_run,
-            "env": env_name,
-            "config": {
-                **config
-            },
-            "checkpoint_freq": 25,
-            "max_failures": 999,
-            "stop": {"training_iteration": 500},
-            "num_samples": 1,
-        }
+        "run": alg_run,
+        "env": env_name,
+        "config": {
+            **config
+        },
+        "checkpoint_freq": 25,
+        "max_failures": 999,
+        "stop": {
+            "training_iteration": 1,
+        },
+        "num_samples": 1,
+    }
 
     if upload_dir:
         exp_tag["upload_dir"] = "s3://" + upload_dir

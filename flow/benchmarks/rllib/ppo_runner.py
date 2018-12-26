@@ -10,9 +10,8 @@ import argparse
 import ray
 from ray.rllib.agents.agent import get_agent_class
 from ray.tune import run_experiments
-from ray.tune.registry import register_env
-
 from flow.utils.registry import make_create_env
+from ray.tune.registry import register_env
 from flow.utils.rllib import FlowParamsEncoder
 
 EXAMPLE_USAGE = """
@@ -115,10 +114,9 @@ if __name__ == "__main__":
         "checkpoint_freq": 25,
         "max_failures": 999,
         "stop": {
-            "training_iteration": 500
+            "training_iteration": 1,
         },
-        "num_samples": 3,
-
+        "num_samples": 1,
     }
 
     if upload_dir:
