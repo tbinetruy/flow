@@ -7,7 +7,7 @@ from numpy import linspace, pi, sin, cos
 from copy import deepcopy
 
 ADDITIONAL_NET_PARAMS = {}
-SCALING = 40
+SCALING = 30
 RADIUS = 1.5
 
 class LoopyEightScenario(Scenario):
@@ -151,10 +151,10 @@ class LoopyEightScenario(Scenario):
 
         return edges
 
-    # def specify_connections(self, net_params):
-    #     conn = []
-    #     # connect lanes at bottlenecks
-    #     num_lanes = 2
+    def specify_connections(self, net_params):
+        conn = []
+        # connect lanes at bottlenecks
+        num_lanes = 2
     #     edges_from_b = ['e_13', 'e_42', 'e_60']  # order matters
     #     edges_to_b = ['e_14', 'e_44', 'e_69']
     #     for e_from, e_to in zip(edges_from_b, edges_to_b):
@@ -185,19 +185,23 @@ class LoopyEightScenario(Scenario):
     #         'toLane': '0'
     #     }]
     #
-    #     # remove u-turn connections at n_m4 and n_s7_l
-    #     edges_from_u = ['e_37', 'e_51', 'e_94', 'e_94', 'e_36']
-    #     edges_to_u = ['e_29_u', 'e_29_u', 'e_52', 'e_51', 'e_93']
-    #     for u_from, u_to in zip(edges_from_u, edges_to_u):
-    #         for i in range(num_lanes):
-    #             conn += [{
-    #                 'from': u_from,
-    #                 'to': u_to,
-    #                 'fromLane': str(i),
-    #                 'toLane': str(i)
-    #             }]
-    #
-    #     return conn
+        # remove undesired left-turn connections
+        edges_from_u = ['e1_op', 'e1_op', 'e2', 'e2', 'e3_op', 'e4', 'e5',
+                        'e5_op', 'e6', 'e6_op', 'e7_op', 'e7', 'e8_op',
+                        'e8_op', 'e11', 'e11']
+        edges_to_u = ['e4_op', 'e6_op', 'e3', 'e5', 'e2_op', 'e1', 'e8',
+                      'e2_op', 'e1', 'e11_op', 'e11_op', 'e8', 'e5_op',
+                      'e7_op', 'e7', 'e6']
+        for u_from, u_to in zip(edges_from_u, edges_to_u):
+            for i in range(num_lanes):
+                conn += [{
+                    'from': u_from,
+                    'to': u_to,
+                    'fromLane': str(i),
+                    'toLane': str(i)
+                }]
+
+        return conn
 
     def specify_types(self, net_params):
         types = [{'id': 'edgeType', 'speed': repr(15)}]

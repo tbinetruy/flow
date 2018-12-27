@@ -89,7 +89,7 @@ def loopy_eight_example(render=None,
 
 
 if __name__ == "__main__":
-    exp = loopy_eight_example(render=True,
+    exp = loopy_eight_example(render='drgb',
                            save_render=False,
                            sight_radius=20,
                            pxpm=3,
