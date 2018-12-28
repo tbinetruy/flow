@@ -24,7 +24,7 @@ class MultiEnv(MultiAgentEnv, Env):
         simulator by the number of time steps requested per environment step.
 
         Results from the simulations are processed through various classes,
-        such as the Vehicles and TrafficLights classes, to produce standardized
+        such as the Vehicle and TrafficLight kernels, to produce standardized
         methods for identifying specific network state features. Finally,
         results from the simulator are used to generate appropriate
         observations.
@@ -86,19 +86,20 @@ class MultiEnv(MultiAgentEnv, Env):
 
             self.additional_command()
 
-            self.traci_connection.simulationStep()
+            # advance the simulation in the simulator by one step
+            self.k.simulation.simulation_step()
 
             # collect subscription information from sumo
             vehicle_obs = \
                 self.traci_connection.vehicle.getSubscriptionResults()
             id_lists = \
                 self.traci_connection.simulation.getSubscriptionResults()
-            tls_obs = \
-                self.traci_connection.trafficlight.getSubscriptionResults()
 
             # store new observations in the vehicles and traffic lights class
             self.vehicles.update(vehicle_obs, id_lists, self)
-            self.traffic_lights.update(tls_obs)
+
+            # store new observations in the vehicles and traffic lights class
+            self.k.update(reset=False)
 
             # update the colors of vehicles
             self.update_vehicle_colors()
@@ -107,9 +108,7 @@ class MultiEnv(MultiAgentEnv, Env):
             self.sorted_ids, self.sorted_extra_data = self.sort_by_position()
 
             # crash encodes whether the simulator experienced a collision
-            crash = \
-                self.traci_connection.simulation.getStartingTeleportNumber() \
-                != 0
+            crash = self.k.simulation.check_collision()
 
             # stop collecting new simulation steps if there is a collision
             if crash:
@@ -173,7 +172,7 @@ class MultiEnv(MultiAgentEnv, Env):
 
         # warn about not using restart_instance when using inflows
         if len(self.scenario.net_params.inflows.get()) > 0 and \
-                not self.sumo_params.restart_instance:
+                not self.sim_params.restart_instance:
             print(
                 "**********************************************************\n"
                 "**********************************************************\n"
@@ -186,14 +185,14 @@ class MultiEnv(MultiAgentEnv, Env):
                 "**********************************************************"
             )
 
-        if self.sumo_params.restart_instance or self.step_counter > 2e6:
+        if self.sim_params.restart_instance or self.step_counter > 2e6:
             self.step_counter = 0
             # issue a random seed to induce randomness into the next rollout
-            self.sumo_params.seed = random.randint(0, 1e5)
+            self.sim_params.seed = random.randint(0, 1e5)
             # modify the vehicles class to match initial data
             self.vehicles = deepcopy(self.initial_vehicles)
-            # restart the sumo instance
-            self.restart_sumo(self.sumo_params)
+            # restart the simulation instance
+            self.restart_simulation(self.sim_params)
 
         # perform shuffling (if requested)
         if self.starting_position_shuffle or self.vehicle_arrangement_shuffle:
@@ -269,16 +268,18 @@ class MultiEnv(MultiAgentEnv, Env):
                     departPos=str(pos),
                     departSpeed=str(speed))
 
-        self.traci_connection.simulationStep()
+        # advance the simulation in the simulator by one step
+        self.k.simulation.simulation_step()
 
         # collect subscription information from sumo
         vehicle_obs = self.traci_connection.vehicle.getSubscriptionResults()
         id_lists = self.traci_connection.simulation.getSubscriptionResults()
-        tls_obs = self.traci_connection.trafficlight.getSubscriptionResults()
 
         # store new observations in the vehicles and traffic lights class
         self.vehicles.update(vehicle_obs, id_lists, self)
-        self.traffic_lights.update(tls_obs)
+
+        # store new observations in the vehicles and traffic lights class
+        self.k.update(reset=True)
 
         # update the colors of vehicles
         self.update_vehicle_colors()
@@ -330,11 +331,10 @@ class MultiEnv(MultiAgentEnv, Env):
             The rl_actions clipped according to the box
         """
         # ignore if no actions are issued
-
-        # clip according to the action space requirements
         if rl_actions is None:
             return None
 
+        # clip according to the action space requirements
         if isinstance(self.action_space, Box):
             for key, action in rl_actions.items():
                 rl_actions[key] = np.clip(

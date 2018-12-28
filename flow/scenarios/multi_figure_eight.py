@@ -4,7 +4,7 @@ import numpy as np
 from numpy import pi, sin, cos, linspace, ceil, sqrt
 
 from flow.core.params import InitialConfig
-from flow.core.traffic_lights import TrafficLights
+from flow.core.params import TrafficLightParams
 from flow.scenarios.base_scenario import Scenario
 
 ADDITIONAL_NET_PARAMS = {
@@ -31,7 +31,7 @@ class MultiFigure8Scenario(Scenario):
                  vehicles,
                  net_params,
                  initial_config=InitialConfig(),
-                 traffic_lights=TrafficLights()):
+                 traffic_lights=TrafficLightParams()):
         """Initialize a figure 8 scenario.
 
         Requires from net_params:
@@ -83,48 +83,48 @@ class MultiFigure8Scenario(Scenario):
             for k in range(num_cols):
                 nodes += [{
                     "id": "center_intersection_{}".format(i),
-                    "x": repr(0 + j * ring_spacing),
-                    "y": repr(0 + k * ring_spacing),
+                    "x": 0 + j * ring_spacing,
+                    "y": 0 + k * ring_spacing,
                     "type": "priority"
                 }, {
                     "id": "top_upper_ring_{}".format(i),
-                    "x": repr(r + j * ring_spacing),
-                    "y": repr(2 * r + k * ring_spacing),
+                    "x": r + j * ring_spacing,
+                    "y": 2 * r + k * ring_spacing,
                     "type": "priority"
                 }, {
                     "id": "bottom_upper_ring_in_{}".format(i),
-                    "x": repr(r + j * ring_spacing),
-                    "y": repr(0 + k * ring_spacing),
+                    "x": r + j * ring_spacing,
+                    "y": 0 + k * ring_spacing,
                     "type": "priority"
                 }, {
                     "id": "left_upper_ring_{}".format(i),
-                    "x": repr(0 + j * ring_spacing),
-                    "y": repr(r + k * ring_spacing),
+                    "x": 0 + j * ring_spacing,
+                    "y": r + k * ring_spacing,
                     "type": "priority"
                 }, {
                     "id": "right_upper_ring_{}".format(i),
-                    "x": repr(2 * r + j * ring_spacing),
-                    "y": repr(r + k * ring_spacing),
+                    "x": 2 * r + j * ring_spacing,
+                    "y": r + k * ring_spacing,
                     "type": "priority"
                 }, {
                     "id": "top_lower_ring_{}".format(i),
-                    "x": repr(-r + j * ring_spacing),
-                    "y": repr(0 + k * ring_spacing),
+                    "x": -r + j * ring_spacing,
+                    "y": 0 + k * ring_spacing,
                     "type": "priority"
                 }, {
                     "id": "bottom_lower_ring_{}".format(i),
-                    "x": repr(-r + j * ring_spacing),
-                    "y": repr(-2 * r + k * ring_spacing),
+                    "x": -r + j * ring_spacing,
+                    "y": -2 * r + k * ring_spacing,
                     "type": "priority"
                 }, {
                     "id": "left_lower_ring_{}".format(i),
-                    "x": repr(-2 * r + j * ring_spacing),
-                    "y": repr(-r + k * ring_spacing),
+                    "x": -2 * r + j * ring_spacing,
+                    "y": -r + k * ring_spacing,
                     "type": "priority"
                 }, {
                     "id": "right_lower_ring_in_{}".format(i),
-                    "x": repr(0 + j * ring_spacing),
-                    "y": repr(-r + k * ring_spacing),
+                    "x": 0 + j * ring_spacing,
+                    "y": -r + k * ring_spacing,
                     "type": "priority"
                 }]
                 i += 1
@@ -152,31 +152,31 @@ class MultiFigure8Scenario(Scenario):
                 edges += [{
                     "id": "right_lower_ring_in_{}".format(i),
                     "type": "edgeType",
-                    "priority": "78",
+                    "priority": 78,
                     "from": "right_lower_ring_in_{}".format(i),
                     "to": "center_intersection_{}".format(i),
-                    "length": repr(intersection_edgelen / 2)
+                    "length": intersection_edgelen / 2
                 }, {
                     "id": "right_lower_ring_out_{}".format(i),
                     "type": "edgeType",
-                    "priority": "78",
+                    "priority": 78,
                     "from": "center_intersection_{}".format(i),
                     "to": "left_upper_ring_{}".format(i),
-                    "length": repr(intersection_edgelen / 2)
+                    "length": intersection_edgelen / 2
                 }, {
                     "id": "bottom_upper_ring_in_{}".format(i),
                     "type": "edgeType",
-                    "priority": "46",
+                    "priority": 46,
                     "from": "bottom_upper_ring_in_{}".format(i),
                     "to": "center_intersection_{}".format(i),
-                    "length": repr(intersection_edgelen / 2)
+                    "length": intersection_edgelen / 2
                 }, {
                     "id": "bottom_upper_ring_out_{}".format(i),
                     "type": "edgeType",
-                    "priority": "46",
+                    "priority": 46,
                     "from": "center_intersection_{}".format(i),
                     "to": "top_lower_ring_{}".format(i),
-                    "length": repr(intersection_edgelen / 2)
+                    "length": intersection_edgelen / 2
                 }]
 
                 # ring edges
@@ -190,13 +190,13 @@ class MultiFigure8Scenario(Scenario):
                     "to":
                     "top_upper_ring_{}".format(i),
                     "length":
-                    repr(ring_edgelen),
+                    ring_edgelen,
                     "shape":
-                    " ".join([
-                        "%.2f,%.2f" % (r * (1 - cos(t)) + j * ring_spacing,
-                                        r * (1 + sin(t)) + k * ring_spacing)
-                        for t in linspace(0, pi / 2, resolution)
-                    ])
+                        [
+                            (r * (1 - cos(t)) + j * ring_spacing,
+                             r * (1 + sin(t)) + k * ring_spacing)
+                            for t in linspace(0, pi / 2, resolution)
+                            ]
                 }, {
                     "id":
                     "top_upper_ring_{}".format(i),
@@ -207,13 +207,13 @@ class MultiFigure8Scenario(Scenario):
                     "to":
                     "right_upper_ring_{}".format(i),
                     "length":
-                    repr(ring_edgelen),
+                    ring_edgelen,
                     "shape":
-                    " ".join([
-                        "%.2f,%.2f" % (r * (1 + sin(t)) + j * ring_spacing,
-                                        r * (1 + cos(t)) + k * ring_spacing)
-                        for t in linspace(0, pi / 2, resolution)
-                    ])
+                        [
+                            (r * (1 + sin(t)) + j * ring_spacing,
+                             r * (1 + cos(t)) + k * ring_spacing)
+                            for t in linspace(0, pi / 2, resolution)
+                            ]
                 }, {
                     "id":
                     "right_upper_ring_{}".format(i),
@@ -224,13 +224,13 @@ class MultiFigure8Scenario(Scenario):
                     "to":
                     "bottom_upper_ring_in_{}".format(i),
                     "length":
-                    repr(ring_edgelen),
+                    ring_edgelen,
                     "shape":
-                    " ".join([
-                        "%.2f,%.2f" % (r * (1 + cos(t)) + j * ring_spacing,
-                                        r * (1 - sin(t)) + k * ring_spacing)
-                        for t in linspace(0, pi / 2, resolution)
-                    ])
+                        [
+                            (r * (1 + cos(t)) + j * ring_spacing,
+                             r * (1 - sin(t)) + k * ring_spacing)
+                            for t in linspace(0, pi / 2, resolution)
+                            ]
                 }, {
                     "id":
                     "top_lower_ring_{}".format(i),
@@ -241,13 +241,13 @@ class MultiFigure8Scenario(Scenario):
                     "to":
                     "left_lower_ring_{}".format(i),
                     "length":
-                    repr(ring_edgelen),
+                    ring_edgelen,
                     "shape":
-                    " ".join([
-                        "%.2f,%.2f" % (-r + r * cos(t) + j * ring_spacing,
-                                       -r + r * sin(t) + k * ring_spacing)
-                        for t in linspace(pi / 2, pi, resolution)
-                    ])
+                        [
+                            (-r + r * cos(t) + j * ring_spacing,
+                            -r + r * sin(t) + k * ring_spacing)
+                            for t in linspace(pi / 2, pi, resolution)
+                            ]
                 }, {
                     "id":
                     "left_lower_ring_{}".format(i),
@@ -258,13 +258,13 @@ class MultiFigure8Scenario(Scenario):
                     "to":
                     "bottom_lower_ring_{}".format(i),
                     "length":
-                    repr(ring_edgelen),
+                    ring_edgelen,
                     "shape":
-                    " ".join([
-                        "%.2f,%.2f" % (-r + r * cos(t) + j * ring_spacing,
-                                       -r + r * sin(t) + k * ring_spacing)
-                        for t in linspace(pi, 3 * pi / 2, resolution)
-                    ])
+                        [
+                            (-r + r * cos(t) + j * ring_spacing,
+                             -r + r * sin(t) + k * ring_spacing)
+                            for t in linspace(pi, 3 * pi / 2, resolution)
+                            ]
                 }, {
                     "id":
                     "bottom_lower_ring_{}".format(i),
@@ -275,13 +275,13 @@ class MultiFigure8Scenario(Scenario):
                     "to":
                     "right_lower_ring_in_{}".format(i),
                     "length":
-                    repr(ring_edgelen),
+                    ring_edgelen,
                     "shape":
-                    " ".join([
-                        "%.2f,%.2f" % (-r + r * cos(t) + j * ring_spacing,
-                                        -r + r * sin(t) + k * ring_spacing)
-                        for t in linspace(-pi / 2, 0, resolution)
-                    ])
+                        [
+                            (-r + r * cos(t) + j * ring_spacing,
+                             -r + r * sin(t) + k * ring_spacing)
+                            for t in linspace(-pi / 2, 0, resolution)
+                            ]
                 }]
                 i += 1
                 if i >= ring_num:
@@ -297,8 +297,8 @@ class MultiFigure8Scenario(Scenario):
         speed_limit = net_params.additional_params["speed_limit"]
         types = [{
             "id": "edgeType",
-            "numLanes": repr(lanes),
-            "speed": repr(speed_limit)
+            "numLanes": lanes,
+            "speed": speed_limit
         }]
 
         return types

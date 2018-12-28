@@ -22,7 +22,7 @@ from flow.core.params import EnvParams
 from flow.core.params import InitialConfig
 from flow.core.params import NetParams
 from flow.core.params import SumoParams
-from flow.core.vehicles import Vehicles
+from flow.core.params import VehicleParams
 from flow.scenarios.figure_eight import ADDITIONAL_NET_PARAMS
 from flow.utils.registry import make_create_env
 from flow.utils.rllib import FlowParamsEncoder
@@ -34,10 +34,10 @@ N_ROLLOUTS = 4
 # number of parallel workers
 N_CPUS = 1
 # number of figure 8s
-NUM_RINGS = 2
+NUM_RINGS = 4
 
 # We place one autonomous vehicle and 13 human-driven vehicles in the network
-vehicles = Vehicles()
+vehicles = VehicleParams()
 for i in range(NUM_RINGS):
     vehicles.add(
         veh_id='human_{}'.format(i),
@@ -45,13 +45,11 @@ for i in range(NUM_RINGS):
             'noise': 0.2
         }),
         routing_controller=(ContinuousRouter, {}),
-        speed_mode='no_collide',
         num_vehicles=13)
     vehicles.add(
         veh_id='rl_{}'.format(i),
         acceleration_controller=(RLController, {}),
         routing_controller=(ContinuousRouter, {}),
-        speed_mode='no_collide',
         num_vehicles=1)
 
     additonal_net_params = deepcopy(ADDITIONAL_NET_PARAMS)
@@ -68,10 +66,12 @@ flow_params = dict(
     scenario='MultiFigure8Scenario',
 
     # sumo-related parameters (see flow.core.params.SumoParams)
-    sumo=SumoParams(
+    # sumo-related parameters (see flow.core.params.SumoParams)
+    sim=SumoParams(
         sim_step=0.1,
         render=False,
     ),
+
 
     # environment related parameters (see flow.core.params.EnvParams)
     env=EnvParams(
@@ -165,7 +165,7 @@ if __name__ == '__main__':
             'env': env_name,
             'checkpoint_freq': 1,
             'stop': {
-                'training_iteration': 1
+                'training_iteration': 100
             },
             'config': config,
             # 'upload_dir': 's3://<BUCKET NAME>'

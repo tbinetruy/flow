@@ -6,11 +6,12 @@ TODO(ak): add paper after it has been published.
 """
 
 from flow.controllers.rlcontroller import RLController
-from flow.controllers.lane_change_controllers import SumoLaneChangeController
+from flow.controllers.lane_change_controllers import SimLaneChangeController
 from flow.controllers.routing_controllers import ContinuousRouter
 from flow.envs.multiagent_env import MultiEnv
 from flow.core.params import InFlows, NetParams
-from flow.core.vehicles import Vehicles
+from flow.core.params import SumoCarFollowingParams, SumoLaneChangeParams
+from flow.core.params import VehicleParams
 
 from collections import defaultdict
 from copy import deepcopy
@@ -93,7 +94,7 @@ PERIOD = 10.0
 
 
 class BottleneckEnv(Env):
-    def __init__(self, env_params, sumo_params, scenario):
+    def __init__(self, env_params, sim_params, scenario):
         """Environment used as a simplified representation of the toll booth
         portion of the bay bridge. Contains ramp meters, and a toll both.
 
@@ -112,7 +113,7 @@ class BottleneckEnv(Env):
                 raise KeyError('Net parameter "{}" not supplied'.format(p))
 
         self.num_rl = deepcopy(scenario.vehicles.num_rl_vehicles)
-        super().__init__(env_params, sumo_params, scenario)
+        super().__init__(env_params, sim_params, scenario)
         env_add_params = self.env_params.additional_params
         # tells how scaled the number of lanes are
         self.scaling = scenario.net_params.additional_params.get("scaling")
@@ -252,7 +253,7 @@ class BottleneckEnv(Env):
         # we should be green, otherwise we should be red
         tl_mask = (self.ramp_state <= self.green_time)
         colors = ['G' if val else 'r' for val in tl_mask]
-        self.traffic_lights.set_state('3', ''.join(colors), self)
+        self.k.traffic_light.set_state('3', ''.join(colors))
 
     def apply_toll_bridge_control(self):
         cars_that_have_left = []
@@ -413,13 +414,13 @@ class BottleNeckAccelEnv(BottleneckEnv):
 
        """
 
-    def __init__(self, env_params, sumo_params, scenario):
+    def __init__(self, env_params, sim_params, scenario):
         for p in ADDITIONAL_RL_ENV_PARAMS.keys():
             if p not in env_params.additional_params:
                 raise KeyError(
                     'Environment parameter "{}" not supplied'.format(p))
 
-        super().__init__(env_params, sumo_params, scenario)
+        super().__init__(env_params, sim_params, scenario)
         self.add_rl_if_exit = env_params.get_additional_param("add_rl_if_exit")
 
     @property
@@ -626,8 +627,8 @@ class DesiredVelocityEnv(BottleneckEnv):
            for RL vehicles making forward progress
     """
 
-    def __init__(self, env_params, sumo_params, scenario):
-        super().__init__(env_params, sumo_params, scenario)
+    def __init__(self, env_params, sim_params, scenario):
+        super().__init__(env_params, sim_params, scenario)
         for p in ADDITIONAL_VSL_ENV_PARAMS.keys():
             if p not in env_params.additional_params:
                 raise KeyError(
@@ -637,7 +638,7 @@ class DesiredVelocityEnv(BottleneckEnv):
         add_env_params = self.env_params.additional_params
         default = [("1", 1, True), ("2", 1, True), ("3", 1, True),
                    ("4", 1, True), ("5", 1, True)]
-        super(DesiredVelocityEnv, self).__init__(env_params, sumo_params,
+        super(DesiredVelocityEnv, self).__init__(env_params, sim_params,
                                                  scenario)
         self.segments = add_env_params.get("controlled_segments", default)
 
@@ -888,21 +889,29 @@ class DesiredVelocityEnv(BottleneckEnv):
                         no_internal_links=False,
                         additional_params=additional_net_params)
 
-                    vehicles = Vehicles()
+                    vehicles = VehicleParams()
                     vehicles.add(
                         veh_id="human",
-                        speed_mode=9,
-                        lane_change_controller=(SumoLaneChangeController, {}),
+                        car_following_params=SumoCarFollowingParams(
+                            speed_mode=9,
+                        ),
+                        lane_change_controller=(SimLaneChangeController, {}),
                         routing_controller=(ContinuousRouter, {}),
-                        lane_change_mode=0,  # 1621,#0b100000101,
+                        lane_change_params=SumoLaneChangeParams(
+                            lane_change_mode=0,  # 1621,#0b100000101,
+                        ),
                         num_vehicles=1 * self.scaling)
                     vehicles.add(
                         veh_id="followerstopper",
                         acceleration_controller=(RLController, {}),
-                        lane_change_controller=(SumoLaneChangeController, {}),
+                        lane_change_controller=(SimLaneChangeController, {}),
                         routing_controller=(ContinuousRouter, {}),
-                        speed_mode=9,
-                        lane_change_mode=0,
+                        car_following_params=SumoCarFollowingParams(
+                            speed_mode=9,
+                        ),
+                        lane_change_params=SumoLaneChangeParams(
+                            lane_change_mode=0,
+                        ),
                         num_vehicles=1 * self.scaling)
                     self.vehicles = vehicles
 
