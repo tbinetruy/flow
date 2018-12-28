@@ -34,7 +34,7 @@ N_ROLLOUTS = 4
 # number of parallel workers
 N_CPUS = 1
 # number of figure 8s
-NUM_RINGS = 4
+NUM_RINGS = 2
 
 # We place one autonomous vehicle and 13 human-driven vehicles in the network
 vehicles = VehicleParams()
