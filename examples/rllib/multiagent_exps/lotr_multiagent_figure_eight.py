@@ -168,6 +168,8 @@ if __name__ == '__main__':
                 'training_iteration': 100
             },
             'config': config,
-            # 'upload_dir': 's3://<BUCKET NAME>'
+            'upload_dir': 's3://kanaad.experiments/lord_of_{}_figure_eights'.format(
+                NUM_RINGS),
+
         },
     })
