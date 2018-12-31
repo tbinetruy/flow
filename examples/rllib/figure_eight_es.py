@@ -3,7 +3,7 @@
 import json
 
 import ray
-from ray.rllib.agents.agent import get_agent_class
+from ray.rllib.agents.registry import get_agent_class
 from ray.tune import run_experiments
 from ray.tune.registry import register_env
 
@@ -18,7 +18,7 @@ from flow.scenarios.figure_eight import ADDITIONAL_NET_PARAMS
 # time horizon of a single rollout
 HORIZON = 1500
 # number of rollouts per training iteration
-N_ROLLOUTS = 20
+N_ROLLOUTS = 1
 # number of parallel workers
 N_CPUS = 2
 
@@ -88,17 +88,11 @@ flow_params = dict(
 
 def setup_exps():
 
-    alg_run = 'PPO'
+    alg_run = 'ES'
     agent_cls = get_agent_class(alg_run)
     config = agent_cls._default_config.copy()
     config['num_workers'] = N_CPUS
     config['train_batch_size'] = HORIZON * N_ROLLOUTS
-    config['gamma'] = 0.999  # discount rate
-    config['model'].update({'fcnet_hiddens': [32, 32]})
-    config['use_gae'] = True
-    config['lambda'] = 0.97
-    config['kl_target'] = 0.02
-    config['num_sgd_iter'] = 10
     config['horizon'] = HORIZON
 
     # save the flow params for replay
@@ -127,7 +121,7 @@ if __name__ == '__main__':
             'checkpoint_freq': 20,
             'max_failures': 999,
             'stop': {
-                'training_iteration': 200,
+                'training_iteration': 1,
             },
         }
     })
