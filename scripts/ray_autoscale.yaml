@@ -73,9 +73,11 @@ setup_commands:
     - pip install --upgrade pyzmq notebook
     - pip install ray==0.6.1
     - pip install lz4
-    - cd ray && git fetch && git checkout flow_upstream master
+    - git clone https://github.com/flow-project/ray.git
+    - cd ray && git fetch && git checkout centralized_vf_pr
     # soft link in rllib
-    - python ray/python/ray/rllib/setup-rllib-dev.py
+    - echo "y\n" | python ray/python/ray/rllib/setup-rllib-dev.py
+    # set up sumo and anaconda
     # set up sumo and anaconda
     - echo 'export PATH="/home/ubuntu/sumo/bin:$PATH"' >> ~/.bashrc
     - echo 'export SUMO_HOME="/home/ubuntu/sumo"' >> ~/.bashrc
