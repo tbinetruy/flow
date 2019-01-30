@@ -108,17 +108,29 @@ class SoftIntersectionEnv(Env):
     # REWARD FUNCTION GOES HERE
     def get_reward(self, **kwargs):
         # safety reward
-        R_total_collisions = self.sum_collisions * 1  # TODO: normalize
+        R_sum_collisions = self.sum_collisions * 1  # TODO: normalize
+        print("R_sum_collisions =", R_sum_collisions)
         R_min_headway = self.min_headway * 1  # TODO: normalize
-        R_safety = 0.8 * R_total_collisions + 0.2 * R_min_headway
+        print("R_min_headway =", R_min_headway)
+        R_safety = 0.8 * R_sum_collisions + 0.2 * R_min_headway
+        print("R_safety =", R_safety)
+
         # performance reward
         R_avg_speed = self.avg_speed * 1  # TODO: normalize
+        print("R_avg_speed =", R_avg_speed)
         R_std_speed = self.std_speed * 1  # TODO: normalize
+        print("R_std_speed =", R_std_speed)
         R_performance = 0.8 * R_avg_speed + 0.2 * R_std_speed
+        print("R_performance =", R_performance)
+
         # consumption reward
         R_avg_fuel = self.avg_fuel * 1  # TODO: normalize
+        print("R_avg_fuel =", R_avg_fuel)
         R_avg_co2 = self.avg_co2 * 1  # TODO: normalize
+        print("R_avg_co2 =", R_avg_co2)
         R_consumption = 0.5 * R_avg_fuel + 0.5 * R_avg_co2
+        print("R_consumption =", R_consumption)
+
         # total reward
         reward = 0.5 * R_safety + 0.4 * R_performance + 0.1 * R_consumption
         return reward
