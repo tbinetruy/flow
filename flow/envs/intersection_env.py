@@ -108,7 +108,7 @@ class SoftIntersectionEnv(Env):
     # REWARD FUNCTION GOES HERE
     def get_reward(self, **kwargs):
         # safety reward
-        R_total_collisions = self.total_collisions * 1  # TODO: normalize
+        R_total_collisions = self.sum_collisions * 1  # TODO: normalize
         R_min_headway = self.min_headway * 1  # TODO: normalize
         R_safety = 0.8 * R_total_collisions + 0.2 * R_min_headway
         # performance reward
@@ -125,6 +125,24 @@ class SoftIntersectionEnv(Env):
 
     # UTILITY FUNCTION GOES HERE
     def additional_command(self):
+        # Update key attributes
+        self.sum_collisions = \
+            self.traci_connection.simulation.getCollidingVehiclesNumber()
+        self.min_headway = np.inf
+        speeds = []
+        fuels = []
+        co2s = []
+        for veh_id in self.vehicles.get_ids():
+            headway = self.vehicles.get_headway(veh_id)
+            if headway < self.min_headway:
+                self.min_headway = headway
+            speeds.append(self.vehicles.get_speed(veh_id))
+            fuels.append(self.vehicles.get_fuel(veh_id))
+            co2s.append(self.vehicles.get_co2(veh_id))
+        self.avg_speed = np.mean(speeds)
+        self.std_speed = np.std(speeds)
+        self.avg_fuel = np.mean(fuels)
+        self.avg_co2 = np.mean(co2s)
         # disable skip to test methods
         self.test_sbc(skip=True)
         self.test_tls(skip=True)

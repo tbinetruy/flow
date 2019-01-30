@@ -336,7 +336,8 @@ class Env(gym.Env, Serializable):
             self.traci_connection.vehicle.subscribe(veh_id, [
                 tc.VAR_LANE_INDEX, tc.VAR_LANEPOSITION, tc.VAR_ROAD_ID,
                 tc.VAR_SPEED, tc.VAR_EDGES, tc.VAR_POSITION, tc.VAR_ANGLE,
-                tc.VAR_SPEED_WITHOUT_TRACI
+                tc.VAR_SPEED_WITHOUT_TRACI, tc.VAR_FUELCONSUMPTION,
+                tc.VAR_CO2EMISSION
             ])
             self.traci_connection.vehicle.subscribeLeader(veh_id, 2000)
 

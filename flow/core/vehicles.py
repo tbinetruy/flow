@@ -358,9 +358,13 @@ class Vehicles:
             _angle = vehicle_obs[veh_id][tc.VAR_ANGLE]
             _time_step = sim_obs[tc.VAR_TIME_STEP]
             _time_delta = sim_obs[tc.VAR_DELTA_T]
+            _fuel = sim_obs[tc.VAR_FUELCONSUMPTION]
+            _co2 = sim_obs[tc.VAR_CO2EMISSION]
             self.__vehicles[veh_id]["orientation"] = list(_position) + [_angle]
             self.__vehicles[veh_id]["timestep"] = _time_step
             self.__vehicles[veh_id]["timedelta"] = _time_delta
+            self.__vehicles[veh_id]["fuel"] = _fuel
+            self.__vehicles[veh_id]["co2"] = _co2
             headway = vehicle_obs.get(veh_id, {}).get(tc.VAR_LEADER, None)
             # check for a collided vehicle or a vehicle with no leader
             if headway is None:
@@ -550,6 +554,14 @@ class Vehicles:
     def get_timedelta(self, veh_id):
         """Return the simulation time delta of the vehicle of veh_id."""
         return self.__vehicles[veh_id]["timedelta"]
+
+    def get_fuel(self, veh_id):
+        """Return the fuel consumption of the vehicle of veh_id."""
+        return self.__vehicles[veh_id]["fuel"]
+
+    def get_co2(self, veh_id):
+        """Return the CO2 emission of the vehicle of veh_id."""
+        return self.__vehicles[veh_id]["co2"]
 
     def get_ids(self):
         """Return the names of all vehicles currently in the network."""
