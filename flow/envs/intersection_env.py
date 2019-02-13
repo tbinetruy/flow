@@ -129,8 +129,8 @@ class SoftIntersectionEnv(Env):
     # UTILITY FUNCTION GOES HERE
     def additional_command(self):
         # Update key attributes
-        self.sum_collisions = \
-            self.traci_connection.simulation.getCollidingVehiclesNumber()
+        self.sum_collisions = 0
+        #    self.traci_connection.simulation.getCollidingVehiclesNumber()
         self.min_headway = np.inf
         speeds = []
         fuels = []
