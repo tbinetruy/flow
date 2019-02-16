@@ -107,32 +107,35 @@ class SoftIntersectionEnv(Env):
 
     # REWARD FUNCTION GOES HERE
     def get_reward(self, **kwargs):
-        # safety reward
-        R_sum_collisions = self.sum_collisions * 1  # TODO: normalize
-        print("R_sum_collisions =", R_sum_collisions)
-        R_min_headway = self.min_headway * 1  # TODO: normalize
-        print("R_min_headway =", R_min_headway)
-        R_safety = 0.8 * R_sum_collisions + 0.2 * R_min_headway
-        print("R_safety =", R_safety)
+        # safety reward (WARNING: sum_collisions is not working yet.)
+        # _sum_collisions = self.sum_collisions * 1  # TODO: normalize
+        # print("_sum_collisions =", _sum_collisions)
+        # _min_headway = self.min_headway * 1  # TODO: normalize
+        # print("_min_headway =", _min_headway)
+        # _safety = 0.8 * _sum_collisions + 0.2 * _min_headway
+        # print("_safety =", _safety)
 
         # performance reward
-        R_avg_speed = self.avg_speed * 1  # TODO: normalize
-        print("R_avg_speed =", R_avg_speed)
-        R_std_speed = self.std_speed * 1  # TODO: normalize
-        print("R_std_speed =", R_std_speed)
-        R_performance = 0.8 * R_avg_speed + 0.2 * R_std_speed
-        print("R_performance =", R_performance)
+        _avg_speed = self.avg_speed * 1  # TODO: normalize
+        print("_avg_speed =", _avg_speed)
+        _std_speed = self.std_speed * 1  # TODO: normalize
+        print("_std_speed =", _std_speed)
+        _performance = 0.8 * _avg_speed + 0.2 * _std_speed
+        print("_performance =", _performance)
 
         # consumption reward
-        R_avg_fuel = self.avg_fuel * 1  # TODO: normalize
-        print("R_avg_fuel =", R_avg_fuel)
-        R_avg_co2 = self.avg_co2 * 1  # TODO: normalize
-        print("R_avg_co2 =", R_avg_co2)
-        R_consumption = 0.5 * R_avg_fuel + 0.5 * R_avg_co2
-        print("R_consumption =", R_consumption)
+        _avg_fuel = self.avg_fuel * -10  # TODO: normalize
+        print("_avg_fuel =", _avg_fuel)
+        _avg_co2 = self.avg_co2 * -5e-4  # TODO: normalize
+        print("_avg_co2 =", _avg_co2)
+        _cost = 0.5 * _avg_fuel + 0.5 * _avg_co2
+        print("_cost =", _cost)
 
         # total reward
-        reward = 0.5 * R_safety + 0.4 * R_performance + 0.1 * R_consumption
+        #reward = 0.5 * _safety + 0.4 * _performance + 0.1 * _cost
+        reward = 0.5 * _performance + 0.5 * _cost
+        if np.isnan(reward):
+            reward = 0
         return reward
 
     # UTILITY FUNCTION GOES HERE

@@ -55,47 +55,47 @@ def intersection_example(render=None,
     # sumo_params.sim_step = 0.2
 
     vehicles = Vehicles()
-    
-    # Add a virtual vehicle
-    vehicles.add(
-        veh_id='autonomous',
-        speed_mode=0b11111,
-        lane_change_mode=0b011001010101,
-        acceleration_controller=(SumoCarFollowingController, {}),
-        lane_change_controller=(SumoLaneChangeController, {}),
-        routing_controller=(IntersectionRandomRouter, {}),
-        num_vehicles=0,
-    )
 
+    # Add mixed-autonomy traffic
     inflow = InFlows()
-    inflow.add(
-        veh_type='autonomous',
-        edge='e_1_inflow',
-        probability=0.1,
-        departSpeed=8,
-        departLane='random'
-    )
-    inflow.add(
-        veh_type='autonomous',
-        edge='e_3_inflow',
-        probability=0.1,
-        departSpeed=8,
-        departLane='random'
-    )
-    inflow.add(
-        veh_type='autonomous',
-        edge='e_5_inflow',
-        probability=0.1,
-        departSpeed=8,
-        departLane='random'
-    )
-    inflow.add(
-        veh_type='autonomous',
-        edge='e_7_inflow',
-        probability=0.1,
-        departSpeed=8,
-        departLane='random'
-    )
+    for type in ['manned', 'autonomous']:
+        vehicles.add(
+            veh_id=type,
+            speed_mode=0b11111,
+            lane_change_mode=0b011001010101,
+            acceleration_controller=(SumoCarFollowingController, {}),
+            lane_change_controller=(SumoLaneChangeController, {}),
+            routing_controller=(IntersectionRandomRouter, {}),
+            num_vehicles=0,
+        )
+        inflow.add(
+            veh_type=type,
+            edge='e_1_inflow',
+            probability=0.1,
+            departSpeed=8,
+            departLane='random'
+        )
+        inflow.add(
+            veh_type=type,
+            edge='e_3_inflow',
+            probability=0.1,
+            departSpeed=8,
+            departLane='random'
+        )
+        inflow.add(
+            veh_type=type,
+            edge='e_5_inflow',
+            probability=0.1,
+            departSpeed=8,
+            departLane='random'
+        )
+        inflow.add(
+            veh_type=type,
+            edge='e_7_inflow',
+            probability=0.1,
+            departSpeed=8,
+            departLane='random'
+        )
 
     env_params = EnvParams(
         additional_params=ADDITIONAL_ENV_PARAMS,
