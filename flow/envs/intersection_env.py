@@ -148,7 +148,7 @@ class SoftIntersectionEnv(Env):
 
         # performance reward
         _avg_speed = self.avg_speed * 1  # TODO: normalize
-        _std_speed = self.std_speed * 1  # TODO: normalize
+        _std_speed = self.std_speed * -1  # TODO: normalize
         _performance = 0.8 * _avg_speed + 0.2 * _std_speed
 
         # consumption reward
