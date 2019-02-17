@@ -6,9 +6,6 @@ from flow.controllers.base_routing_controller import BaseRouter
 
 import numpy as np
 
-np.random.seed(204)
-
-
 class ContinuousRouter(BaseRouter):
     """A router used to continuously re-route of the vehicle in a closed loop.
 
@@ -91,6 +88,7 @@ class IntersectionRouter(MinicityRouter):
 class IntersectionRandomRouter(MinicityRouter):
 
     def choose_route(self, env):
+        np.random.seed(env.seed)
         type_id = env.vehicles.get_state(self.veh_id, 'type')
         cur_route = env.vehicles.get_route(self.veh_id)
         cur_edge = env.vehicles.get_edge(self.veh_id)

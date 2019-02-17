@@ -42,7 +42,6 @@ WHITE = (255, 255, 255, 255)
 CYAN = (0, 255, 255, 255)
 RED = (255, 0, 0, 255)
 
-
 class Env(gym.Env, Serializable):
     """Base environment class.
 
@@ -81,6 +80,8 @@ class Env(gym.Env, Serializable):
         self.env_params = env_params
         self.scenario = scenario
         self.sumo_params = sumo_params
+        self.seed = 204
+        np.random.seed(self.seed)
         time_stamp = ''.join(str(time.time()).split('.'))
         if os.environ.get("TEST_FLAG", 0):
             # 1.0 works with stress_test_start 10k times
