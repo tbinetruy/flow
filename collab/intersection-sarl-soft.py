@@ -7,7 +7,7 @@ try:
     from ray.rllib.agents.agent import get_agent_class
 except ImportError:
     from ray.rllib.agents.registry import get_agent_class
-from ray.tune import run_experiments
+from ray.tune import run_experiments, grid_search
 from ray.tune.registry import register_env
 
 from flow.utils.registry import make_create_env
@@ -101,6 +101,7 @@ flow_params = dict(
         sim_step=0.1,
         render=False,
         seed=seed,
+        restart_instance=True,
     ),
 
     # environment related parameters (see flow.core.params.EnvParams)
@@ -113,6 +114,7 @@ flow_params = dict(
     # network-related parameters (see flow.core.params.NetParams and the
     # scenario's documentation or ADDITIONAL_NET_PARAMS component)
     net=NetParams(
+        inflows=inflow,
         no_internal_links=False,
         junction_type='traffic_light',
         additional_params=ADDITIONAL_NET_PARAMS.copy(),
@@ -133,14 +135,31 @@ flow_params = dict(
 
 
 def setup_exps():
+    grad_free = False
+    if grad_free:
+        alg_run = 'ES'
+    else:
+        alg_run = 'PPO'
 
-    alg_run = 'ES' # TODO: Make this an argument
     agent_cls = get_agent_class(alg_run)
     config = agent_cls._default_config.copy()
-    config['num_workers'] = N_CPUS
-    config['horizon'] = HORIZON
-    config['episodes_per_batch'] = N_ROLLOUTS
-    config['train_batch_size'] = HORIZON * N_ROLLOUTS
+
+    if grad_free:
+        config['num_workers'] = N_CPUS
+        config['horizon'] = HORIZON
+        config['episodes_per_batch'] = N_ROLLOUTS
+        config['train_batch_size'] = HORIZON * N_ROLLOUTS
+    else:
+        config["num_workers"] = min(N_CPUS, N_ROLLOUTS)
+        config["train_batch_size"] = HORIZON * N_ROLLOUTS
+        config["use_gae"] = True
+        config["horizon"] = HORIZON
+        config["lambda"] = grid_search([0.97, 1.0])
+        config["lr"] = grid_search([5e-4, 5e-5])
+        config["vf_clip_param"] = 1e6
+        config["num_sgd_iter"] = 10
+        config["model"]["fcnet_hiddens"] = [100, 50, 25]
+        config["observation_filter"] = "NoFilter"
 
     # save the flow params for replay
     flow_json = json.dumps(

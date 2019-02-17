@@ -9,7 +9,6 @@ from gym.spaces.box import Box
 from gym.spaces.tuple_space import Tuple
 
 import numpy as np
-import scipy
 
 import os
 from os.path import expanduser
@@ -87,27 +86,27 @@ class SoftIntersectionEnv(Env):
             max_accel, min_decel = 1.00, -3.00
             lower, upper = 0.5, 1.5
             mu, sigma = action[1], action[2]
-            speed_multiplier = scipy.stats.truncnorm(
-                (lower - mu) / sigma, (upper - mu) / sigma,
-                loc=mu, scale=sigma,
+            speed_multiplier = np.clip(
+                np.random.normal(loc=mu, scale=sigma), lower, upper
             )
             if agent_idx in self.vehicle_index.keys():
                 veh_list = self.vehicle_index[agent_idx]
                 for veh_id in veh_list:
                     veh_speed = self.traci_connection.vehicle.getSpeed(veh_id)
                     max_speed = veh_speed + max_accel
-                    min_speed = veh_speed + min_decel
+                    min_speed = max(veh_speed + min_decel, 0)
                     veh_speed = veh_speed * speed_multiplier
-                    veh_speed = np.clip(veh_speed, max_speed, min_speed)
-                    self.traci_connection.vehicle.slowDown(veh_id, veh_speed)
+                    veh_speed = np.clip(veh_speed, min_speed, max_speed)
+                    self.traci_connection.vehicle.slowDown(
+                        veh_id, veh_speed, 1000
+                    )
 
         elif agent_idx == 80:
             # acting on traffic lights
             lower, upper = 1.0, self.tls_phase_count - 1
             mu, sigma = action[1], action[2]
-            tls_phase_increment = np.round(scipy.stats.truncnorm(
-                (lower - mu) / sigma, (upper - mu) / sigma,
-                loc=mu, scale=sigma,
+            tls_phase_increment = np.round(np.clip(
+                np.random.normal(loc=mu, scale=sigma), lower, upper
             ))
             self.tls_phase = \
                 self.traci_connection.trafficlight.getPhase(self.tls_id)
