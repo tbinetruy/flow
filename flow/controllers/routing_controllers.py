@@ -96,34 +96,22 @@ class IntersectionRandomRouter(MinicityRouter):
         cur_edge = env.vehicles.get_edge(self.veh_id)
         cur_lane = env.vehicles.get_lane(self.veh_id)
         straight_routes = [
-            ['e_1_inflow', 'e_1_sbc+', 'e_1', 'e_6', 'e_6_sbc-'],
-            ['e_3_inflow', 'e_3_sbc+', 'e_3', 'e_8', 'e_8_sbc-'],
-            ['e_5_inflow', 'e_5_sbc+', 'e_5', 'e_2', 'e_2_sbc-'],
-            ['e_7_inflow', 'e_7_sbc+', 'e_7', 'e_4', 'e_4_sbc-'],
-            ['e_1_sbc+', 'e_1', 'e_6', 'e_6_sbc-'],
-            ['e_3_sbc+', 'e_3', 'e_8', 'e_8_sbc-'],
-            ['e_5_sbc+', 'e_5', 'e_2', 'e_2_sbc-'],
-            ['e_7_sbc+', 'e_7', 'e_4', 'e_4_sbc-']]
+            ['e_1_in', 'e_1', 'e_6', 'e_6_out'],
+            ['e_3_in', 'e_3', 'e_8', 'e_8_out'],
+            ['e_5_in', 'e_5', 'e_2', 'e_2_out'],
+            ['e_7_in', 'e_7', 'e_4', 'e_4_out']]
         right_turn_routes = [
-            ['e_1_inflow', 'e_1_sbc+', 'e_1', 'e_8', 'e_8_sbc-'],
-            ['e_7_inflow', 'e_7_sbc+', 'e_7', 'e_6', 'e_6_sbc-'],
-            ['e_5_inflow', 'e_5_sbc+', 'e_5', 'e_4', 'e_4_sbc-'],
-            ['e_3_inflow', 'e_3_sbc+', 'e_3', 'e_2', 'e_2_sbc-'],
-            ['e_1_sbc+', 'e_1', 'e_8', 'e_8_sbc-'],
-            ['e_7_sbc+', 'e_7', 'e_6', 'e_6_sbc-'],
-            ['e_5_sbc+', 'e_5', 'e_4', 'e_4_sbc-'],
-            ['e_3_sbc+', 'e_3', 'e_2', 'e_2_sbc-'],
+            ['e_1_in', 'e_1', 'e_8', 'e_8_out'],
+            ['e_7_in', 'e_7', 'e_6', 'e_6_out'],
+            ['e_5_in', 'e_5', 'e_4', 'e_4_out'],
+            ['e_3_in', 'e_3', 'e_2', 'e_2_out'],
         ]
         left_turn_routes = [
-            ['e_1_inflow', 'e_1_sbc+', 'e_1', 'e_4', 'e_4_sbc-'],
-            ['e_7_inflow', 'e_7_sbc+', 'e_7', 'e_2', 'e_2_sbc-'],
-            ['e_5_inflow', 'e_5_sbc+', 'e_5', 'e_8', 'e_8_sbc-'],
-            ['e_3_inflow', 'e_3_sbc+', 'e_3', 'e_6', 'e_6_sbc-'],
-            ['e_1_sbc+', 'e_1', 'e_4', 'e_4_sbc-'],
-            ['e_7_sbc+', 'e_7', 'e_2', 'e_2_sbc-'],
-            ['e_5_sbc+', 'e_5', 'e_8', 'e_8_sbc-'],
-            ['e_3_sbc+', 'e_3', 'e_6', 'e_6_sbc-'],
-        ]        # request all vehicles start from sbc+ edges, not any edge
+            ['e_1_in', 'e_1', 'e_4', 'e_4_out'],
+            ['e_7_in', 'e_7', 'e_2', 'e_2_out'],
+            ['e_5_in', 'e_5', 'e_8', 'e_8_out'],
+            ['e_3_in', 'e_3', 'e_6', 'e_6_out'],
+        ]        # request all vehicles start from in edges, not any edge
         all_routes = 7 * straight_routes + \
                      2 * right_turn_routes + \
                      1 * left_turn_routes;

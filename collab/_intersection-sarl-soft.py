@@ -57,6 +57,12 @@ def intersection_example(render=None,
     vehicles = Vehicles()
 
     # Add mixed-autonomy traffic
+    insertion_prob = 0.1
+    autonomy_percent = 0.5
+    percent_table = {
+        'manned': (1 - autonomy_percent)*insertion_prob,
+        'autonomous': autonomy_percent*insertion_prob,
+    }
     inflow = InFlows()
     for type in ['manned', 'autonomous']:
         vehicles.add(
@@ -70,29 +76,29 @@ def intersection_example(render=None,
         )
         inflow.add(
             veh_type=type,
-            edge='e_1_inflow',
-            probability=0.1,
+            edge='e_1_in',
+            probability=percent_table[type],
             departSpeed=8,
             departLane='random'
         )
         inflow.add(
             veh_type=type,
-            edge='e_3_inflow',
-            probability=0.1,
+            edge='e_3_in',
+            probability=percent_table[type],
             departSpeed=8,
             departLane='random'
         )
         inflow.add(
             veh_type=type,
-            edge='e_5_inflow',
-            probability=0.1,
+            edge='e_5_in',
+            probability=percent_table[type],
             departSpeed=8,
             departLane='random'
         )
         inflow.add(
             veh_type=type,
-            edge='e_7_inflow',
-            probability=0.1,
+            edge='e_7_in',
+            probability=percent_table[type],
             departSpeed=8,
             departLane='random'
         )
@@ -110,7 +116,7 @@ def intersection_example(render=None,
 
     initial_config = InitialConfig(
         spacing='uniform',
-        edges_distribution=['e_1_sbc+'], # add a placeholder
+        edges_distribution=['e_1'], # add a placeholder
         min_gap=5,
     )
 

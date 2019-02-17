@@ -35,60 +35,89 @@ class SoftIntersectionEnv(Env):
 
         super().__init__(env_params, sumo_params, scenario)
 
-        # setup traffic lights
-        self.tls_idlist = self.traci_connection.trafficlight.getIDList()
-        if len(self.tls_idlist) > 0:
-            self.tls_id = self.tls_idlist[0]
-            self.tls_state =\
-                self.traci_connection.trafficlight.\
-                getRedYellowGreenState(self.tls_id)
-            self.tls_definition =\
-                self.traci_connection.trafficlight.\
-                getCompleteRedYellowGreenDefinition(self.tls_id)
-            self.tls_phase = 0
-            self.tls_phase_count = 0
-            for logic in self.tls_definition:
-                for phase in logic._phases:
-                    self.tls_phase_count += 1
-            self.tls_phase_increment = 0
-
-        # setup speed broadcasters
-        self.sbc_locations = [
-            "e_1_sbc+_0", "e_1_sbc+_1",  # east bound
-            "e_3_sbc+_0", "e_3_sbc+_1",  # south bound
-            "e_5_sbc+_0", "e_5_sbc+_1",  # west bound
-            "e_7_sbc+_0", "e_7_sbc+_1",  # north bound
-        ]
-        # default speed reference to 11.176 m/s
-        self.sbc_reference = {
-            loc: self.traci_connection.lane.getMaxSpeed(loc)
-            for loc in self.sbc_locations
+        self.route_idx_table = {
+            ('e_1', 'e_4'): 0,
+            ('e_1', 'e_6'): 1,
+            ('e_1', 'e_8'): 2,
+            ('e_3', 'e_2'): 0,
+            ('e_3', 'e_8'): 1,
+            ('e_3', 'e_6'): 2,
+            ('e_5', 'e_8'): 0,
+            ('e_5', 'e_2'): 1,
+            ('e_5', 'e_4'): 2,
+            ('e_7', 'e_6'): 0,
+            ('e_7', 'e_4'): 1,
+            ('e_7', 'e_2'): 2,
         }
+
+        # setup traffic lights
+        tls_list = self.traci_connection.trafficlight.getIDList()
+        self.tls_id = tls_list[0]
+        tls_definition =\
+            self.traci_connection.trafficlight.\
+            getCompleteRedYellowGreenDefinition(self.tls_id)
+        self.tls_phase = \
+            self.traci_connection.trafficlight.getPhase(self.tls_id)
+        self.tls_phase_count = 0
+        for logic in tls_definition:
+            for phase in logic._phases:
+                self.tls_phase_count += 1
 
         # setup reward-related variables
         self.rewards = 0
+
+        # setup observation cache
+        self.occupancy_table = np.zeros((16, 5))
+        self.vehicle_index = {}
 
     # ACTION GOES HERE
     @property
     def action_space(self):
         return Box(
             low=0,
-            high=max(self.scenario.max_speed, 1),
-            shape=(9,),
+            high=81,
+            shape=(3,),
             dtype=np.float32)
 
     def set_action(self, action):
-        if self.time_counter % 10 == 0:
-            self.sbc_reference = {
-                loc: np.clip(action[idx], 0, np.inf)
-                for idx, loc in enumerate(self.sbc_locations)
-            }
-            self.tls_phase_increment = np.clip(
-                int(action[-1]), 0, 1)
-        self._set_reference(self.sbc_reference)
-        self.tls_phase += self.tls_phase_increment
-        self.tls_phase %= self.tls_phase_count
-        self._set_phase(self.tls_phase)
+        agent = action[0]
+        if agent < 80:
+            # acting on vehicles
+            max_accel, min_decel = 1.00, -3.00
+            lower, upper = 0.5, 1.5
+            mu, sigma = action[1], action[2]
+            speed_multiplier = scipy.stats.truncnorm(
+                (lower - mu) / sigma, (upper - mu) / sigma,
+                loc=mu, scale=sigma,
+            )
+            veh_list = self.vehicle_index[agent]
+            for veh_id in veh_list:
+                veh_speed = self.traci_connection.vehicle.getSpeed(veh_id)
+                max_speed = veh_speed + max_accel
+                min_speed = veh_speed + min_decel
+                veh_speed = veh_speed * speed_multiplier
+                veh_speed = np.clip(veh_speed, max_speed, min_speed)
+                self.traci_connection.vehicle.slowDown(veh_id, veh_speed)
+
+        elif agent == 80:
+            # acting on traffic lights
+            lower, upper = 1.0, self.tls_phase_count - 1
+            mu, sigma = action[1], action[2]
+            tls_phase_increment = np.round(scipy.stats.truncnorm(
+                (lower - mu) / sigma, (upper - mu) / sigma,
+                loc=mu, scale=sigma,
+            ))
+            self.tls_phase = \
+                self.traci_connection.trafficlight.getPhase(self.tls_id)
+            self.tls_phase += tls_phase_increment
+            self.tls_phase %= self.tls_phase_count
+            self.traci_connection.trafficlight.setPhase(\
+                self.tls_id, tls_phase)
+        elif agent == 81:
+            # no ops
+            pass
+        else:
+            raise ValueError('Agent index exceeds 81.')
 
     # OBSERVATION GOES HERE
     @property
@@ -97,13 +126,14 @@ class SoftIntersectionEnv(Env):
         return Box(
             low=0.,
             high=np.inf,
-            shape=(49,),
+            shape=(81,),
             dtype=np.float32)
 
     def get_observation(self, **kwargs):
+        observation = self.occupancy_table.tolist()
         tls_phase = self.tls_phase
-        observation = None
-        return observation
+        observation = observation + [tls_phase]
+        return np.asarray(observation)
 
     # REWARD FUNCTION GOES HERE
     def get_reward(self, **kwargs):
@@ -117,29 +147,60 @@ class SoftIntersectionEnv(Env):
 
         # performance reward
         _avg_speed = self.avg_speed * 1  # TODO: normalize
-        print("_avg_speed =", _avg_speed)
         _std_speed = self.std_speed * 1  # TODO: normalize
-        print("_std_speed =", _std_speed)
         _performance = 0.8 * _avg_speed + 0.2 * _std_speed
-        print("_performance =", _performance)
 
         # consumption reward
         _avg_fuel = self.avg_fuel * -10  # TODO: normalize
-        print("_avg_fuel =", _avg_fuel)
         _avg_co2 = self.avg_co2 * -5e-4  # TODO: normalize
-        print("_avg_co2 =", _avg_co2)
         _cost = 0.5 * _avg_fuel + 0.5 * _avg_co2
-        print("_cost =", _cost)
 
         # total reward
         #reward = 0.5 * _safety + 0.4 * _performance + 0.1 * _cost
         reward = 0.5 * _performance + 0.5 * _cost
         if np.isnan(reward):
             reward = 0
+
+        debug_mode = False
+        if debug_mode:
+            print("_avg_speed =", _avg_speed)
+            print("_std_speed =", _std_speed)
+            print("_performance =", _performance)
+            print("_avg_fuel =", _avg_fuel)
+            print("_avg_co2 =", _avg_co2)
+            print("_cost =", _cost)
+
         return reward
 
     # UTILITY FUNCTION GOES HERE
     def additional_command(self):
+        self.occupancy_table = np.zeros((16, 5))
+        self.vehicle_index = {}
+        for veh_id in self.vehicles.get_ids():
+            edge_id = self.traci_connection.vehicle.getRoadID(veh_id)
+            if 'in' in edge_id or 'out' in edge_id:
+                continue
+            veh_type = self.traci_connection.vehicle.getTypeID(veh_id)
+            route = self.traci_connection.vehicle.getRoute(veh_id)
+            edge_idx = int(route[0][2]) // 2
+            row_idx = edge_idx * 4
+            if veh_type == 'autonomous':
+                route_idx = self.route_idx_table[(route[1], route[2])]
+            else:
+                route_idx = 3
+            row_idx += route_idx
+            col_idx = self.vehicles.get_position(veh_id) // 20
+            col_idx = int(min(col_idx, 4))
+            try:
+                self.occupancy_table[row_idx, col_idx] += 1
+                if row_idx*5 + col_idx in self.vehicle_index:
+                    self.vehicle_index[(row_idx, col_idx)] += [veh_id]
+                else:
+                    self.vehicle_index[(row_idx, col_idx)] = [veh_id]
+            except IndexError:
+                print(veh_id, veh_type, route,
+                      self.vehicles.get_position(veh_id))
+
         # Update key attributes
         self.sum_collisions = \
             self.traci_connection.simulation.getCollidingVehiclesNumber()
@@ -159,18 +220,8 @@ class SoftIntersectionEnv(Env):
         self.avg_fuel = np.mean(fuels)
         self.avg_co2 = np.mean(co2s)
         # disable skip to test methods
-        self.test_sbc(skip=True)
         self.test_tls(skip=True)
-        self.test_reward(skip=False)
-
-    def test_sbc(self, skip=True):
-        if self.time_counter > 50 and not skip:
-            print("Broadcasting reference...")
-            self.sbc_reference = {
-                loc: 1
-                for loc in self.sbc_locations
-            }
-            self._set_reference(self.sbc_reference)
+        self.test_reward(skip=True)
 
     def test_tls(self, skip=True):
         if self.time_counter % 10 == 0 and not skip:
@@ -185,19 +236,6 @@ class SoftIntersectionEnv(Env):
             print('Reward this step:', _reward)
             self.rewards += _reward
             print('Total rewards:', self.rewards)
-
-    def _set_reference(self, sbc_reference):
-        for sbc, reference in sbc_reference.items():
-            sbc_clients = self.traci_connection.lane.getLastStepVehicleIDs(sbc)
-            for veh_id in sbc_clients:
-                if "autonomous" in veh_id:
-                    self.traci_connection.vehicle.slowDown(
-                        veh_id, reference, 100)
-
-    def _set_phase(self, tls_phase):
-        if len(self.tls_idlist) > 0:
-            self.traci_connection.trafficlight.setPhase(\
-                self.tls_id, tls_phase)
 
     # DO NOT WORRY ABOUT ANYTHING BELOW THIS LINE >◡<
     def _apply_rl_actions(self, rl_actions):
