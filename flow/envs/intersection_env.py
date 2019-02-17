@@ -195,7 +195,9 @@ class SoftIntersectionEnv(Env):
             try:
                 self.occupancy_table[row_idx, col_idx] += 1
                 agent_idx = int(row_idx*5 + col_idx)
-                if agent_idx in self.vehicle_index.keys():
+                if veh_type == 'manned':
+                    pass
+                elif agent_idx in self.vehicle_index.keys():
                     self.vehicle_index[agent_idx] += [veh_id]
                 else:
                     self.vehicle_index[agent_idx] = [veh_id]
