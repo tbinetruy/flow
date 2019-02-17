@@ -160,6 +160,7 @@ def setup_exps():
         config["num_sgd_iter"] = 10
         config["model"]["fcnet_hiddens"] = [100, 50, 25]
         config["observation_filter"] = "NoFilter"
+    config["model"]["use_lstm"] = "true"
 
     # save the flow params for replay
     flow_json = json.dumps(
