@@ -59,7 +59,7 @@ def intersection_example(render=None,
     # Add mixed-autonomy traffic
     insertion_prob = 0.1
     autonomy_percent = 0.5
-    percent_table = {
+    prob_table = {
         'manned': (1 - autonomy_percent)*insertion_prob,
         'autonomous': autonomy_percent*insertion_prob,
     }
@@ -77,28 +77,28 @@ def intersection_example(render=None,
         inflow.add(
             veh_type=type,
             edge='e_1_in',
-            probability=percent_table[type],
+            probability=prob_table[type],
             departSpeed=8,
             departLane='random'
         )
         inflow.add(
             veh_type=type,
             edge='e_3_in',
-            probability=percent_table[type],
+            probability=prob_table[type],
             departSpeed=8,
             departLane='random'
         )
         inflow.add(
             veh_type=type,
             edge='e_5_in',
-            probability=percent_table[type],
+            probability=prob_table[type],
             departSpeed=8,
             departLane='random'
         )
         inflow.add(
             veh_type=type,
             edge='e_7_in',
-            probability=percent_table[type],
+            probability=prob_table[type],
             departSpeed=8,
             departLane='random'
         )

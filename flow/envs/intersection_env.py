@@ -9,6 +9,7 @@ from gym.spaces.box import Box
 from gym.spaces.tuple_space import Tuple
 
 import numpy as np
+import scipy
 
 import os
 from os.path import expanduser
@@ -80,8 +81,8 @@ class SoftIntersectionEnv(Env):
             dtype=np.float32)
 
     def set_action(self, action):
-        agent = action[0]
-        if agent < 80:
+        agent_idx = action[0]
+        if agent_idx < 80:
             # acting on vehicles
             max_accel, min_decel = 1.00, -3.00
             lower, upper = 0.5, 1.5
@@ -90,16 +91,17 @@ class SoftIntersectionEnv(Env):
                 (lower - mu) / sigma, (upper - mu) / sigma,
                 loc=mu, scale=sigma,
             )
-            veh_list = self.vehicle_index[agent]
-            for veh_id in veh_list:
-                veh_speed = self.traci_connection.vehicle.getSpeed(veh_id)
-                max_speed = veh_speed + max_accel
-                min_speed = veh_speed + min_decel
-                veh_speed = veh_speed * speed_multiplier
-                veh_speed = np.clip(veh_speed, max_speed, min_speed)
-                self.traci_connection.vehicle.slowDown(veh_id, veh_speed)
+            if agent_idx in self.vehicle_index.keys():
+                veh_list = self.vehicle_index[agent_idx]
+                for veh_id in veh_list:
+                    veh_speed = self.traci_connection.vehicle.getSpeed(veh_id)
+                    max_speed = veh_speed + max_accel
+                    min_speed = veh_speed + min_decel
+                    veh_speed = veh_speed * speed_multiplier
+                    veh_speed = np.clip(veh_speed, max_speed, min_speed)
+                    self.traci_connection.vehicle.slowDown(veh_id, veh_speed)
 
-        elif agent == 80:
+        elif agent_idx == 80:
             # acting on traffic lights
             lower, upper = 1.0, self.tls_phase_count - 1
             mu, sigma = action[1], action[2]
@@ -113,7 +115,7 @@ class SoftIntersectionEnv(Env):
             self.tls_phase %= self.tls_phase_count
             self.traci_connection.trafficlight.setPhase(\
                 self.tls_id, tls_phase)
-        elif agent == 81:
+        elif agent_idx == 81:
             # no ops
             pass
         else:
@@ -130,7 +132,7 @@ class SoftIntersectionEnv(Env):
             dtype=np.float32)
 
     def get_observation(self, **kwargs):
-        observation = self.occupancy_table.tolist()
+        observation = self.occupancy_table.flatten().tolist()
         tls_phase = self.tls_phase
         observation = observation + [tls_phase]
         return np.asarray(observation)
@@ -193,12 +195,13 @@ class SoftIntersectionEnv(Env):
             col_idx = int(min(col_idx, 4))
             try:
                 self.occupancy_table[row_idx, col_idx] += 1
-                if row_idx*5 + col_idx in self.vehicle_index:
-                    self.vehicle_index[(row_idx, col_idx)] += [veh_id]
+                agent_idx = int(row_idx*5 + col_idx)
+                if agent_idx in self.vehicle_index.keys():
+                    self.vehicle_index[agent_idx] += [veh_id]
                 else:
-                    self.vehicle_index[(row_idx, col_idx)] = [veh_id]
+                    self.vehicle_index[agent_idx] = [veh_id]
             except IndexError:
-                print(veh_id, veh_type, route,
+                raise IndexError(veh_id, veh_type, route,
                       self.vehicles.get_position(veh_id))
 
         # Update key attributes

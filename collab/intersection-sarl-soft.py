@@ -21,41 +21,70 @@ from flow.envs.intersection_env import SoftIntersectionEnv, \
     ADDITIONAL_ENV_PARAMS
 from flow.scenarios.intersection import \
     SoftIntersectionScenario, ADDITIONAL_NET_PARAMS
+from flow.controllers.routing_controllers import IntersectionRandomRouter
+from flow.core.params import InFlows
+import numpy as np
+seed=204
+np.random.seed(seed)
 
 # time horizon of a single rollout
-HORIZON = 1000
+HORIZON = 5000
 # number of rollouts per training iteration
 N_ROLLOUTS = 18
 # number of parallel workers
 N_CPUS = 6
 
 additional_env_params = ADDITIONAL_ENV_PARAMS.copy()
-additional_env_params["alpha"] = 1.0  # performance-consumption tradeoff
 
 # We place 40 autonomous vehicles in the network
 vehicles = Vehicles()
-experiment = {'e_1_sbc+': [('autonomous', 6)],
-              'e_3_sbc+': [('autonomous', 6)],
-              'e_5_sbc+': [('autonomous', 6)],
-              'e_7_sbc+': [('autonomous', 6)]}
-vehicle_data = {}
 
-# get all different vehicle types
-for _, pairs in experiment.items():
-    for pair in pairs:
-        cur_num = vehicle_data.get(pair[0], 0)
-        vehicle_data[pair[0]] = cur_num + pair[1]
-
-# add vehicle
-for veh_id, veh_num in vehicle_data.items():
+# Add mixed-autonomy traffic
+insertion_prob = 0.1
+autonomy_percent = 0.5
+prob_table = {
+    'manned': (1 - autonomy_percent)*insertion_prob,
+    'autonomous': autonomy_percent*insertion_prob,
+}
+inflow = InFlows()
+for type in ['manned', 'autonomous']:
     vehicles.add(
-        veh_id=veh_id,
+        veh_id=type,
         speed_mode=0b11111,
         lane_change_mode=0b011001010101,
         acceleration_controller=(SumoCarFollowingController, {}),
         lane_change_controller=(SumoLaneChangeController, {}),
-        routing_controller=(IntersectionRouter, {}),
-        num_vehicles=veh_num)
+        routing_controller=(IntersectionRandomRouter, {}),
+        num_vehicles=0,
+    )
+    inflow.add(
+        veh_type=type,
+        edge='e_1_in',
+        probability=prob_table[type],
+        departSpeed=8,
+        departLane='random'
+    )
+    inflow.add(
+        veh_type=type,
+        edge='e_3_in',
+        probability=prob_table[type],
+        departSpeed=8,
+        departLane='random'
+    )
+    inflow.add(
+        veh_type=type,
+        edge='e_5_in',
+        probability=prob_table[type],
+        departSpeed=8,
+        departLane='random'
+    )
+    inflow.add(
+        veh_type=type,
+        edge='e_7_in',
+        probability=prob_table[type],
+        departSpeed=8,
+        departLane='random'
+    )
 
 flow_params = dict(
     # name of the experiment
@@ -71,12 +100,13 @@ flow_params = dict(
     sumo=SumoParams(
         sim_step=0.1,
         render=False,
+        seed=seed,
     ),
 
     # environment related parameters (see flow.core.params.EnvParams)
     env=EnvParams(
         horizon=HORIZON,
-        warmup_steps=2,
+        warmup_steps=1,
         additional_params=additional_env_params,
     ),
 
@@ -96,7 +126,8 @@ flow_params = dict(
     # reset (see flow.core.params.InitialConfig)
     initial=InitialConfig(
         spacing='uniform',
-        edges_distribution=experiment,
+        edges_distribution=['e_1'],
+        min_gap=5,
     ),
 )
 

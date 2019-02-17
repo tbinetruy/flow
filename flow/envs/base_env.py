@@ -80,7 +80,7 @@ class Env(gym.Env, Serializable):
         self.env_params = env_params
         self.scenario = scenario
         self.sumo_params = sumo_params
-        self.seed = 204
+        self.seed = self.sumo_params.seed
         np.random.seed(self.seed)
         time_stamp = ''.join(str(time.time()).split('.'))
         if os.environ.get("TEST_FLAG", 0):
