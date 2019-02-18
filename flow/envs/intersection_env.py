@@ -114,11 +114,12 @@ class SoftIntersectionEnv(Env):
             self.tls_phase %= self.tls_phase_count
             self.traci_connection.trafficlight.setPhase(\
                 self.tls_id, tls_phase)
-        elif agent_idx == 81:
+        # elif agent_idx == 81:
+        else:
             # no ops
             pass
-        else:
-            raise ValueError('Agent index exceeds 81.')
+        # else:
+        #     raise ValueError('Agent index exceeds 81.')
 
     # OBSERVATION GOES HERE
     @property
