@@ -75,13 +75,13 @@ class SoftIntersectionEnv(Env):
     def action_space(self):
         return Box(
             low=0,
-            high=81,
+            high=21,
             shape=(3,),
             dtype=np.float32)
 
     def set_action(self, action):
         agent_idx = action[0]
-        if agent_idx < 80:
+        if agent_idx < 20:
             # acting on vehicles
             max_accel, min_decel = 1.00, -3.00
             lower, upper = 0.5, 1.5
@@ -100,8 +100,7 @@ class SoftIntersectionEnv(Env):
                     self.traci_connection.vehicle.slowDown(
                         veh_id, veh_speed, 1000
                     )
-
-        elif agent_idx == 80:
+        elif agent_idx == 20:
             # acting on traffic lights
             lower, upper = 1.0, self.tls_phase_count - 1
             mu, sigma = action[1], action[2]
@@ -195,7 +194,7 @@ class SoftIntersectionEnv(Env):
             col_idx = int(min(col_idx, 4))
             try:
                 self.occupancy_table[row_idx, col_idx] += 1
-                agent_idx = int(row_idx*5 + col_idx)
+                agent_idx = int(edge_idx*5 + col_idx)
                 if veh_type == 'manned':
                     pass
                 elif agent_idx in self.vehicle_index.keys():
