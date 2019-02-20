@@ -76,18 +76,21 @@ class SoftIntersectionEnv(Env):
         return Box(
             low=0,
             high=21,
-            shape=(3,),
+            shape=(2,),
             dtype=np.float32)
 
     def set_action(self, action):
-        agent_idx = action[0]
+        agent_idx = int(action[0])
         if agent_idx < 20:
             # acting on vehicles
             max_accel, min_decel = 1.00, -3.00
             lower, upper = 0.5, 1.5
-            mu, sigma = action[1], action[2]
+            # mu, sigma = action[1], action[2]
+            # speed_multiplier = np.clip(
+            #     np.random.normal(loc=mu, scale=sigma), lower, upper
+            # )
             speed_multiplier = np.clip(
-                np.random.normal(loc=mu, scale=sigma), lower, upper
+                action[1], lower, upper
             )
             if agent_idx in self.vehicle_index.keys():
                 veh_list = self.vehicle_index[agent_idx]
@@ -98,14 +101,17 @@ class SoftIntersectionEnv(Env):
                     veh_speed = veh_speed * speed_multiplier
                     veh_speed = np.clip(veh_speed, min_speed, max_speed)
                     self.traci_connection.vehicle.slowDown(
-                        veh_id, veh_speed, 1000
+                        veh_id, veh_speed, 10
                     )
         elif agent_idx == 20:
             # acting on traffic lights
             lower, upper = 1.0, self.tls_phase_count - 1
-            mu, sigma = action[1], action[2]
+            # mu, sigma = action[1], action[2]
+            # tls_phase_increment = np.round(np.clip(
+            #     np.random.normal(loc=mu, scale=sigma), lower, upper
+            # ))
             tls_phase_increment = np.round(np.clip(
-                np.random.normal(loc=mu, scale=sigma), lower, upper
+                action[1], lower, upper
             ))
             self.tls_phase = \
                 self.traci_connection.trafficlight.getPhase(self.tls_id)
@@ -113,12 +119,9 @@ class SoftIntersectionEnv(Env):
             self.tls_phase %= self.tls_phase_count
             self.traci_connection.trafficlight.setPhase(\
                 self.tls_id, tls_phase)
-        # elif agent_idx == 81:
         else:
             # no ops
             pass
-        # else:
-        #     raise ValueError('Agent index exceeds 81.')
 
     # OBSERVATION GOES HERE
     @property

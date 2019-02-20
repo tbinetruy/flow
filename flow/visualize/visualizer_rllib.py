@@ -14,6 +14,8 @@ parser : ArgumentParser
 
 import argparse
 import numpy as np
+seed = 204
+np.random.seed(seed)
 import os
 import sys
 
@@ -122,6 +124,7 @@ def visualizer_rllib(args):
     else:
         sumo_params.render = True
     sumo_params.emission_path = './test_time_rollout/'
+    sumo_params.seed = seed
 
     _env = env_class(
         env_params=env_params, sumo_params=sumo_params, scenario=scenario)
