@@ -24,9 +24,29 @@ def truncate_colormap(cmap, minval=0.25, maxval=0.75, n=100):
     return new_cmap
 
 
-class PygletRenderer():
+def m2p(x, y):
+    """Convert a set of (x,y) points from meters to pixels.
 
-    def __init__(self, network, mode,
+    Parameters
+    ----------
+    :param x:
+    :param y:
+
+    Returns
+    -------
+    (float, float)
+        x,y coordinates in pixels
+    """
+    pass
+
+
+class PygletRenderer(object):
+
+    def __init__(self,
+                 network,
+                 mode,
+                 env,  # FIXME: this is a hack
+                 tls,  # FIXME: this is a hack
                  save_render=False,
                  path=HOME+"/flow_rendering",
                  sight_radius=50,
@@ -76,6 +96,8 @@ class PygletRenderer():
         self.alpha = alpha
         self.enable_alpha()
         self.time = 0
+        self.tls = tls
+        self.env = env
 
         self.lane_polys = copy.deepcopy(network)
         lane_polys_flat = [pt for poly in network for pt in poly]
@@ -105,6 +127,32 @@ class PygletRenderer():
             color = [c for _ in range(int(len(lane_poly)/2))
                      for c in [224, 224, 224, int(self.alpha*255)]]
             self.lane_colors.append(color)
+
+        # Dictionary of traffic light subgroups
+        #
+        # Key is the name of the node the traffic lights reside on
+        #
+        # Element is a tuple (1st element is coordinates and direction, 2nd
+        # element is the dictionary of the the directions (left, right, top,
+        # bottom) with each direction providing a list of traffic lights per
+        # lane, and the direction of those traffic lights (left, straight,
+        # right)
+        #
+        # For example, if there is a traffic light on node 'n_5' that is only
+        # on the two lanes of the edge facing left, this would look something
+        # like this:
+        #
+        # tls_subgrousp = {'n_5': (
+        #     (x,y),
+        #     {'e_1': [(True, True, False), (False, True, False), ()],
+        #      '...': __,
+        #      '...': __,
+        #      '...': __}
+        # )}
+        self.tls_subgroups = {}
+        for node in tls.get_ids():
+            self.tls_subgroups[node] = (tls.get_position(node, env),
+                                   tls.get_controllable_links(node, env))
 
         try:
             self.window = pyglet.window.Window(width=self.width,
@@ -137,6 +185,7 @@ class PygletRenderer():
                machine_dynamics,
                human_logs,
                machine_logs,
+               # tls,
                save_render=None,
                sight_radius=None,
                show_radius=None,
@@ -208,6 +257,7 @@ class PygletRenderer():
         self.add_lane_polys()
         self.lane_batch.draw()
         self.vehicle_batch = pyglet.graphics.Batch()
+        self.tl_batch = pyglet.graphics.Batch()
         if "drgb" in self.mode:
             human_cmap = truncate_colormap(cm.Greens, 0.2, 0.8)
             machine_cmap = truncate_colormap(cm.Blues, 0.2, 0.8)
@@ -254,6 +304,10 @@ class PygletRenderer():
             self.add_vehicle_polys(machine_orientations,
                                    machine_conditions, 0)
         self.vehicle_batch.draw()
+
+        self._add_tls_poly_circle(self.env.traffic_lights.get_ids())  # FIXME: this is a hack
+
+        self.tl_batch.draw()
 
         buffer = pyglet.image.get_buffer_manager().get_color_buffer()
         image_data = buffer.get_image_data()
@@ -436,8 +490,93 @@ class PygletRenderer():
         index = [x for x in range(pxpm)]
         group = pyglet.graphics.Group()
         self.vehicle_batch.add_indexed(
-            pxpm, pyglet.gl.GL_LINE_LOOP, group, index,
+            pxpm, pyglet.gl.GL_POLYGON, group, index,
             ("v2f", vertex_list), ("c4B", vertex_color))
+
+    def _add_tls_poly_circle(self, nodes, color=None):
+        """Internal pyglet method to render a tls as a circle.
+
+        Parameters
+        ----------
+        center : tuple
+            The center coordinate of the vehicle
+        angle : float
+            The angle of the vehicle
+        size : int
+            The size of the rendered triangle
+        color : list
+            The color of the vehicle  [r, g, b].
+        """
+        # cx, cy = center
+        # ang = np.radians(angle)
+        # s = size * self.pxpm
+        # pt1 = [cx, cy]
+        # pt1_ = [cx - s * self.x_scale * np.sin(ang),
+        #         cy - s * self.y_scale * np.cos(ang)]
+        # pt2 = [pt1_[0] + 0.25 * s * self.x_scale * np.sin(np.pi / 2 - ang),
+        #        pt1_[1] - 0.25 * s * self.y_scale * np.cos(np.pi / 2 - ang)]
+        # pt3 = [pt1_[0] - 0.25 * s * self.x_scale * np.sin(np.pi / 2 - ang),
+        #        pt1_[1] + 0.25 * s * self.y_scale * np.cos(np.pi / 2 - ang)]
+        # vertex_list = []
+        # vertex_color = []
+        # for point in [pt1, pt2, pt3]:
+        #     vertex_list += point
+        #     vertex_color += color
+        # index = [x for x in range(3)]
+        # group = pyglet.graphics.Group()
+        # self.vehicle_batch.add_indexed(
+        #     3, pyglet.gl.GL_POLYGON, group, index,
+        #     ("v2f", vertex_list), ("c4B", vertex_color))
+
+        # loop through all nodes that have traffic lights
+        for node in nodes:
+            radius_intersection = 1  # FIXME: this is a hack
+            # TODO: make everything below here a specifiable variable
+            radius_tl = 1
+            delta1 = 1
+            delta2 = 1
+            delta3 = 1
+            delta4 = 1
+            cx, cy = self.tls_subgroups[node][0]
+            edges = self.tls_subgroups[node][1]
+            # loop through all edges that enter the node
+            for edge in edges:
+                tl_data = edges[edge]
+                angle = self.tls.get_edge_angle(edge, self.env)
+                # loop through the number of lanes in the edge
+                for i, lane in enumerate(tl_data):
+                    # j corresponds to {left, center, right}
+                    for j in range(3):
+                        if lane[j]:
+                            coordinates = (
+                                cx + radius_intersection + delta2 + (2 * j + 1) * radius_tl,
+                                cy + radius_intersection + delta1 + radius_tl + delta4 * i + 2 * radius_tl * i)
+
+                            coordinates_angled = [
+                                (coordinates[0]-cx)*np.cos(angle)-(coordinates[1]-cy)*np.sin(angle)+cx,
+                                (coordinates[0] - cx) * np.sin(angle) - (coordinates[1] - cy) * np.cos(angle) + cy]
+
+                            # transform x,y values from meters to pixels
+                            x0, y0 = ((coordinates_angled[0] - self.x_shift) * self.x_scale * self.pxpm,
+                                      (coordinates_angled[1] - self.y_shift) * self.y_scale * self.pxpm)
+                            print(x0, y0)
+
+                            radius = radius_tl * self.pxpm
+                            pxpm = int(self.pxpm * 50)
+                            vertex_list = []
+                            vertex_color = []
+                            for idx in range(pxpm):
+                                angle = np.radians(float(idx) / pxpm * 360.0)
+                                x = radius * self.x_scale * np.cos(angle) + x0
+                                y = radius * self.y_scale * np.sin(angle) + y0
+                                vertex_list += [x, y]
+                                vertex_color += [224, 224, 224, int(self.alpha * 255)]
+
+                            index = [x for x in range(pxpm)]
+                            group = pyglet.graphics.Group()
+                            self.tl_batch.add_indexed(
+                                pxpm, pyglet.gl.GL_LINE_LOOP, group, index,
+                                ("v2f", vertex_list), ("c4B", vertex_color))
 
     def enable_alpha(self, enable=True):
         """Enable alpha channel for coloring.

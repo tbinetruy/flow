@@ -1,6 +1,7 @@
 """Contains the intersection scenario class."""
 
 from flow.core.params import InitialConfig
+from flow.core.traffic_lights import TrafficLights
 from flow.scenarios.base_scenario import Scenario
 import numpy as np
 
@@ -16,7 +17,8 @@ class SoftIntersectionScenario(Scenario):
                  name,
                  vehicles,
                  net_params,
-                 initial_config=InitialConfig()):
+                 initial_config=InitialConfig(),
+                 traffic_lights=TrafficLights()):
         """Instantiate the scenario class.
         """
         for p in ADDITIONAL_NET_PARAMS.keys():
@@ -29,7 +31,7 @@ class SoftIntersectionScenario(Scenario):
         else:
             self.junction_type = 'priority'
 
-        super().__init__(name, vehicles, net_params,initial_config)
+        super().__init__(name, vehicles, net_params, initial_config, traffic_lights)
 
     def specify_edge_starts(self):
         """See parent class."""

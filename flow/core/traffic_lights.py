@@ -1,6 +1,7 @@
 """Contains the traffic light class."""
 
 import traci.constants as tc
+import numpy as np
 
 # DEFAULTS
 PROGRAM_ID = 1
@@ -238,3 +239,114 @@ class TrafficLights:
             "show_detectors": show_detectors,
             "phases": phases
         }
+
+    def get_position(self, node_id, env):
+        """Return the position of a specific traffic light node.
+
+        Parameters
+        ----------
+        node_id : str
+            name of the node the traffic light is located on
+        env : flow.envs.Env
+            the environment at the current time step
+
+        Returns
+        -------
+        float
+            x coordinate
+        float
+            y coordinate
+        float
+            the angle (in radians)
+        """
+        node = next(n for n in env.scenario.nodes if n['id'] == node_id)
+        x = node['x']
+        y = node['y']
+        return float(x), float(y)  # FIXME: this is a hack
+
+    def get_controllable_links(self, node_id, env):
+        """Get a mapping from traffic light IDs to direction of traffic lights.
+
+        Parameters
+        ----------
+        node_id : str
+            name of the node the traffic light is located on
+        env : flow.envs.Env
+            the environment at the current time step
+
+        Returns
+        -------
+        dict
+
+            * Key: direction of edges (left, right, top, bottom)
+            * Element: list of traffic lights per lane, and the direction of
+              those traffic lights (left, straight, right)
+
+        Example
+        -------
+        If there an environment with a traffic light on node 'n_5' that is only
+        on the two lanes of the edge facing left, and we were to call:
+
+            >>> from flow.envs import Env
+            >>> env = Env()
+            >>> tl = TrafficLights()
+            >>> print(tl.get_controllable_links('n_5', env))
+
+        This would return:
+
+            {
+                'e_1': [{'e_2': False, 'e_3': True, }, {'e_2': False, 'e_3': ...}],
+                'e_2': [(True, True, False), (False, True, False)],
+                'e_3': [],
+                'e_4'
+                'e_5'
+                'e_6'
+                'e_7'
+                'e_8'
+            }
+
+            {
+                'left': [(True, True, False), (False, True, False)],
+                'right': [],
+                'top': [],
+                'bottom': []
+            }
+        """
+        res = env.traci_connection.trafficlight.getControlledLinks(node_id)
+
+        edges = {}
+        for res_i in res:
+            edge = res_i[0][0].rsplit('_', 1)[0]
+            lane = int(res_i[0][0].rsplit('_', 1)[1])
+            if edge not in edges:
+                edges[edge] = [[False, False, False]
+                               for _ in range(env.scenario.num_lanes(edge))]
+            to_edge = res_i[0][1].rsplit('_', 1)[0]
+            angle_from = self.get_edge_angle(edge, env)
+            angle_to = self.get_edge_angle(to_edge, env)
+            delta = (angle_to - angle_from + np.pi) % (2 * np.pi) - np.pi
+            if delta < -np.pi/4:
+                edges[edge][lane][2] = True
+            elif delta > np.pi/4:
+                edges[edge][lane][0] = True
+            else:
+                edges[edge][lane][1] = True
+
+        return edges
+
+    def get_edge_angle(self, edge, env):
+        """
+
+        :param env:
+        :return:
+        """
+        edge_data = next(e for e in env.scenario.edges
+                         if e['id'] == edge)
+        from_node = next(n for n in env.scenario.nodes
+                         if n['id'] == edge_data['from'])
+        to_node = next(n for n in env.scenario.nodes
+                       if n['id'] == edge_data['to'])
+        x2, y2, x1, y1 = (to_node['x'], to_node['y'],
+                          from_node['x'], from_node['y'])
+        print(edge, np.arctan2(float(y2)-float(y1), float(x2)-float(x1)))
+        return np.arctan2(float(y2)-float(y1), float(x2)-float(x1))
