@@ -820,6 +820,9 @@ class Scenario(Serializable):
             ],
             shell=True)
 
+        self.nodes = nodes
+        self.edges = edges
+
         # collect data from the generated network configuration file
         error = None
         for _ in range(RETRIES_ON_ERROR):

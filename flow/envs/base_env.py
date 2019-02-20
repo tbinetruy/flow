@@ -151,10 +151,13 @@ class Env(gym.Env, Serializable):
             self.renderer = Renderer(
                 network,
                 self.sumo_params.render,
-                save_render,
+                self,
+                tls=self.traffic_lights,
+                save_render=save_render,
                 sight_radius=sight_radius,
                 pxpm=pxpm,
-                show_radius=show_radius)
+                show_radius=show_radius,
+            )
 
             # render a frame
             self.render(reset=True)
