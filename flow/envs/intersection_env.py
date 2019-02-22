@@ -6,7 +6,6 @@ from flow.core.params import InitialConfig, NetParams, SumoCarFollowingParams
 from flow.controllers import IDMController
 
 from gym.spaces.box import Box
-from gym.spaces.tuple_space import Tuple
 
 import numpy as np
 
@@ -73,30 +72,39 @@ class SoftIntersectionEnv(Env):
     # ACTION GOES HERE
     @property
     def action_space(self):
-        return Box(
+        action = Box(
             low=0,
-            high=21,
-            shape=(2,),
-            dtype=np.float32)
+            high=1,
+            shape=(3,),
+            dtype=np.float32,
+        )
+        return action
 
     def set_action(self, action):
-        print('Actions before parsing:', action)
-        agent_idx = int(action[0])
-        if agent_idx < 20:
+        # print('Actions before parsing:', action)
+        agent_idx = int(np.round(action[0]*30))
+        if agent_idx == 0:
+            pass
+            # tls_phase_increment = int(np.round(
+            #     action[1]*self.tls_phase_count
+            # ))
+            # # print('Agent index %d and tls phase increment %d' %
+            # #       (agent_idx, tls_phase_increment))
+            # self.tls_phase = \
+            #     self.traci_connection.trafficlight.getPhase(self.tls_id)
+            # self.tls_phase += tls_phase_increment
+            # self.tls_phase %= self.tls_phase_count
+            # self.traci_connection.trafficlight.setPhase(\
+            #     self.tls_id, self.tls_phase)
+        elif agent_idx < 21:
             # acting on vehicles
+            # pass
             max_accel, min_decel = 1.00, -3.00
-            lower, upper = 0.5, 1.5
-            # mu, sigma = action[1], action[2]
-            # speed_multiplier = np.clip(
-            #     np.random.normal(loc=mu, scale=sigma), lower, upper
-            # )
-            speed_multiplier = np.clip(
-                action[1], lower, upper
-            )
-            print('Agent index %d and acc %f' %
-                  (agent_idx, speed_multiplier))
-            if agent_idx in self.vehicle_index.keys():
-                veh_list = self.vehicle_index[agent_idx]
+            speed_multiplier = action[2] + 0.5
+            # print('Agent index %d and speed multiplier %f' %
+            #       (agent_idx, speed_multiplier))
+            if agent_idx-1 in self.vehicle_index.keys():
+                veh_list = self.vehicle_index[agent_idx-1]
                 for veh_id in veh_list:
                     veh_speed = self.traci_connection.vehicle.getSpeed(veh_id)
                     max_speed = veh_speed + max_accel
@@ -106,25 +114,8 @@ class SoftIntersectionEnv(Env):
                     self.traci_connection.vehicle.slowDown(
                         veh_id, veh_speed, 10
                     )
-        elif agent_idx == 20:
-            print('This is a traffic light agent.')
-            # acting on traffic lights
-            lower, upper = 1.0, self.tls_phase_count - 1
-            # mu, sigma = action[1], action[2]
-            # tls_phase_increment = np.round(np.clip(
-            #     np.random.normal(loc=mu, scale=sigma), lower, upper
-            # ))
-            tls_phase_increment = np.round(np.clip(
-                action[1], lower, upper
-            ))
-            self.tls_phase = \
-                self.traci_connection.trafficlight.getPhase(self.tls_id)
-            self.tls_phase += tls_phase_increment
-            self.tls_phase %= self.tls_phase_count
-            self.traci_connection.trafficlight.setPhase(\
-                self.tls_id, tls_phase)
         else:
-            print('No operation.')
+            # print('No operation.')
             # no ops
             pass
 
@@ -132,16 +123,17 @@ class SoftIntersectionEnv(Env):
     @property
     def observation_space(self):
         """See class definition."""
-        return Box(
+        observation = Box(
             low=0.,
             high=np.inf,
             shape=(81,),
-            dtype=np.float32)
+            dtype=np.int)
+        return observation
 
     def get_observation(self, **kwargs):
-        observation = self.occupancy_table.flatten().tolist()
-        tls_phase = self.tls_phase
-        observation = observation + [tls_phase]
+        tls_phase = [self.tls_phase]
+        occupancy_table = self.occupancy_table.flatten().tolist()
+        observation = tls_phase + occupancy_table
         return np.asarray(observation)
 
     # REWARD FUNCTION GOES HERE
@@ -166,7 +158,8 @@ class SoftIntersectionEnv(Env):
 
         # total reward
         #reward = 0.5 * _safety + 0.4 * _performance + 0.1 * _cost
-        reward = 0.5 * _performance + 0.5 * _cost
+        # reward = 0.5 * _performance + 0.5 * _cost
+        reward = _performance
         if np.isnan(reward):
             reward = 0
 

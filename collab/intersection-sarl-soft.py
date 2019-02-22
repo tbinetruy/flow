@@ -28,11 +28,11 @@ seed=204
 np.random.seed(seed)
 
 # time horizon of a single rollout
-HORIZON = 1000
+HORIZON = 5000
 # number of rollouts per training iteration
-N_ROLLOUTS = 1
+N_ROLLOUTS = 18
 # number of parallel workers
-N_CPUS = 1
+N_CPUS = 6
 
 additional_env_params = ADDITIONAL_ENV_PARAMS.copy()
 
@@ -101,7 +101,7 @@ flow_params = dict(
         sim_step=0.1,
         render=False,
         seed=seed,
-        #restart_instance=True,
+        restart_instance=True,
     ),
 
     # environment related parameters (see flow.core.params.EnvParams)
@@ -140,28 +140,27 @@ def setup_exps():
     if grad_free:
         alg_run = 'ES'
     else:
-        alg_run = 'PPO'
+        alg_run = 'A3C'
 
     agent_cls = get_agent_class(alg_run)
     config = agent_cls._default_config.copy()
 
-    if grad_free:
-        config['num_workers'] = N_CPUS
-        config['horizon'] = HORIZON
-        config['episodes_per_batch'] = N_ROLLOUTS
-        config['train_batch_size'] = HORIZON * N_ROLLOUTS
-    else:
-        config["num_workers"] = min(N_CPUS, N_ROLLOUTS)
-        config["train_batch_size"] = HORIZON * N_ROLLOUTS
-        config["use_gae"] = True
-        config["horizon"] = HORIZON
-        config["lambda"] = 0.97
-        config["lr"] = 5e-5
-        config["vf_clip_param"] = 1e6
-        config["num_sgd_iter"] = 10
-        config["model"]["fcnet_hiddens"] = [100, 50, 25]
-        config["observation_filter"] = "NoFilter"
+    config["num_workers"] = min(N_CPUS, N_ROLLOUTS)
+    config["train_batch_size"] = HORIZON * N_ROLLOUTS
+    config["horizon"] = HORIZON
     # config["model"]["use_lstm"] = "true" # This seems to only work for PPO.
+    if grad_free:
+        # pass
+        config['episodes_per_batch'] = 1#N_ROLLOUTS
+    else:
+        pass
+        # config["use_gae"] = True
+        # config["lambda"] = 0.97
+        # config["lr"] = 5e-5
+        # config["vf_clip_param"] = 1e6
+        # config["num_sgd_iter"] = 10
+        # #config["model"]["fcnet_hiddens"] = [100, 50, 25]
+        # config["observation_filter"] = "NoFilter"
 
     # save the flow params for replay
     flow_json = json.dumps(
@@ -186,10 +185,10 @@ if __name__ == '__main__':
             'config': {
                 **config
             },
-            'checkpoint_freq': 25,
+            'checkpoint_freq': 50,
             'max_failures': 999,
             'stop': {
-                'training_iteration': 100,
+                'training_iteration': 1000,
             },
         }
     })
