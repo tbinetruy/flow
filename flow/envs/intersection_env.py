@@ -80,6 +80,7 @@ class SoftIntersectionEnv(Env):
             dtype=np.float32)
 
     def set_action(self, action):
+        print('Actions before parsing:', action)
         agent_idx = int(action[0])
         if agent_idx < 20:
             # acting on vehicles
@@ -92,6 +93,8 @@ class SoftIntersectionEnv(Env):
             speed_multiplier = np.clip(
                 action[1], lower, upper
             )
+            print('Agent index %d and acc %f' %
+                  (agent_idx, speed_multiplier))
             if agent_idx in self.vehicle_index.keys():
                 veh_list = self.vehicle_index[agent_idx]
                 for veh_id in veh_list:
@@ -104,6 +107,7 @@ class SoftIntersectionEnv(Env):
                         veh_id, veh_speed, 10
                     )
         elif agent_idx == 20:
+            print('This is a traffic light agent.')
             # acting on traffic lights
             lower, upper = 1.0, self.tls_phase_count - 1
             # mu, sigma = action[1], action[2]
@@ -120,6 +124,7 @@ class SoftIntersectionEnv(Env):
             self.traci_connection.trafficlight.setPhase(\
                 self.tls_id, tls_phase)
         else:
+            print('No operation.')
             # no ops
             pass
 

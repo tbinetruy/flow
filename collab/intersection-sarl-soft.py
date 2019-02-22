@@ -28,11 +28,11 @@ seed=204
 np.random.seed(seed)
 
 # time horizon of a single rollout
-HORIZON = 5000
+HORIZON = 1000
 # number of rollouts per training iteration
-N_ROLLOUTS = 18
+N_ROLLOUTS = 1
 # number of parallel workers
-N_CPUS = 6
+N_CPUS = 1
 
 additional_env_params = ADDITIONAL_ENV_PARAMS.copy()
 
@@ -101,7 +101,7 @@ flow_params = dict(
         sim_step=0.1,
         render=False,
         seed=seed,
-        restart_instance=True,
+        #restart_instance=True,
     ),
 
     # environment related parameters (see flow.core.params.EnvParams)
@@ -136,6 +136,7 @@ flow_params = dict(
 
 def setup_exps():
     grad_free = False
+
     if grad_free:
         alg_run = 'ES'
     else:
@@ -154,8 +155,8 @@ def setup_exps():
         config["train_batch_size"] = HORIZON * N_ROLLOUTS
         config["use_gae"] = True
         config["horizon"] = HORIZON
-        config["lambda"] = grid_search([0.97, 1.0])
-        config["lr"] = grid_search([5e-4, 5e-5])
+        config["lambda"] = 0.97
+        config["lr"] = 5e-5
         config["vf_clip_param"] = 1e6
         config["num_sgd_iter"] = 10
         config["model"]["fcnet_hiddens"] = [100, 50, 25]
@@ -185,10 +186,10 @@ if __name__ == '__main__':
             'config': {
                 **config
             },
-            'checkpoint_freq': 50,
+            'checkpoint_freq': 25,
             'max_failures': 999,
             'stop': {
-                'training_iteration': 1000,
+                'training_iteration': 100,
             },
         }
     })
