@@ -14,6 +14,12 @@ from os.path import expanduser
 HOME = expanduser("~")
 import time
 
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rc('font', family='FreeSans', size=12)
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+
 ADDITIONAL_ENV_PARAMS = {
     # maximum acceleration for autonomous vehicles, in m/s^2
     "max_accel": 3,
@@ -81,15 +87,17 @@ class SoftIntersectionEnv(Env):
         return action
 
     def set_action(self, action):
+        verbose_mode = True
         # print('Actions before parsing:', action)
         agent_idx = int(np.round(action[0]*30))
         if agent_idx == 0:
-            pass
-            # tls_phase_increment = int(np.round(
-            #     action[1]*self.tls_phase_count
-            # ))
-            # # print('Agent index %d and tls phase increment %d' %
-            # #       (agent_idx, tls_phase_increment))
+            # pass
+            tls_phase_increment = int(np.round(
+                action[1]*self.tls_phase_count
+            ))
+            if verbose_mode:
+                print('Agent index %d and tls phase increment %d' %
+                      (agent_idx, tls_phase_increment))
             # self.tls_phase = \
             #     self.traci_connection.trafficlight.getPhase(self.tls_id)
             # self.tls_phase += tls_phase_increment
@@ -97,12 +105,13 @@ class SoftIntersectionEnv(Env):
             # self.traci_connection.trafficlight.setPhase(\
             #     self.tls_id, self.tls_phase)
         elif agent_idx < 21:
-            # acting on vehicles
             # pass
             max_accel, min_decel = 1.00, -3.00
             speed_multiplier = action[2] + 0.5
-            # print('Agent index %d and speed multiplier %f' %
-            #       (agent_idx, speed_multiplier))
+            if verbose_mode:
+                print('Agent index %d and speed multiplier %f' %
+                      (agent_idx-1, speed_multiplier))
+                print(self.vehicle_index.keys())
             if agent_idx-1 in self.vehicle_index.keys():
                 veh_list = self.vehicle_index[agent_idx-1]
                 for veh_id in veh_list:
@@ -111,13 +120,14 @@ class SoftIntersectionEnv(Env):
                     min_speed = max(veh_speed + min_decel, 0)
                     veh_speed = veh_speed * speed_multiplier
                     veh_speed = np.clip(veh_speed, min_speed, max_speed)
-                    self.traci_connection.vehicle.slowDown(
-                        veh_id, veh_speed, 10
-                    )
+                    # self.traci_connection.vehicle.slowDown(
+                    #     veh_id, veh_speed, 10
+                    # )
+                    self.traci_connection.vehicle.setSpeed(veh_id, 0)
         else:
-            # print('No operation.')
-            # no ops
-            pass
+            # pass
+            if verbose_mode:
+                print('No operation.')
 
     # OBSERVATION GOES HERE
     @property
@@ -159,7 +169,7 @@ class SoftIntersectionEnv(Env):
         # total reward
         #reward = 0.5 * _safety + 0.4 * _performance + 0.1 * _cost
         # reward = 0.5 * _performance + 0.5 * _cost
-        reward = _performance
+        reward = -1*_avg_speed
         if np.isnan(reward):
             reward = 0
 
@@ -180,7 +190,7 @@ class SoftIntersectionEnv(Env):
         self.vehicle_index = {}
         for veh_id in self.vehicles.get_ids():
             edge_id = self.traci_connection.vehicle.getRoadID(veh_id)
-            if 'in' in edge_id or 'out' in edge_id:
+            if edge_id not in ['e_1', 'e_3', 'e_5', 'e_7']:
                 continue
             veh_type = self.traci_connection.vehicle.getTypeID(veh_id)
             route = self.traci_connection.vehicle.getRoute(veh_id)
@@ -188,6 +198,12 @@ class SoftIntersectionEnv(Env):
             row_idx = edge_idx * 4
             if veh_type == 'autonomous':
                 route_idx = self.route_idx_table[(route[1], route[2])]
+                try:
+                    # color rl vehicles red
+                    self.traci_connection.vehicle.setColor(
+                        vehID=veh_id, color=(255, 0, 0, 255))
+                except (FatalTraCIError, TraCIException):
+                    pass
             else:
                 route_idx = 3
             row_idx += route_idx
@@ -227,6 +243,27 @@ class SoftIntersectionEnv(Env):
         # disable skip to test methods
         self.test_tls(skip=True)
         self.test_reward(skip=True)
+
+        debug_mode = False
+        if debug_mode:
+            fig = plt.figure()
+            ax = fig.add_subplot(1,1,1)
+            divider = make_axes_locatable(ax)
+            cax = divider.append_axes('right', size='5%', pad=0.05)
+            im = ax.imshow(self.occupancy_table,
+                           cmap='jet', vmin=0, vmax=5)
+            ax.tick_params(axis='both', which='major', labelsize=12)
+            ax.tick_params(axis='both', which='minor',
+                           labelsize=0)
+            ax.set_xticks(np.arange(0,5))
+            ax.set_yticks(np.arange(0,16,4))
+            ax.set_yticks(np.arange(0,16), minor=True)
+            ax.grid(True, which='major')
+            ax.grid(True, which='minor', linestyle='--')
+            ax.tick_params(which='both', direction='out')
+            ax.set_title('time: %d' % self.step_counter)
+            fig.colorbar(im, cax=cax, orientation='vertical')
+            plt.show()
 
     def test_tls(self, skip=True):
         if self.time_counter % 10 == 0 and not skip:

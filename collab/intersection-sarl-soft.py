@@ -140,7 +140,7 @@ def setup_exps():
     if grad_free:
         alg_run = 'ES'
     else:
-        alg_run = 'A3C'
+        alg_run = 'A2C'
 
     agent_cls = get_agent_class(alg_run)
     config = agent_cls._default_config.copy()
@@ -188,7 +188,7 @@ if __name__ == '__main__':
             'checkpoint_freq': 50,
             'max_failures': 999,
             'stop': {
-                'training_iteration': 1000,
+                'training_iteration': 50,
             },
         }
     })
