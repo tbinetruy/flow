@@ -81,53 +81,52 @@ class SoftIntersectionEnv(Env):
         action = Box(
             low=0,
             high=1,
-            shape=(3,),
+            shape=(2,),
             dtype=np.float32,
         )
         return action
 
     def set_action(self, action):
-        verbose_mode = True
-        # print('Actions before parsing:', action)
+        # if agent_idx == 0:
+        #     # pass
+        #     tls_phase_increment = int(np.round(
+        #         action[1]*self.tls_phase_count
+        #     ))
+        #     if verbose_mode:
+        #         print('Agent index %d and tls phase increment %d' %
+        #               (agent_idx, tls_phase_increment))
+        #     # self.tls_phase = \
+        #     #     self.traci_connection.trafficlight.getPhase(self.tls_id)
+        #     # self.tls_phase += tls_phase_increment
+        #     # self.tls_phase %= self.tls_phase_count
+        #     # self.traci_connection.trafficlight.setPhase(\
+        #     #     self.tls_id, self.tls_phase)
         agent_idx = int(np.round(action[0]*30))
-        if agent_idx == 0:
-            # pass
-            tls_phase_increment = int(np.round(
-                action[1]*self.tls_phase_count
-            ))
+        verbose_mode = False
+        if agent_idx < 20:
             if verbose_mode:
-                print('Agent index %d and tls phase increment %d' %
-                      (agent_idx, tls_phase_increment))
-            # self.tls_phase = \
-            #     self.traci_connection.trafficlight.getPhase(self.tls_id)
-            # self.tls_phase += tls_phase_increment
-            # self.tls_phase %= self.tls_phase_count
-            # self.traci_connection.trafficlight.setPhase(\
-            #     self.tls_id, self.tls_phase)
-        elif agent_idx < 21:
-            # pass
-            max_accel, min_decel = 1.00, -3.00
-            speed_multiplier = action[2] + 0.5
-            if verbose_mode:
-                print('Agent index %d and speed multiplier %f' %
-                      (agent_idx-1, speed_multiplier))
-                print(self.vehicle_index.keys())
-            if agent_idx-1 in self.vehicle_index.keys():
-                veh_list = self.vehicle_index[agent_idx-1]
+                print('Pinning agent %d...' % agent_idx)
+                print('Available agents:', self.vehicle_index.keys())
+                if agent_idx in self.vehicle_index.keys():
+                    print('Succeded.')
+                else:
+                    print('Agent %d not found.' % agent_idx)
+            if agent_idx in self.vehicle_index.keys():
+                veh_list = self.vehicle_index[agent_idx]
                 for veh_id in veh_list:
                     veh_speed = self.traci_connection.vehicle.getSpeed(veh_id)
-                    max_speed = veh_speed + max_accel
-                    min_speed = max(veh_speed + min_decel, 0)
-                    veh_speed = veh_speed * speed_multiplier
-                    veh_speed = np.clip(veh_speed, min_speed, max_speed)
-                    # self.traci_connection.vehicle.slowDown(
-                    #     veh_id, veh_speed, 10
-                    # )
-                    self.traci_connection.vehicle.setSpeed(veh_id, 0)
+                    next_veh_speed = veh_speed * (1 + (action[1]-0.5)*0.5)
+                    if verbose_mode:
+                        print(
+                            'Setting vehicle %s from %f m/s to %f m/s.' %
+                            (veh_id, veh_speed, next_veh_speed)
+                        )
+                    self.traci_connection.vehicle.setSpeed(
+                        veh_id, next_veh_speed
+                    )
         else:
-            # pass
             if verbose_mode:
-                print('No operation.')
+                print('Idling...')
 
     # OBSERVATION GOES HERE
     @property

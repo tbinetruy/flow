@@ -28,9 +28,9 @@ seed=204
 np.random.seed(seed)
 
 # time horizon of a single rollout
-HORIZON = 5000
+HORIZON = 1000
 # number of rollouts per training iteration
-N_ROLLOUTS = 18
+N_ROLLOUTS = 6*5
 # number of parallel workers
 N_CPUS = 6
 
@@ -135,12 +135,12 @@ flow_params = dict(
 
 
 def setup_exps():
-    grad_free = False
+    grad_free = True
 
     if grad_free:
         alg_run = 'ES'
     else:
-        alg_run = 'A2C'
+        alg_run = 'PPO'
 
     agent_cls = get_agent_class(alg_run)
     config = agent_cls._default_config.copy()
@@ -151,7 +151,12 @@ def setup_exps():
     # config["model"]["use_lstm"] = "true" # This seems to only work for PPO.
     if grad_free:
         # pass
-        config['episodes_per_batch'] = 1#N_ROLLOUTS
+        config['episodes_per_batch'] = N_ROLLOUTS
+        config['eval_prob'] = 0.05
+        config['noise_stdev'] = 0.02
+        config['stepsize'] = 0.02
+        config['clip_actions'] = False
+        config['observation_filter'] = 'NoFilter'
     else:
         pass
         # config["use_gae"] = True
@@ -177,7 +182,7 @@ def setup_exps():
 
 if __name__ == '__main__':
     alg_run, gym_name, config = setup_exps()
-    ray.init(num_cpus=N_CPUS + 1, redirect_output=False)
+    ray.init(num_cpus=N_CPUS + 1)
     trials = run_experiments({
         flow_params['exp_tag']: {
             'run': alg_run,
@@ -188,7 +193,8 @@ if __name__ == '__main__':
             'checkpoint_freq': 50,
             'max_failures': 999,
             'stop': {
-                'training_iteration': 50,
+                'training_iteration': 250,
             },
+            'local_dir': '/mnt/d/Overflow/ray_results/',
         }
     })
