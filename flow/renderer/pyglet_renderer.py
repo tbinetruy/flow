@@ -107,7 +107,7 @@ class PygletRenderer(object):
         shift = polys_x.min() - 2
         scale = (width - 4) / width
         self.width = (width + 2*self.sight_radius) * self.pxpm
-        self.x_shift = shift - self.sight_radius
+        self.x_shift = shift - self.sight_radius  # in meters
         self.x_scale = scale
 
         polys_y = np.asarray(lane_polys_flat[1::2])
@@ -152,7 +152,7 @@ class PygletRenderer(object):
         self.tls_subgroups = {}
         for node in tls.get_ids():
             self.tls_subgroups[node] = (tls.get_position(node, env),
-                                   tls.get_controllable_links(node, env))
+                                        tls.get_controllable_links(node, env))
 
         try:
             self.window = pyglet.window.Window(width=self.width,
@@ -507,62 +507,46 @@ class PygletRenderer(object):
         color : list
             The color of the vehicle  [r, g, b].
         """
-        # cx, cy = center
-        # ang = np.radians(angle)
-        # s = size * self.pxpm
-        # pt1 = [cx, cy]
-        # pt1_ = [cx - s * self.x_scale * np.sin(ang),
-        #         cy - s * self.y_scale * np.cos(ang)]
-        # pt2 = [pt1_[0] + 0.25 * s * self.x_scale * np.sin(np.pi / 2 - ang),
-        #        pt1_[1] - 0.25 * s * self.y_scale * np.cos(np.pi / 2 - ang)]
-        # pt3 = [pt1_[0] - 0.25 * s * self.x_scale * np.sin(np.pi / 2 - ang),
-        #        pt1_[1] + 0.25 * s * self.y_scale * np.cos(np.pi / 2 - ang)]
-        # vertex_list = []
-        # vertex_color = []
-        # for point in [pt1, pt2, pt3]:
-        #     vertex_list += point
-        #     vertex_color += color
-        # index = [x for x in range(3)]
-        # group = pyglet.graphics.Group()
-        # self.vehicle_batch.add_indexed(
-        #     3, pyglet.gl.GL_POLYGON, group, index,
-        #     ("v2f", vertex_list), ("c4B", vertex_color))
 
         # loop through all nodes that have traffic lights
         for node in nodes:
-            radius_intersection = 1  # FIXME: this is a hack
+            radius_intersection = 20  # FIXME: this is a hack
             # TODO: make everything below here a specifiable variable
             radius_tl = 1
-            delta1 = 1
-            delta2 = 1
-            delta3 = 1
-            delta4 = 1
+            delta1 = 5
+            delta2 = 5
+
+            tl_state = self.env.traffic_lights.get_state(node)
             cx, cy = self.tls_subgroups[node][0]
+            cx = (cx - self.x_shift) * self.x_scale * self.pxpm # * 6.47149460709
+            cy = (cy - self.y_shift) * self.y_scale * self.pxpm # * 6.47149460709
             edges = self.tls_subgroups[node][1]
+
             # loop through all edges that enter the node
             for edge in edges:
                 tl_data = edges[edge]
-                angle = self.tls.get_edge_angle(edge, self.env)
+                pxpm = int(self.pxpm * 50)
+                angles = self.tls.get_edge_angle(edge, self.env) - np.pi/2
                 # loop through the number of lanes in the edge
                 for i, lane in enumerate(tl_data):
                     # j corresponds to {left, center, right}
                     for j in range(3):
-                        if lane[j]:
+                        if lane[j][0]:  # lane[j][0] is True if there is a traffic light, and False otherwise
                             coordinates = (
-                                cx + radius_intersection + delta2 + (2 * j + 1) * radius_tl,
-                                cy + radius_intersection + delta1 + radius_tl + delta4 * i + 2 * radius_tl * i)
+                                cx + radius_intersection + (j + 1) * delta1 + (2 * j + 1) * radius_tl,
+                                cy - radius_intersection - (i + 1) * delta2 - (2 * i + 1) * radius_tl)
 
                             coordinates_angled = [
-                                (coordinates[0]-cx)*np.cos(angle)-(coordinates[1]-cy)*np.sin(angle)+cx,
-                                (coordinates[0] - cx) * np.sin(angle) - (coordinates[1] - cy) * np.cos(angle) + cy]
-
+                                (coordinates[0] - cx) * np.cos(angles) - (coordinates[1] - cy) * np.sin(angles) + cx,
+                                (coordinates[0] - cx) * np.sin(angles) + (coordinates[1] - cy) * np.cos(angles) + cy]
+                            # print(coordinates_angled)
                             # transform x,y values from meters to pixels
-                            x0, y0 = ((coordinates_angled[0] - self.x_shift) * self.x_scale * self.pxpm,
-                                      (coordinates_angled[1] - self.y_shift) * self.y_scale * self.pxpm)
-                            print(x0, y0)
+                            # x0, y0 = ((coordinates_angled[0] - self.x_shift) * self.x_scale * self.pxpm,
+                            #           (coordinates_angled[1] - self.y_shift) * self.y_scale * self.pxpm)
+                            x0, y0 = coordinates_angled[0], coordinates_angled[1]
 
                             radius = radius_tl * self.pxpm
-                            pxpm = int(self.pxpm * 50)
+
                             vertex_list = []
                             vertex_color = []
                             for idx in range(pxpm):
@@ -570,12 +554,22 @@ class PygletRenderer(object):
                                 x = radius * self.x_scale * np.cos(angle) + x0
                                 y = radius * self.y_scale * np.sin(angle) + y0
                                 vertex_list += [x, y]
-                                vertex_color += [224, 224, 224, int(self.alpha * 255)]
+
+                                if tl_state[lane[j][1]] in ['r','R']:
+                                    vertex_color += [224, 0, 0, int(self.alpha * 255)]
+                                elif tl_state[lane[j][1]] in ['g','G']:
+                                    vertex_color += [0, 224, 0, int(self.alpha * 255)]
+                                elif tl_state[lane[j][1]] in ['y', 'Y']:
+                                    vertex_color += [255, 255, 0,
+                                        int(self.alpha * 255)]
+                                else:
+                                    vertex_color += [0, 0, 224,
+                                                     int(self.alpha * 255)]
 
                             index = [x for x in range(pxpm)]
                             group = pyglet.graphics.Group()
                             self.tl_batch.add_indexed(
-                                pxpm, pyglet.gl.GL_LINE_LOOP, group, index,
+                                pxpm, pyglet.gl.GL_POLYGON, group, index,
                                 ("v2f", vertex_list), ("c4B", vertex_color))
 
     def enable_alpha(self, enable=True):

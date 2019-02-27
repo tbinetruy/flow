@@ -313,24 +313,25 @@ class TrafficLights:
             }
         """
         res = env.traci_connection.trafficlight.getControlledLinks(node_id)
+        print(res)
 
         edges = {}
-        for res_i in res:
+        for i, res_i in enumerate(res):
             edge = res_i[0][0].rsplit('_', 1)[0]
             lane = int(res_i[0][0].rsplit('_', 1)[1])
             if edge not in edges:
-                edges[edge] = [[False, False, False]
+                edges[edge] = [([(False, None), (False, None), (False, None)])
                                for _ in range(env.scenario.num_lanes(edge))]
             to_edge = res_i[0][1].rsplit('_', 1)[0]
             angle_from = self.get_edge_angle(edge, env)
             angle_to = self.get_edge_angle(to_edge, env)
             delta = (angle_to - angle_from + np.pi) % (2 * np.pi) - np.pi
             if delta < -np.pi/4:
-                edges[edge][lane][2] = True
+                edges[edge][lane][2] = (True, i)
             elif delta > np.pi/4:
-                edges[edge][lane][0] = True
+                edges[edge][lane][0] = (True, i)
             else:
-                edges[edge][lane][1] = True
+                edges[edge][lane][1] = (True, i)
 
         return edges
 
@@ -348,5 +349,5 @@ class TrafficLights:
                        if n['id'] == edge_data['to'])
         x2, y2, x1, y1 = (to_node['x'], to_node['y'],
                           from_node['x'], from_node['y'])
-        print(edge, np.arctan2(float(y2)-float(y1), float(x2)-float(x1)))
+        #print(edge, np.arctan2(float(y2)-float(y1), float(x2)-float(x1)))
         return np.arctan2(float(y2)-float(y1), float(x2)-float(x1))
