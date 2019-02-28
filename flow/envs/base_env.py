@@ -557,7 +557,7 @@ class Env(gym.Env, Serializable):
         if self.sumo_params.restart_instance or self.step_counter > 2e6:
             self.step_counter = 0
             # issue a random seed to induce randomness into the next rollout
-            self.sumo_params.seed = random.randint(0, 1e5)
+            self.sumo_params.seed = 204#random.randint(0, 1e5)
             # modify the vehicles class to match initial data
             self.vehicles = deepcopy(self.initial_vehicles)
             # restart the sumo instance
@@ -867,26 +867,26 @@ class Env(gym.Env, Serializable):
         if self.sumo_params.render is not True:
             return
 
-        for veh_id in self.vehicles.get_rl_ids():
-            try:
-                # color rl vehicles red
-                self.traci_connection.vehicle.setColor(
-                    vehID=veh_id, color=RED)
-            except (FatalTraCIError, TraCIException):
-                pass
-
-        for veh_id in self.vehicles.get_human_ids():
-            try:
-                if veh_id in self.vehicles.get_observed_ids():
-                    # color observed human-driven vehicles cyan
-                    color = CYAN
-                else:
-                    # color unobserved human-driven vehicles white
-                    color = WHITE
-                self.traci_connection.vehicle.setColor(
-                    vehID=veh_id, color=color)
-            except (FatalTraCIError, TraCIException):
-                pass
+        # for veh_id in self.vehicles.get_rl_ids():
+        #     try:
+        #         # color rl vehicles red
+        #         self.traci_connection.vehicle.setColor(
+        #             vehID=veh_id, color=RED)
+        #     except (FatalTraCIError, TraCIException):
+        #         pass
+        #
+        # for veh_id in self.vehicles.get_human_ids():
+        #     try:
+        #         if veh_id in self.vehicles.get_observed_ids():
+        #             # color observed human-driven vehicles cyan
+        #             color = CYAN
+        #         else:
+        #             # color unobserved human-driven vehicles white
+        #             color = WHITE
+        #         self.traci_connection.vehicle.setColor(
+        #             vehID=veh_id, color=color)
+        #     except (FatalTraCIError, TraCIException):
+        #         pass
 
         # clear the list of observed vehicles
         for veh_id in self.vehicles.get_observed_ids():

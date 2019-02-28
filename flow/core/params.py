@@ -27,7 +27,7 @@ class SumoParams:
                  pxpm=2,
                  overtake_right=False,
                  ballistic=False,
-                 seed=None,
+                 seed=204,
                  restart_instance=False,
                  print_warnings=True,
                  teleport_time=-1,

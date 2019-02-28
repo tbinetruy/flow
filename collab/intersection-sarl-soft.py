@@ -30,7 +30,7 @@ np.random.seed(seed)
 # time horizon of a single rollout
 HORIZON = 1000
 # number of rollouts per training iteration
-N_ROLLOUTS = 6*5
+N_ROLLOUTS = 6*2
 # number of parallel workers
 N_CPUS = 6
 
@@ -135,12 +135,12 @@ flow_params = dict(
 
 
 def setup_exps():
-    grad_free = True
+    grad_free = False
 
     if grad_free:
         alg_run = 'ES'
     else:
-        alg_run = 'PPO'
+        alg_run = 'A2C'
 
     agent_cls = get_agent_class(alg_run)
     config = agent_cls._default_config.copy()
@@ -153,7 +153,7 @@ def setup_exps():
         # pass
         config['episodes_per_batch'] = N_ROLLOUTS
         config['eval_prob'] = 0.05
-        config['noise_stdev'] = 0.02
+        config['noise_stdev'] = 0.05
         config['stepsize'] = 0.02
         config['clip_actions'] = False
         config['observation_filter'] = 'NoFilter'
@@ -161,11 +161,11 @@ def setup_exps():
         pass
         # config["use_gae"] = True
         # config["lambda"] = 0.97
-        # config["lr"] = 5e-5
+        config["lr"] = 5e-5
         # config["vf_clip_param"] = 1e6
         # config["num_sgd_iter"] = 10
         # #config["model"]["fcnet_hiddens"] = [100, 50, 25]
-        # config["observation_filter"] = "NoFilter"
+        config["observation_filter"] = "NoFilter"
 
     # save the flow params for replay
     flow_json = json.dumps(
@@ -193,8 +193,11 @@ if __name__ == '__main__':
             'checkpoint_freq': 50,
             'max_failures': 999,
             'stop': {
-                'training_iteration': 250,
+                'training_iteration': 1000,
             },
             'local_dir': '/mnt/d/Overflow/ray_results/',
-        }
-    })
+            'num_samples': 5,
+        },
+    },
+    resume='prompt',
+    verbose=1,)

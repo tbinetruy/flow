@@ -73,6 +73,7 @@ class SoftIntersectionEnv(Env):
 
         # setup observation cache
         self.occupancy_table = np.zeros((16, 5))
+        self.speed_table = np.zeros((16, 5))
         self.vehicle_index = {}
 
     # ACTION GOES HERE
@@ -114,8 +115,13 @@ class SoftIntersectionEnv(Env):
             if agent_idx in self.vehicle_index.keys():
                 veh_list = self.vehicle_index[agent_idx]
                 for veh_id in veh_list:
-                    veh_speed = self.traci_connection.vehicle.getSpeed(veh_id)
-                    next_veh_speed = veh_speed * (1 + (action[1]-0.5)*0.5)
+                    try:
+                        self.traci_connection.vehicle.setColor(
+                            vehID=veh_id, color=(0, 0, 255, 255))
+                    except (FatalTraCIError, TraCIException):
+                        pass
+                    veh_speed = self.vehicles.get_speed(veh_id)
+                    next_veh_speed = action[1]*self.scenario.max_speed
                     if verbose_mode:
                         print(
                             'Setting vehicle %s from %f m/s to %f m/s.' %
@@ -141,8 +147,10 @@ class SoftIntersectionEnv(Env):
 
     def get_observation(self, **kwargs):
         tls_phase = [self.tls_phase]
-        occupancy_table = self.occupancy_table.flatten().tolist()
-        observation = tls_phase + occupancy_table
+        # occupancy_table = self.occupancy_table.flatten().tolist()
+        # observation = tls_phase + occupancy_table
+        speed_table = self.speed_table.flatten().tolist()
+        observation = tls_phase + speed_table
         return np.asarray(observation)
 
     # REWARD FUNCTION GOES HERE
@@ -168,7 +176,7 @@ class SoftIntersectionEnv(Env):
         # total reward
         #reward = 0.5 * _safety + 0.4 * _performance + 0.1 * _cost
         # reward = 0.5 * _performance + 0.5 * _cost
-        reward = -1*_avg_speed
+        reward = _avg_speed
         if np.isnan(reward):
             reward = 0
 
@@ -186,6 +194,7 @@ class SoftIntersectionEnv(Env):
     # UTILITY FUNCTION GOES HERE
     def additional_command(self):
         self.occupancy_table = np.zeros((16, 5))
+        self.speed_table = np.zeros((16, 5))
         self.vehicle_index = {}
         for veh_id in self.vehicles.get_ids():
             edge_id = self.traci_connection.vehicle.getRoadID(veh_id)
@@ -198,7 +207,6 @@ class SoftIntersectionEnv(Env):
             if veh_type == 'autonomous':
                 route_idx = self.route_idx_table[(route[1], route[2])]
                 try:
-                    # color rl vehicles red
                     self.traci_connection.vehicle.setColor(
                         vehID=veh_id, color=(255, 0, 0, 255))
                 except (FatalTraCIError, TraCIException):
@@ -210,6 +218,8 @@ class SoftIntersectionEnv(Env):
             col_idx = int(min(col_idx, 4))
             try:
                 self.occupancy_table[row_idx, col_idx] += 1
+                self.speed_table[row_idx, col_idx] += \
+                    self.vehicles.get_speed(veh_id)
                 agent_idx = int(edge_idx*5 + col_idx)
                 if veh_type == 'manned':
                     pass
@@ -250,7 +260,7 @@ class SoftIntersectionEnv(Env):
             divider = make_axes_locatable(ax)
             cax = divider.append_axes('right', size='5%', pad=0.05)
             im = ax.imshow(self.occupancy_table,
-                           cmap='jet', vmin=0, vmax=5)
+                           cmap='prism', vmin=0, vmax=2*self.scenario.max_speed)
             ax.tick_params(axis='both', which='major', labelsize=12)
             ax.tick_params(axis='both', which='minor',
                            labelsize=0)
