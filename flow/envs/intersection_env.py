@@ -18,6 +18,8 @@ import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.rc('font', family='FreeSans', size=12)
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+import shapely.geometry
+import itertools
 
 
 ADDITIONAL_ENV_PARAMS = {
@@ -30,7 +32,7 @@ ADDITIONAL_ENV_PARAMS = {
 }
 
 
-class SoftIntersectionEnv(Env):
+class IntersectionEnv(Env):
     def __init__(self, env_params, sumo_params, scenario):
         print("Starting SoftIntersectionEnv...")
         for p in ADDITIONAL_ENV_PARAMS.keys():
@@ -70,11 +72,18 @@ class SoftIntersectionEnv(Env):
 
         # setup reward-related variables
         self.rewards = 0
+        self.reward_stats = [0, 0, 0, 0, 0, 0]
 
-        # setup observation cache
+        # setup observation-related variables
         self.occupancy_table = np.zeros((16, 5))
         self.speed_table = np.zeros((16, 5))
         self.vehicle_index = {}
+        self.vehicle_orient = []
+
+        # setup action-related variables
+        self.is_idle = True
+        self.miss_pin = False
+        self.is_training = False
 
     # ACTION GOES HERE
     @property
@@ -102,16 +111,24 @@ class SoftIntersectionEnv(Env):
         #     # self.tls_phase %= self.tls_phase_count
         #     # self.traci_connection.trafficlight.setPhase(\
         #     #     self.tls_id, self.tls_phase)
+        self.is_idle = True
+        self.miss_pin = False
+        self.is_training = True
+
         agent_idx = int(np.round(action[0]*30))
         verbose_mode = False
         if agent_idx < 20:
+            self.is_idle = False
             if verbose_mode:
                 print('Pinning agent %d...' % agent_idx)
                 print('Available agents:', self.vehicle_index.keys())
-                if agent_idx in self.vehicle_index.keys():
+            if agent_idx in self.vehicle_index.keys():
+                if verbose_mode:
                     print('Succeded.')
-                else:
+            else:
+                if verbose_mode:
                     print('Agent %d not found.' % agent_idx)
+                self.miss_pin = True
             if agent_idx in self.vehicle_index.keys():
                 veh_list = self.vehicle_index[agent_idx]
                 for veh_id in veh_list:
@@ -139,46 +156,63 @@ class SoftIntersectionEnv(Env):
     def observation_space(self):
         """See class definition."""
         observation = Box(
-            low=0.,
+            low=-np.inf,
             high=np.inf,
-            shape=(81,),
-            dtype=np.int)
+            shape=(16, 5, 3),
+            dtype=np.float32,)
         return observation
 
     def get_observation(self, **kwargs):
-        tls_phase = [self.tls_phase]
-        # occupancy_table = self.occupancy_table.flatten().tolist()
-        # observation = tls_phase + occupancy_table
-        speed_table = self.speed_table.flatten().tolist()
-        observation = tls_phase + speed_table
-        return np.asarray(observation)
+        #tls_phase = [self.tls_phase]
+        #occupancy_table = self.occupancy_table.flatten().tolist()
+        #observation = tls_phase + occupancy_table
+        #speed_table = self.speed_table.flatten().tolist()
+        #observation = tls_phase + speed_table
+        return np.dstack((self.occupancy_table, 
+                          self.speed_table,
+                          self.index_table))
 
     # REWARD FUNCTION GOES HERE
     def get_reward(self, **kwargs):
-        # safety reward (WARNING: sum_collisions is not working yet.)
-        # _sum_collisions = self.sum_collisions * 1  # TODO: normalize
-        # print("_sum_collisions =", _sum_collisions)
-        # _min_headway = self.min_headway * 1  # TODO: normalize
-        # print("_min_headway =", _min_headway)
-        # _safety = 0.8 * _sum_collisions + 0.2 * _min_headway
-        # print("_safety =", _safety)
-
+        # safety reward
+        _sum_collisions = self.sum_collisions * -100
+        _pseudo_headway = self.pseudo_headway * -1
+        _safety = 0.8 * _sum_collisions + 0.2 * _pseudo_headway
+        self.reward_stats[1] += self.sum_collisions
+        self.reward_stats[0] += self.pseudo_headway
+        
         # performance reward
-        _avg_speed = self.avg_speed * 1  # TODO: normalize
-        _std_speed = self.std_speed * -1  # TODO: normalize
-        _performance = 0.8 * _avg_speed + 0.2 * _std_speed
+        _avg_speed = self.avg_speed * 1
+        _std_speed = self.std_speed * -1
+        _performance = 0.5 * _avg_speed + 0.5 * _std_speed
+        self.reward_stats[2] += \
+            0 if np.isnan(self.avg_speed) else self.avg_speed
+        self.reward_stats[3] += \
+            0 if np.isnan(self.std_speed) else self.std_speed
 
         # consumption reward
-        _avg_fuel = self.avg_fuel * -10  # TODO: normalize
-        _avg_co2 = self.avg_co2 * -5e-4  # TODO: normalize
-        _cost = 0.5 * _avg_fuel + 0.5 * _avg_co2
+        _avg_fuel = self.avg_fuel / self.avg_speed
+        _avg_co2 = self.avg_co2 / self.avg_speed
+        if np.isnan(_avg_fuel) or np.isinf(_avg_fuel):
+            _avg_fuel = 0
+        if np.isnan(_avg_co2) or np.isinf(_avg_co2):
+            _avg_co2 = 0
+        #_cost = 0.5 * _avg_fuel + 0.5 * _avg_co2
+        self.reward_stats[4] += _avg_fuel
+        self.reward_stats[5] += _avg_co2
+
+        # operation reward
+        _operation = 0
+        if self.is_idle:
+            _operation -= 1
+        if self.miss_pin:
+            _operation -= 5
 
         # total reward
         #reward = 0.5 * _safety + 0.4 * _performance + 0.1 * _cost
         # reward = 0.5 * _performance + 0.5 * _cost
-        reward = _avg_speed
-        if np.isnan(reward):
-            reward = 0
+        reward = 0.5 * _safety + 0.5 * _performance + _operation
+        reward = 0 if np.isnan(reward) else reward
 
         debug_mode = False
         if debug_mode:
@@ -193,10 +227,22 @@ class SoftIntersectionEnv(Env):
 
     # UTILITY FUNCTION GOES HERE
     def additional_command(self):
+        #self.occupancy_table = np.zeros((16, 5))
+        #self.speed_table = np.zeros((16, 5))
         self.occupancy_table = np.zeros((16, 5))
         self.speed_table = np.zeros((16, 5))
+        self.index_table = np.zeros((16, 5))
+        for row in range(self.index_table.shape[0]):
+            for col in range(self.index_table.shape[1]):
+                self.index_table[row, col] = \
+                    row*self.index_table.shape[1] + col
+
         self.vehicle_index = {}
+        self.vehicle_orient = []
         for veh_id in self.vehicles.get_ids():
+            self.vehicle_orient.append(
+                self.vehicles.get_orientation(veh_id)
+            )
             edge_id = self.traci_connection.vehicle.getRoadID(veh_id)
             if edge_id not in ['e_1', 'e_3', 'e_5', 'e_7']:
                 continue
@@ -230,18 +276,18 @@ class SoftIntersectionEnv(Env):
             except IndexError:
                 raise IndexError(veh_id, veh_type, route,
                       self.vehicles.get_position(veh_id))
+        for row_idx in range(self.speed_table[:, :-1].shape[0]):
+            for col_idx in range(self.speed_table[:, :-1].shape[1]-1):
+                if self.occupancy_table[row_idx, col_idx] != 0:
+                    self.speed_table[row_idx, col_idx] /= \
+                        self.occupancy_table[row_idx, col_idx]
 
         # Update key attributes
-        self.sum_collisions = \
-            self.traci_connection.simulation.getCollidingVehiclesNumber()
-        self.min_headway = np.inf
+        self.sum_collisions, self.pseudo_headway = self.compute_collisions()
         speeds = []
         fuels = []
         co2s = []
         for veh_id in self.vehicles.get_ids():
-            headway = self.vehicles.get_headway(veh_id)
-            if headway < self.min_headway:
-                self.min_headway = headway
             speeds.append(self.vehicles.get_speed(veh_id))
             fuels.append(self.vehicles.get_fuel(veh_id))
             co2s.append(self.vehicles.get_co2(veh_id))
@@ -259,12 +305,12 @@ class SoftIntersectionEnv(Env):
             ax = fig.add_subplot(1,1,1)
             divider = make_axes_locatable(ax)
             cax = divider.append_axes('right', size='5%', pad=0.05)
-            im = ax.imshow(self.occupancy_table,
-                           cmap='prism', vmin=0, vmax=2*self.scenario.max_speed)
+            im = ax.imshow(self.speed_table,
+                           cmap='jet', vmin=0, vmax=self.scenario.max_speed)
             ax.tick_params(axis='both', which='major', labelsize=12)
             ax.tick_params(axis='both', which='minor',
                            labelsize=0)
-            ax.set_xticks(np.arange(0,5))
+            ax.set_xticks(np.arange(0,6))
             ax.set_yticks(np.arange(0,16,4))
             ax.set_yticks(np.arange(0,16), minor=True)
             ax.grid(True, which='major')
@@ -273,6 +319,66 @@ class SoftIntersectionEnv(Env):
             ax.set_title('time: %d' % self.step_counter)
             fig.colorbar(im, cax=cax, orientation='vertical')
             plt.show()
+
+    # ADDITIONAL HELPER FUNCTIONS
+    def compute_collisions(self):
+        # TODO: This is currently O(n^2) but can be optimized to O(nlogn).
+        polygons = []
+        centers = []
+        for orient in self.vehicle_orient:
+            x, y, ang = orient
+            ang = np.radians(ang)
+            length, width = 5, 1.8
+            _alpha = 0
+            pt0 = (x + _alpha*length*np.sin(ang), 
+                   y + _alpha*length*np.cos(ang))
+            pt00 = (pt0[0] + 0.5*width*np.sin(np.pi/2-ang),
+                    pt0[1] - 0.5*width*np.cos(np.pi/2-ang))
+            pt01 = (pt0[0] - 0.5*width*np.sin(np.pi/2-ang),
+                    pt0[1] + 0.5*width*np.cos(np.pi/2-ang))
+            pt1 = (x - (1 - _alpha)*length*np.sin(ang), 
+                   y - (1 - _alpha)*length*np.cos(ang))
+            pt10 = (pt1[0] + 0.5*width*np.sin(np.pi/2-ang),
+                    pt1[1] - 0.5*width*np.cos(np.pi/2-ang))
+            pt11 = (pt1[0] - 0.5*width*np.sin(np.pi/2-ang),
+                    pt1[1] + 0.5*width*np.cos(np.pi/2-ang))
+            polygons.append(
+                shapely.geometry.Polygon([pt00, pt01, pt11, pt10]))
+            centers.append(np.asarray([x, y]))
+
+        sum_collisions = 0
+        for poly1, poly2 in itertools.combinations(polygons, r=2):
+            if poly1.intersects(poly2):
+                sum_collisions += 1
+
+        pseudo_headway = np.inf
+        for center1, center2 in itertools.combinations(centers, r=2):
+            distance = np.linalg.norm(center1 - center2)
+            if distance < pseudo_headway:
+                pseudo_headway = distance
+
+        debug_mode = False
+        plot_mode = False
+        if debug_mode:
+            if sum_collisions > 0:
+                #print('Polygons:', polygons)
+                print('Sum collisions:', sum_collisions)
+                #print('Centers:', centers)
+                print('Pseudo headway:', pseudo_headway)
+                if plot_mode:
+                    fig = plt.figure(figsize=(5,5))
+                    ax = fig.add_subplot(111)
+                    for poly in polygons:
+                        x, y = poly.exterior.xy
+                        ax.plot(x, y, color='#6699cc', alpha=0.7,
+                            linewidth=3, solid_capstyle='round', zorder=2)
+                    ax.set_title('Polygon')
+                    ax.axis('equal')
+                    ax.set_xlim([100, 140])
+                    ax.set_ylim([100, 140])
+                    plt.show()
+
+        return sum_collisions, pseudo_headway
 
     def test_tls(self, skip=True):
         if self.time_counter % 10 == 0 and not skip:
@@ -287,308 +393,8 @@ class SoftIntersectionEnv(Env):
             print('Reward this step:', _reward)
             self.rewards += _reward
             print('Total rewards:', self.rewards)
-
-    # DO NOT WORRY ABOUT ANYTHING BELOW THIS LINE >◡<
-    def _apply_rl_actions(self, rl_actions):
-        self.set_action(rl_actions)
-
-    def get_state(self, **kwargs):
-        return self.get_observation(**kwargs)
-
-    def compute_reward(self, actions, **kwargs):
-        return self.get_reward(**kwargs)
-
-class HardIntersectionEnv(Env):
-    def __init__(self, env_params, sumo_params, scenario):
-        print("Starting HardIntersectionEnv...")
-        for p in ADDITIONAL_ENV_PARAMS.keys():
-            if p not in env_params.additional_params:
-                raise KeyError(
-                    'Environment parameter "{}" not supplied'.format(p))
-
-        super().__init__(env_params, sumo_params, scenario)
-
-        # setup traffic lights
-        self.tls_id = self.traci_connection.trafficlight.getIDList()[0]
-        self.tls_state =\
-            self.traci_connection.trafficlight.\
-            getRedYellowGreenState(self.tls_id)
-        self.tls_definition =\
-            self.traci_connection.trafficlight.\
-            getCompleteRedYellowGreenDefinition(self.tls_id)
-        self.tls_phase = 0
-        self.tls_phase_count = 0
-        for logic in self.tls_definition:
-            for phase in logic._phases:
-                self.tls_phase_count += 1
-        self.tls_phase_increment = 0
-
-        # setup speed broadcasters
-        self.sbc_locations = [
-            "e_1_zone1+_0", "e_1_zone1+_1",  # east bound
-            "e_1_zone2+_0", "e_1_zone2+_1",  # east bound
-            "e_1_zone3+_0", "e_1_zone3+_1",  # east bound
-            "e_1_zone4+_0", "e_1_zone4+_1",  # east bound
-
-            "e_2_zone1+_0", "e_2_zone1+_1",  # south bound
-            "e_2_zone2+_0", "e_2_zone2+_1",  # south bound
-            "e_2_zone3+_0", "e_2_zone3+_1",  # south bound
-            "e_2_zone4+_0", "e_2_zone4+_1",  # south bound
-
-            "e_3_zone1+_0", "e_3_zone1+_1",  # west bound
-            "e_3_zone2+_0", "e_3_zone2+_1",  # west bound
-            "e_3_zone3+_0", "e_3_zone3+_1",  # west bound
-            "e_3_zone4+_0", "e_3_zone4+_1",  # west bound
-
-            "e_4_zone1+_0", "e_4_zone1+_1",  # north bound
-            "e_4_zone2+_0", "e_4_zone2+_1",  # north bound
-            "e_4_zone3+_0", "e_4_zone3+_1",  # north bound
-            "e_4_zone4+_0", "e_4_zone4+_1",  # north bound
-        ]
-        # default speed reference to 11.176 m/s
-        self.sbc_command = {
-            loc: self.traci_connection.lane.getMaxSpeed(loc)
-            for loc in self.sbc_locations
-        }
-
-        # setup inflow outflow logger
-        self.inflow_locations = [
-            "e_1_zone1+_0", "e_1_zone1+_1",  # east bound
-            "e_1_zone2+_0", "e_1_zone2+_1",  # east bound
-            "e_1_zone3+_0", "e_1_zone3+_1",  # east bound
-            "e_1_zone4+_0", "e_1_zone4+_1",  # east bound
-
-            "e_2_zone1+_0", "e_2_zone1+_1",  # south bound
-            "e_2_zone2+_0", "e_2_zone2+_1",  # south bound
-            "e_2_zone3+_0", "e_2_zone3+_1",  # south bound
-            "e_2_zone4+_0", "e_2_zone4+_1",  # south bound
-
-            "e_3_zone1+_0", "e_3_zone1+_1",  # west bound
-            "e_3_zone2+_0", "e_3_zone2+_1",  # west bound
-            "e_3_zone3+_0", "e_3_zone3+_1",  # west bound
-            "e_3_zone4+_0", "e_3_zone4+_1",  # west bound
-
-            "e_4_zone1+_0", "e_4_zone1+_1",  # north bound
-            "e_4_zone2+_0", "e_4_zone2+_1",  # north bound
-            "e_4_zone3+_0", "e_4_zone3+_1",  # north bound
-            "e_4_zone4+_0", "e_4_zone4+_1",  # north bound
-        ]
-        self.inflow_accelerations = {loc: 0 for loc in self.inflow_locations}
-        self.inflow_speeds = {loc: 0 for loc in self.inflow_locations}
-        self.inflow_densities = { loc: 0 for loc in self.inflow_locations}
-        self.inflow_fuels = {loc: 0 for loc in self.inflow_locations}
-        self.inflow_co2s = {loc: 0 for loc in self.inflow_locations}
-        self.outflow_locations = [
-            "e_1_zone1-_0", "e_1_zone1-_1",  # east bound
-            "e_1_zone2-_0", "e_1_zone2-_1",  # east bound
-            "e_1_zone3-_0", "e_1_zone3-_1",  # east bound
-            "e_1_zone4-_0", "e_1_zone4-_1",  # east bound
-
-            "e_2_zone1-_0", "e_2_zone1-_1",  # south bound
-            "e_2_zone2-_0", "e_2_zone2-_1",  # south bound
-            "e_2_zone3-_0", "e_2_zone3-_1",  # south bound
-            "e_2_zone4-_0", "e_2_zone4-_1",  # south bound
-
-            "e_3_zone1-_0", "e_3_zone1-_1",  # west bound
-            "e_3_zone2-_0", "e_3_zone2-_1",  # west bound
-            "e_3_zone3-_0", "e_3_zone3-_1",  # west bound
-            "e_3_zone4-_0", "e_3_zone4-_1",  # west bound
-
-            "e_4_zone1-_0", "e_4_zone1-_1",  # north bound
-            "e_4_zone2-_0", "e_4_zone2-_1",  # north bound
-            "e_4_zone3-_0", "e_4_zone3-_1",  # north bound
-            "e_4_zone4-_0", "e_4_zone4-_1",  # north bound
-        ]
-        self.outflow_accelerations = {loc: 0 for loc in self.outflow_locations}
-        self.outflow_speeds = {loc: 0 for loc in self.outflow_locations}
-        self.outflow_densities = {loc: 0 for loc in self.outflow_locations}
-        self.outflow_fuels = {loc: 0 for loc in self.outflow_locations}
-        self.outflow_co2s = {loc: 0 for loc in self.outflow_locations}
-
-        # setup reward-related variables
-        self.alpha = env_params.additional_params["alpha"]
-        self.rewards = 0
-
-    # ACTION GOES HERE
-    @property
-    def action_space(self):
-        return Box(
-            low=0,
-            high=max(self.scenario.max_speed, self.tls_phase_count),
-            shape=(33,),
-            dtype=np.float32)
-
-    def set_action(self, action):
-        self.sbc_command = {
-            loc: np.clip(action[idx], 0, np.inf)
-            for idx, loc in enumerate(self.sbc_locations)
-        }
-        self.tls_phase_increment = np.clip(
-            int(action[-1]), 0, self.tls_phase_count)
-        self._set_command(self.sbc_command)
-        self.tls_phase += self.tls_phase_increment
-        self.tls_phase %= self.tls_phase_count
-        self._set_phase(self.tls_phase)
-
-    # OBSERVATION GOES HERE
-    @property
-    def observation_space(self):
-        """See class definition."""
-        return Box(
-            low=0.,
-            high=np.inf,
-            shape=(193,),
-            dtype=np.float32)
-
-    def get_observation(self, **kwargs):
-        inflow_accelerations = [
-            self.inflow_accelerations[loc]
-            for loc in self.inflow_locations
-        ]
-        inflow_speeds = [
-            self.inflow_speeds[loc]
-            for loc in self.inflow_locations
-        ]
-        inflow_densities = [
-            self.inflow_densities[loc]
-            for loc in self.inflow_locations
-        ]
-        outflow_accelerations = [
-            self.outflow_accelerations[loc]
-            for loc in self.outflow_locations
-        ]
-        outflow_speeds = [
-            self.outflow_speeds[loc]
-            for loc in self.outflow_locations
-        ]
-        outflow_densities = [
-            self.outflow_densities[loc]
-            for loc in self.outflow_locations
-        ]
-        tls_phase = self.tls_phase
-        observation = np.asarray(
-            inflow_accelerations + inflow_speeds + inflow_densities +
-            outflow_accelerations + outflow_speeds + outflow_densities +
-            [tls_phase]
-        )
-        return observation
-
-    # REWARD FUNCTION GOES HERE
-    def get_reward(self, **kwargs):
-        speeds = list(self.inflow_speeds.values())
-        speeds += list(self.outflow_speeds.values())
-        densities = list(self.inflow_densities.values())
-        densities += list(self.outflow_densities.values())
-        performance = 0.4*np.mean(speeds) + 0.1*-np.std(speeds) + \
-                      0.4*-np.mean(densities) + 0.1*-np.std(densities)
-        fuels = list(self.inflow_fuels.values())
-        fuels += list(self.outflow_fuels.values())
-        co2s = list(self.inflow_co2s.values())
-        co2s += list(self.outflow_co2s.values())
-        consumption = 0.5*-np.mean(fuels) + 0.5*-np.mean(co2s)/1e2
-        return self.alpha * performance + (1 - self.alpha) * consumption
-
-    # UTILITY FUNCTION GOES HERE
-    def additional_command(self):
-        # update inflow statistics
-        inflow_stats = []
-        for idx, loc in enumerate(self.inflow_locations):
-            flow_stats = self.get_flow_stats(loc)
-            inflow_stats.append(flow_stats)
-            acceleration, speed, _, _, density, fuel, co2 = flow_stats
-            self.inflow_accelerations[loc] = acceleration
-            self.inflow_speeds[loc] = speed
-            self.inflow_densities[loc] = density
-            self.inflow_fuels[loc] = fuel
-            self.inflow_co2s[loc] = co2
-
-        # update outflow statistics
-        outflow_stats = []
-        for idx, loc in enumerate(self.outflow_locations):
-            flow_stats = self.get_flow_stats(loc)
-            outflow_stats.append(flow_stats)
-            acceleration, speed, _, _, density, fuel, co2 = flow_stats
-            self.outflow_accelerations[loc] = acceleration
-            self.outflow_speeds[loc] = speed
-            self.outflow_densities[loc] = density
-            self.outflow_fuels[loc] = fuel
-            self.outflow_co2s[loc] = co2
-
-        # update traffic lights state
-        self.tls_state =\
-            self.traci_connection.trafficlight.\
-            getRedYellowGreenState(self.tls_id)
-
-        # disable skip to test traci tls and sbc setter methods
-        self.test_sbc(skip=True)
-        self.test_tls(skip=True)
-        self.test_ioflow(inflow_stats, outflow_stats, skip=True)
-        self.test_reward(skip=True)
-
-    def test_sbc(self, skip=True):
-        if self.time_counter > 50 and not skip:
-            print("Broadcasting command...")
-            self.sbc_command = {
-                loc: 1
-                for loc in self.sbc_locations
-            }
-            self._set_command(self.sbc_command)
-
-    def test_tls(self, skip=True):
-        if self.time_counter % 10 == 0 and not skip:
-            print("Switching phase...")
-            self.tls_phase = np.random.randint(0, self.tls_phase_count-1)
-            print("New phase:", self.tls_phase)
-            self._set_phase(self.tls_phase)
-
-    def test_ioflow(self, inflow_stats, outflow_stats, skip=False):
-        if not skip:
-            print("inflow:", inflow_stats)
-            print("acceleration:", self.inflow_accelerations)
-            print("speed:", self.inflow_speeds)
-            print("density:", self.inflow_densities)
-            print("fuel:", self.inflow_fuels)
-            print("co2:", self.inflow_co2s)
-
-            print("outflow:", outflow_stats)
-            print("acceleration:", self.outflow_accelerations)
-            print("speed:", self.outflow_speeds)
-            print("density:", self.outflow_densities)
-            print("fuel:", self.outflow_fuels)
-            print("co2:", self.outflow_co2s)
-
-    def test_reward(self, skip=True):
-        if not skip:
-            _reward = self.get_reward()
-            self.rewards += _reward
-
-    def get_flow_stats(self, loc):
-        speed = self.traci_connection.lane.getLastStepMeanSpeed(loc)
-        try:
-            acceleration = (speed - self.inflow_speeds[loc])/self.sim_step
-        except KeyError:
-            acceleration = (speed - self.outflow_speeds[loc])/self.sim_step
-        count = self.traci_connection.lane.getLastStepVehicleNumber(loc)
-        length = self.traci_connection.lane.getLength(loc)
-        lane_vehicles = self.traci_connection.lane.getLastStepVehicleIDs(loc)
-        density = count / length
-        fuel = self.traci_connection.lane.getFuelConsumption(loc) / length
-        co2 = self.traci_connection.lane.getCO2Emission(loc) / length
-        if count == 0:
-            speed = 0
-        return [
-            acceleration, speed, count, length, density, fuel, co2
-        ]
-
-    def _set_phase(self, tls_phase):
-        self.traci_connection.trafficlight.setPhase(\
-            self.tls_id, tls_phase)
-
-    def _set_command(self, sbc_command):
-        for sbc, reference in sbc_command.items():
-            sbc_clients = self.traci_connection.lane.getLastStepVehicleIDs(sbc)
-            for veh_id in sbc_clients:
-                self.traci_connection.vehicle.setSpeed(veh_id, reference)
+            print('Cumulative reward stats in log scale:', 
+                  np.log(self.reward_stats))
 
     # DO NOT WORRY ABOUT ANYTHING BELOW THIS LINE >◡<
     def _apply_rl_actions(self, rl_actions):

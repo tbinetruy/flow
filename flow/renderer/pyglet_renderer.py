@@ -369,10 +369,11 @@ class PygletRenderer():
             x, y, ang = orientation
             x = (x-self.x_shift)*self.x_scale*self.pxpm
             y = (y-self.y_shift)*self.y_scale*self.pxpm
-            self._add_vehicle_poly_triangle((x, y), ang, 5, color)
+            #self._add_vehicle_poly_triangle((x, y), ang, color)
+            self._add_vehicle_poly_rectangle((x, y), ang, color)
             self._add_vehicle_poly_circle((x, y), sight_radius, color)
 
-    def _add_vehicle_poly_triangle(self, center, angle, size, color):
+    def _add_vehicle_poly_triangle(self, center, angle, color):
         """Internal pyglet method to render a vehicle as a triangle.
 
             Parameters
@@ -386,25 +387,64 @@ class PygletRenderer():
             color: list
                 The color of the vehicle  [r, g, b].
         """
-        cx, cy = center
+        x, y = center
         ang = np.radians(angle)
-        s = size*self.pxpm
-        pt1 = [cx, cy]
-        pt1_ = [cx - s*self.x_scale*np.sin(ang),
-                cy - s*self.y_scale*np.cos(ang)]
-        pt2 = [pt1_[0] + 0.25*s*self.x_scale*np.sin(np.pi/2-ang),
-               pt1_[1] - 0.25*s*self.y_scale*np.cos(np.pi/2-ang)]
-        pt3 = [pt1_[0] - 0.25*s*self.x_scale*np.sin(np.pi/2-ang),
-               pt1_[1] + 0.25*s*self.y_scale*np.cos(np.pi/2-ang)]
+        length, width = 5*self.pxpm, 1.8*self.pxpm
+        pt0 = (x, y)
+        pt1 = (x - length*self.x_scale*np.sin(ang), 
+               y - length*self.x_scale*np.cos(ang))
+        pt10 = (pt1[0] + 0.5*width*self.x_scale*np.sin(np.pi/2-ang),
+                pt1[1] - 0.5*width*self.x_scale*np.cos(np.pi/2-ang))
+        pt11 = (pt1[0] - 0.5*width*self.x_scale*np.sin(np.pi/2-ang),
+                pt1[1] + 0.5*width*self.x_scale*np.cos(np.pi/2-ang))
         vertex_list = []
         vertex_color = []
-        for point in [pt1, pt2, pt3]:
+        for point in [pt0, pt10, pt11]:
             vertex_list += point
             vertex_color += color
         index = [x for x in range(3)]
         group = pyglet.graphics.Group()
         self.vehicle_batch.add_indexed(
             3, pyglet.gl.GL_POLYGON, group, index,
+            ("v2f", vertex_list), ("c4B", vertex_color))
+
+    def _add_vehicle_poly_rectangle(self, center, angle, color):
+        """Internal pyglet method to render a vehicle as a rectangle.
+
+            Parameters
+            ----------
+            center: tuple
+                The center coordinate of the vehicle
+            angle: float
+                The angle of the vehicle
+            size: int
+                The size of the rendered triangle
+            color: list
+                The color of the vehicle  [r, g, b].
+        """
+        x, y = center
+        ang = np.radians(angle)
+        length, width = 5*self.pxpm, 1.8*self.pxpm
+        pt0 = (x, y)
+        pt00 = (pt0[0] + 0.5*width*self.x_scale*np.sin(np.pi/2-ang),
+                pt0[1] - 0.5*width*self.x_scale*np.cos(np.pi/2-ang))
+        pt01 = (pt0[0] - 0.5*width*self.x_scale*np.sin(np.pi/2-ang),
+                pt0[1] + 0.5*width*self.x_scale*np.cos(np.pi/2-ang))
+        pt1 = (x - length*self.x_scale*np.sin(ang), 
+               y - length*self.x_scale*np.cos(ang))
+        pt10 = (pt1[0] + 0.5*width*self.x_scale*np.sin(np.pi/2-ang),
+                pt1[1] - 0.5*width*self.x_scale*np.cos(np.pi/2-ang))
+        pt11 = (pt1[0] - 0.5*width*self.x_scale*np.sin(np.pi/2-ang),
+                pt1[1] + 0.5*width*self.x_scale*np.cos(np.pi/2-ang))
+        vertex_list = []
+        vertex_color = []
+        for point in [pt00, pt01, pt11, pt10]:
+            vertex_list += point
+            vertex_color += color
+        index = [x for x in range(4)]
+        group = pyglet.graphics.Group()
+        self.vehicle_batch.add_indexed(
+            4, pyglet.gl.GL_POLYGON, group, index,
             ("v2f", vertex_list), ("c4B", vertex_color))
 
     def _add_vehicle_poly_circle(self, center, radius, color):

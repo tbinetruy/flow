@@ -6,7 +6,7 @@ from flow.core.experiment import SumoExperiment
 from flow.core.params import SumoParams, EnvParams, NetParams, InitialConfig,\
     SumoCarFollowingParams
 from flow.core.vehicles import Vehicles
-from flow.envs.intersection_env import SoftIntersectionEnv, ADDITIONAL_ENV_PARAMS
+from flow.envs.intersection_env import IntersectionEnv, ADDITIONAL_ENV_PARAMS
 from flow.scenarios.intersection import SoftIntersectionScenario, ADDITIONAL_NET_PARAMS
 from flow.controllers.routing_controllers import IntersectionRandomRouter
 from flow.core.params import InFlows
@@ -58,18 +58,18 @@ def intersection_example(render=None,
 
     # Add mixed-autonomy traffic
     insertion_prob = 0.1
-    autonomy_percent = 0.5
+    autonomy_percent = 1.0#0.5
     prob_table = {
         'manned': (1 - autonomy_percent)*insertion_prob,
         'autonomous': autonomy_percent*insertion_prob,
     }
     inflow = InFlows()
-    for type in ['manned', 'autonomous']:
+    for type in ['autonomous']:#['manned', 'autonomous']:
         vehicles.add(
             veh_id=type,
-            speed_mode=0b11111,
-            lane_change_mode=0b011001010101,
-            acceleration_controller=(SumoCarFollowingController, {}),
+            speed_mode=0,#0b11111,
+            lane_change_mode=0,#0b011001010101,
+            acceleration_controller=(ConstAccController, {}),
             lane_change_controller=(SumoLaneChangeController, {}),
             routing_controller=(IntersectionRandomRouter, {}),
             num_vehicles=0,
@@ -127,13 +127,13 @@ def intersection_example(render=None,
         net_params=net_params,
     )
 
-    env = SoftIntersectionEnv(env_params, sumo_params, scenario)
+    env = IntersectionEnv(env_params, sumo_params, scenario)
 
     return SumoExperiment(env, scenario)
 
 
 if __name__ == "__main__":
-    exp = intersection_example(render=True,
+    exp = intersection_example(render=False,
                                save_render=False,
                                sight_radius=20,
                                pxpm=4,

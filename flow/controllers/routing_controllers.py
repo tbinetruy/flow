@@ -121,7 +121,8 @@ class IntersectionRandomRouter(MinicityRouter):
                 all_routes_dict[route[0]] = [route]
 
         if len(cur_route) == 1:
-            route = random.choice(all_routes_dict[cur_edge])
+            options = all_routes_dict[cur_edge]
+            route = options[np.random.choice(len(options))]
         else:
             route = None
         return route
