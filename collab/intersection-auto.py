@@ -30,6 +30,48 @@ np.random.seed(seed)
 from ray.rllib.models import ModelCatalog, Model
 import tensorflow as tf
 
+def residual_block(inputs):
+    layer1 = tf.layers.conv2d(
+        inputs=inputs,
+        filters=8,
+        kernel_size=(4, 2),
+        strides=(4, 1),
+        padding="valid ",
+        activation=tf.nn.relu
+    )
+    layer2 = tf.layers.batch_normalization(layer1)
+    layer3 = tf.layers.conv2d(
+        inputs=layer2,
+        filters=8,
+        kernel_size=(1, 1),
+        strides=(1, 1),
+        padding="valid",
+        activation=None
+    )
+    outputs = tf.nn.relu(layer0 + tf.layers.batch_normalization(layer3))
+    return outputs
+
+def conv2dlstm_block(inputs):
+    outputs, _ = tf.nn.dynamic_rnn(
+        cell=tf.contrib.rnn.Conv2DLSTMCell,
+        inputs=inputs,
+    )
+    return outputs
+
+def mhdpa_block(inputs):
+    from tensor2tensor.layers.common_attention import multihead_attention
+    outputs = multihead_attention(
+        query_antecedent=inputs,
+        memory_antecedent=None,
+        bias=None,
+        total_key_depth,
+        total_value_depth,
+        output_depth,
+        num_heads=3,
+        dropout_rate
+    )
+    return outputs
+
 class RelationalModelClass(Model):
     def _build_layers_v2(self, input_dict, num_outputs, options):
         """Define the layers of a custom model.
@@ -65,44 +107,34 @@ class RelationalModelClass(Model):
         #layer1 = slim.fully_connected(input_dict["obs"], 64, ...)
         #layer2 = slim.fully_connected(layer1, 64, ...)
         #...
-        conv = tf.layers.conv2d(
-            inputs=input_dict["obs"],
-            filters=8,
-            kernel_size=[4, 2],
-            padding="valid",
-            activation=tf.nn.relu
+
+        # Residual block for spatial processing
+        residual_outputs = residual_block(input_dict['obs'])
+        
+        # Conv2DLSTM block for memeory processing
+        conv2dlstm_outputs = conv2dlstm__block(residual_outputs)
+        
+        # Flatten the conv2dlstm outputs
+        batch_size, height, width, channel_size = \
+            conv2dlstm_outputs.get_shape().as_list()
+        flat_conv2dlstm_outputs = tf.reshape(
+            conv2dlstm_outputs, [-1, height*width, channel_size])
+        
+        # MHDPA block for relational processing
+        mhdpa_outputs = mhdpa_block(flat_conv2dlstm_outputs)
+        
+        # Optional additional mhdpa blocks
+        #mhdpa_outputs = mhdpa_block(mhdpa_outputs)
+        #mhdpa_outputs = mhdpa_block(mhdpa_outputs)
+
+        # Feature layer to compute value function and policy logits
+        feature_layer = mhdpa_outputs
+        policy_logits = tf.layers.dense(
+            feature_layer,
+            num_outputs
         )
-        return layerN, layerN_minus_1
 
-    def value_function(self):
-        """Builds the value function output.
-
-        This method can be overridden to customize the implementation of the
-        value function (e.g., not sharing hidden layers).
-
-        Returns:
-            Tensor of size [BATCH_SIZE] for the value function.
-        """
-        return tf.reshape(
-            linear(self.last_layer, 1, "value", normc_initializer(1.0)), [-1])
-
-    def custom_loss(self, policy_loss):
-        """Override to customize the loss function used to optimize this model.
-
-        This can be used to incorporate self-supervised losses (by defining
-        a loss over existing input and output tensors of this model), and
-        supervised losses (by defining losses over a variable-sharing copy of
-        this model's layers).
-
-        You can find an runnable example in examples/custom_loss.py.
-
-        Arguments:
-            policy_loss (Tensor): scalar policy loss from the policy graph.
-
-        Returns:
-            Scalar tensor for the customized loss for this model.
-        """
-        return policy_loss
+        return policy_logits, feature_layer
 
 
 ModelCatalog.register_custom_model('relational_model', RelationalModelClass)
