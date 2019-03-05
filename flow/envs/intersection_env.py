@@ -77,6 +77,7 @@ class IntersectionEnv(Env):
         # setup observation-related variables
         self.occupancy_table = np.zeros((16, 5))
         self.speed_table = np.zeros((16, 5))
+        self.index_table = np.zeros((16, 5))
         self.vehicle_index = {}
         self.vehicle_orient = []
 
@@ -168,7 +169,7 @@ class IntersectionEnv(Env):
         #observation = tls_phase + occupancy_table
         #speed_table = self.speed_table.flatten().tolist()
         #observation = tls_phase + speed_table
-        return np.dstack((self.occupancy_table, 
+        return np.dstack((self.occupancy_table,
                           self.speed_table,
                           self.index_table))
 
@@ -180,7 +181,7 @@ class IntersectionEnv(Env):
         _safety = 0.8 * _sum_collisions + 0.2 * _pseudo_headway
         self.reward_stats[1] += self.sum_collisions
         self.reward_stats[0] += self.pseudo_headway
-        
+
         # performance reward
         _avg_speed = self.avg_speed * 1
         _std_speed = self.std_speed * -1
@@ -330,13 +331,13 @@ class IntersectionEnv(Env):
             ang = np.radians(ang)
             length, width = 5, 1.8
             _alpha = 0
-            pt0 = (x + _alpha*length*np.sin(ang), 
+            pt0 = (x + _alpha*length*np.sin(ang),
                    y + _alpha*length*np.cos(ang))
             pt00 = (pt0[0] + 0.5*width*np.sin(np.pi/2-ang),
                     pt0[1] - 0.5*width*np.cos(np.pi/2-ang))
             pt01 = (pt0[0] - 0.5*width*np.sin(np.pi/2-ang),
                     pt0[1] + 0.5*width*np.cos(np.pi/2-ang))
-            pt1 = (x - (1 - _alpha)*length*np.sin(ang), 
+            pt1 = (x - (1 - _alpha)*length*np.sin(ang),
                    y - (1 - _alpha)*length*np.cos(ang))
             pt10 = (pt1[0] + 0.5*width*np.sin(np.pi/2-ang),
                     pt1[1] - 0.5*width*np.cos(np.pi/2-ang))
@@ -393,7 +394,7 @@ class IntersectionEnv(Env):
             print('Reward this step:', _reward)
             self.rewards += _reward
             print('Total rewards:', self.rewards)
-            print('Cumulative reward stats in log scale:', 
+            print('Cumulative reward stats in log scale:',
                   np.log(self.reward_stats))
 
     # DO NOT WORRY ABOUT ANYTHING BELOW THIS LINE >◡<

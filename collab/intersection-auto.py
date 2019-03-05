@@ -174,13 +174,13 @@ class RelationalModelClass(Model):
         # MHDPA block for relational processing
         mhdpa_outputs = mhdpa_block(flat_conv2dlstm_outputs)
 
-        # Flatten the mhdpa outputs
-        batch = mhdpa_outputs.get_shape().as_list()[0]
-        flat_mhdpa_outputs = tf.reshape(mhdpa_outputs, [batch, -1])
-
         ## Optional additional mhdpa blocks
         ##mhdpa_outputs = mhdpa_block(mhdpa_outputs)
         ##mhdpa_outputs = mhdpa_block(mhdpa_outputs)
+
+        # Flatten the mhdpa outputs
+        batch = mhdpa_outputs.get_shape().as_list()[0]
+        flat_mhdpa_outputs = tf.reshape(mhdpa_outputs, [batch, -1])
 
         ## Feature layer to compute value function and policy logits
         feature_layer = flat_mhdpa_outputs

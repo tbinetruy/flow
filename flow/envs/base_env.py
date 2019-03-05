@@ -504,7 +504,7 @@ class Env(gym.Env, Serializable):
 
         # collect information of the state of the network based on the
         # environment class used
-        self.state = np.asarray(self.get_state()).T
+        self.state = np.asarray(self.get_state())
 
         # collect observation new state associated with action
         next_observation = np.copy(self.state)
