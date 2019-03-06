@@ -176,11 +176,11 @@ class IntersectionEnv(Env):
     # REWARD FUNCTION GOES HERE
     def get_reward(self, **kwargs):
         # safety reward
-        _sum_collisions = self.sum_collisions * -100
-        _pseudo_headway = self.pseudo_headway * -1
+        _sum_collisions = self.sum_collisions * -1000
+        _pseudo_headway = self.pseudo_headway * 0.01
         _safety = 0.8 * _sum_collisions + 0.2 * _pseudo_headway
-        self.reward_stats[1] += self.sum_collisions
-        self.reward_stats[0] += self.pseudo_headway
+        self.reward_stats[0] += self.sum_collisions
+        self.reward_stats[1] += self.pseudo_headway
 
         # performance reward
         _avg_speed = self.avg_speed * 1
@@ -205,7 +205,7 @@ class IntersectionEnv(Env):
         # operation reward
         _operation = 0
         if self.is_idle:
-            _operation -= 1
+            _operation -= 2
         if self.miss_pin:
             _operation -= 5
 
@@ -352,7 +352,7 @@ class IntersectionEnv(Env):
             if poly1.intersects(poly2):
                 sum_collisions += 1
 
-        pseudo_headway = np.inf
+        pseudo_headway = 100  # The diameter of the intersection
         for center1, center2 in itertools.combinations(centers, r=2):
             distance = np.linalg.norm(center1 - center2)
             if distance < pseudo_headway:
@@ -394,6 +394,7 @@ class IntersectionEnv(Env):
             print('Reward this step:', _reward)
             self.rewards += _reward
             print('Total rewards:', self.rewards)
+            print('Cumulative reward stats:', self.reward_stats)
             print('Cumulative reward stats in log scale:',
                   np.log(self.reward_stats))
 

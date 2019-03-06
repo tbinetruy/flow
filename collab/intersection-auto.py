@@ -20,7 +20,7 @@ from flow.controllers.routing_controllers import IntersectionRouter
 from flow.envs.intersection_env import IntersectionEnv, \
     ADDITIONAL_ENV_PARAMS
 from flow.scenarios.intersection import \
-    SoftIntersectionScenario, ADDITIONAL_NET_PARAMS
+    IntersectionScenario, ADDITIONAL_NET_PARAMS
 from flow.controllers.routing_controllers import IntersectionRandomRouter
 from flow.core.params import InFlows
 import numpy as np
@@ -28,8 +28,16 @@ seed=204
 np.random.seed(seed)
 
 from ray.rllib.models import ModelCatalog, Model
+from ray.rllib.models.misc import linear, normc_initializer
 import tensorflow as tf
 from tensor2tensor.layers.common_attention import multihead_attention
+
+# time horizon of a single rollout
+HORIZON = 1000
+# number of rollouts per training iteration
+N_ROLLOUTS = 1
+# number of parallel workers
+N_CPUS = 1
 
 def residual_block(inputs):
     layer1 = tf.layers.conv2d(
@@ -140,13 +148,13 @@ class RelationalModelClass(Model):
         with tf.variable_scope('residual_block_cache', reuse=tf.AUTO_REUSE):
             prev_residual_outputs = tf.get_variable(
                 name='prev_residual_outputs',
-                shape=[2, 4, 4, 8],
+                shape=[N_ROLLOUTS, 4, 4, 8],
                 initializer=tf.zeros_initializer,
                 trainable=False,
             )
             residual_outputs = tf.get_variable(
                 name='residual_outputs',
-                shape=[2, 4, 4, 8],
+                shape=[N_ROLLOUTS, 4, 4, 8],
                 initializer=tf.zeros_initializer,
                 trainable=False,
             )
@@ -189,17 +197,89 @@ class RelationalModelClass(Model):
             num_outputs
         )
 
+        print('OUTPUT/////////////////////////////////////////')
+        print(policy_logits)
+        print(policy_logits.get_shape().as_list())
+
         return policy_logits, feature_layer
 
+        #import tensorflow as tf
+        #import tensorflow.contrib.slim as slim
+        #from ray.rllib.models.model import Model
+        #from ray.rllib.models.misc import normc_initializer, get_activation_fn
+        #from ray.rllib.utils.annotations import override
+
+        #hiddens = options.get("fcnet_hiddens")
+        #activation = get_activation_fn(options.get("fcnet_activation"))
+
+        #with tf.name_scope("fc_net"):
+        #    i = 1
+        #    last_layer = tf.reshape(input_dict["obs"], [-1, 4])
+        #    for size in hiddens:
+        #        label = "fc{}".format(i)
+        #        last_layer = slim.fully_connected(
+        #            last_layer,
+        #            size,
+        #            weights_initializer=normc_initializer(1.0),
+        #            activation_fn=activation,
+        #            scope=label)
+        #        i += 1
+        #    label = "fc_out"
+        #    output = slim.fully_connected(
+        #        last_layer,
+        #        num_outputs,
+        #        weights_initializer=normc_initializer(0.01),
+        #        activation_fn=None,
+        #        scope=label)
+        #    return output, last_layer
+
+    def value_function(self):
+        """Builds the value function output.
+
+        This method can be overridden to customize the implementation of the
+        value function (e.g., not sharing hidden layers).
+
+        Returns:
+            Tensor of size [BATCH_SIZE] for the value function.
+        """
+        return tf.reshape(
+            linear(self.last_layer, 1, "value", normc_initializer(1.0)), [-1])
+
+    def custom_loss(self, policy_loss, loss_inputs):
+        """Override to customize the loss function used to optimize this model.
+
+        This can be used to incorporate self-supervised losses (by defining
+        a loss over existing input and output tensors of this model), and
+        supervised losses (by defining losses over a variable-sharing copy of
+        this model's layers).
+
+        You can find an runnable example in examples/custom_loss.py.
+
+        Arguments:
+            policy_loss (Tensor): scalar policy loss from the policy graph.
+            loss_inputs (dict): map of input placeholders for rollout data.
+
+        Returns:
+            Scalar tensor for the customized loss for this model.
+        """
+        return policy_loss
+
+    def custom_stats(self):
+        """Override to return custom metrics from your model.
+
+        The stats will be reported as part of the learner stats, i.e.,
+            info:
+                learner:
+                    model:
+                        key1: metric1
+                        key2: metric2
+
+        Returns:
+            Dict of string keys to scalar tensors.
+        """
+        return {}
 
 ModelCatalog.register_custom_model('relational_model', RelationalModelClass)
-
-# time horizon of a single rollout
-HORIZON = 1000
-# number of rollouts per training iteration
-N_ROLLOUTS = 2
-# number of parallel workers
-N_CPUS = 2
 
 additional_env_params = ADDITIONAL_ENV_PARAMS.copy()
 
@@ -255,13 +335,13 @@ for type in ['autonomous']:#['manned', 'autonomous']:
 
 flow_params = dict(
     # name of the experiment
-    exp_tag='intersection-sarl-soft',
+    exp_tag='intersection',
 
     # name of the flow environment the experiment is running on
     env_name='IntersectionEnv',
 
     # name of the scenario class the experiment is running on
-    scenario='SoftIntersectionScenario',
+    scenario='IntersectionScenario',
 
     # sumo-related parameters (see flow.core.params.SumoParams)
     sumo=SumoParams(
@@ -365,11 +445,11 @@ if __name__ == '__main__':
             'checkpoint_freq': 50,
             'max_failures': 999,
             'stop': {
-                'training_iteration': 1000,
+                'training_iteration': 10000,
             },
             #'local_dir': '/mnt/d/Overflow/ray_results/',
             'num_samples': 1,
         },
     },
-    resume=False,#'prompt',
+    resume='prompt',
     verbose=1,)

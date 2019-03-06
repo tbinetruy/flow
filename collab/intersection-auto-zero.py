@@ -7,7 +7,7 @@ from flow.core.params import SumoParams, EnvParams, NetParams, InitialConfig,\
     SumoCarFollowingParams
 from flow.core.vehicles import Vehicles
 from flow.envs.intersection_env import IntersectionEnv, ADDITIONAL_ENV_PARAMS
-from flow.scenarios.intersection import SoftIntersectionScenario, ADDITIONAL_NET_PARAMS
+from flow.scenarios.intersection import IntersectionScenario, ADDITIONAL_NET_PARAMS
 from flow.controllers.routing_controllers import IntersectionRandomRouter
 from flow.core.params import InFlows
 import numpy as np
@@ -67,9 +67,9 @@ def intersection_example(render=None,
     for type in ['autonomous']:#['manned', 'autonomous']:
         vehicles.add(
             veh_id=type,
-            speed_mode=0,#0b11111,
-            lane_change_mode=0,#0b011001010101,
-            acceleration_controller=(ConstAccController, {}),
+            speed_mode=0b11111,
+            lane_change_mode=0b011001010101,
+            acceleration_controller=(SumoCarFollowingController, {}),
             lane_change_controller=(SumoLaneChangeController, {}),
             routing_controller=(IntersectionRandomRouter, {}),
             num_vehicles=0,
@@ -120,8 +120,8 @@ def intersection_example(render=None,
         min_gap=5,
     )
 
-    scenario = SoftIntersectionScenario(
-        name='intersection-soft',
+    scenario = IntersectionScenario(
+        name='intersection',
         vehicles=vehicles,
         initial_config=initial_config,
         net_params=net_params,
@@ -133,11 +133,11 @@ def intersection_example(render=None,
 
 
 if __name__ == "__main__":
-    exp = intersection_example(render=False,
+    exp = intersection_example(render=True,
                                save_render=False,
                                sight_radius=20,
                                pxpm=4,
                                show_radius=False)
 
     # run for a set number of rollouts / time steps
-    exp.run(1, 5000)
+    exp.run(1, 2000)
