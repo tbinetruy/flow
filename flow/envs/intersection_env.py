@@ -78,6 +78,10 @@ class IntersectionEnv(Env):
         self.occupancy_table = np.zeros((16, 5))
         self.speed_table = np.zeros((16, 5))
         self.index_table = np.zeros((16, 5))
+        self.prev_occupancy_table = np.zeros((16, 5))
+        self.prev_speed_table = np.zeros((16, 5))
+        self.prev_index_table = np.zeros((16, 5))
+
         self.vehicle_index = {}
         self.vehicle_orient = []
 
@@ -159,7 +163,7 @@ class IntersectionEnv(Env):
         observation = Box(
             low=-np.inf,
             high=np.inf,
-            shape=(16, 5, 3),
+            shape=(16, 5, 3*2),
             dtype=np.float32,)
         return observation
 
@@ -171,7 +175,10 @@ class IntersectionEnv(Env):
         #observation = tls_phase + speed_table
         return np.dstack((self.occupancy_table,
                           self.speed_table,
-                          self.index_table))
+                          self.index_table,
+                          self.prev_occupancy_table,
+                          self.prev_speed_table,
+                          self.prev_index_table,))
 
     # REWARD FUNCTION GOES HERE
     def get_reward(self, **kwargs):
@@ -228,8 +235,9 @@ class IntersectionEnv(Env):
 
     # UTILITY FUNCTION GOES HERE
     def additional_command(self):
-        #self.occupancy_table = np.zeros((16, 5))
-        #self.speed_table = np.zeros((16, 5))
+        self.prev_occupancy_table = self.occupancy_table.copy()
+        self.prev_speed_table = self.speed_table.copy()
+        self.prev_index_table = self.index_table.copy()
         self.occupancy_table = np.zeros((16, 5))
         self.speed_table = np.zeros((16, 5))
         self.index_table = np.zeros((16, 5))

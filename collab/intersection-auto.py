@@ -35,9 +35,9 @@ from tensor2tensor.layers.common_attention import multihead_attention
 # time horizon of a single rollout
 HORIZON = 1000
 # number of rollouts per training iteration
-N_ROLLOUTS = 1
+N_ROLLOUTS = 6*2
 # number of parallel workers
-N_CPUS = 1
+N_CPUS = 6
 
 def residual_block(inputs):
     layer1 = tf.layers.conv2d(
@@ -75,16 +75,16 @@ def conv2dlstm_block(inputs, prev_inputs):
         output_channels=32,
         kernel_shape=[3, 3],
     )
-    initial_state = rnn_cell.zero_state(
-        batch_size=inputs.get_shape().as_list()[0],
-        dtype=tf.float32,
-    )
+    #initial_state = rnn_cell.zero_state(
+    #    batch_size=inputs.get_shape().as_list()[0],
+    #    dtype=tf.float32,
+    #)
     inputs = tf.expand_dims(inputs, axis=1)
     prev_inputs = tf.expand_dims(prev_inputs, axis=1)
     outputs, _ = tf.nn.dynamic_rnn(
         cell=rnn_cell,
         inputs=tf.concat([inputs, prev_inputs], 1),
-        initial_state=initial_state,
+        #initial_state=initial_state,
         dtype=tf.float32,
     )
     return outputs
@@ -140,34 +140,21 @@ class RelationalModelClass(Model):
 
         # Set inputs
         inputs = input_dict['obs']
-        print('INPUT/////////////////////////////////////////')
+        print('INPUT//////////////////////////////////////////')
         print(input_dict['obs'])
         print(input_dict['obs'].get_shape().as_list())
-
-        # Allocate or access cache variable to store states
-        with tf.variable_scope('residual_block_cache', reuse=tf.AUTO_REUSE):
-            prev_residual_outputs = tf.get_variable(
-                name='prev_residual_outputs',
-                shape=[N_ROLLOUTS, 4, 4, 8],
-                initializer=tf.zeros_initializer,
-                trainable=False,
-            )
-            residual_outputs = tf.get_variable(
-                name='residual_outputs',
-                shape=[N_ROLLOUTS, 4, 4, 8],
-                initializer=tf.zeros_initializer,
-                trainable=False,
-            )
+        print('//////////////////////////////////////////INPUT')
 
         # Residual block for spatial processing
-        residual_outputs.assign(residual_block(inputs))
+        channel = int(input_dict['obs'].get_shape().as_list()[-1]/2)
+        inputs, prev_inputs = tf.split(
+            input_dict['obs'], [channel, channel], axis=-1)
+        residual_outputs = residual_block(inputs)
+        prev_residual_outputs = residual_block(prev_inputs)
 
         # Conv2DLSTM block for memeory processing
         conv2dlstm_outputs = conv2dlstm_block(
             residual_outputs, prev_residual_outputs)
-
-        # Cache residual outputs
-        prev_residual_outputs.assign(residual_outputs)
 
         # Flatten the conv2dlstm outputs
         conv2dlstm_outputs = tf.concat(
@@ -177,61 +164,35 @@ class RelationalModelClass(Model):
         width = conv2dlstm_outputs.get_shape().as_list()[2]
         channel = conv2dlstm_outputs.get_shape().as_list()[3]
         flat_conv2dlstm_outputs = tf.reshape(
-            conv2dlstm_outputs, [batch, height*width, channel])
+            conv2dlstm_outputs, [-1, height*width, channel])
 
         # MHDPA block for relational processing
         mhdpa_outputs = mhdpa_block(flat_conv2dlstm_outputs)
+        print(mhdpa_outputs)
 
-        ## Optional additional mhdpa blocks
+        ## Optional: add additional mhdpa blocks
         ##mhdpa_outputs = mhdpa_block(mhdpa_outputs)
         ##mhdpa_outputs = mhdpa_block(mhdpa_outputs)
 
         # Flatten the mhdpa outputs
-        batch = mhdpa_outputs.get_shape().as_list()[0]
-        flat_mhdpa_outputs = tf.reshape(mhdpa_outputs, [batch, -1])
+        length = mhdpa_outputs.get_shape().as_list()[1]
+        channel = mhdpa_outputs.get_shape().as_list()[1]
+        flat_mhdpa_outputs = tf.reshape(mhdpa_outputs, [-1, length*channel])
 
-        ## Feature layer to compute value function and policy logits
+        # Feature layer to compute value function and policy logits
         feature_layer = flat_mhdpa_outputs
         policy_logits = tf.layers.dense(
             feature_layer,
-            num_outputs
+            4
         )
+        # Optional: use auto-regressive RNN
 
         print('OUTPUT/////////////////////////////////////////')
         print(policy_logits)
         print(policy_logits.get_shape().as_list())
+        print('/////////////////////////////////////////OUTPUT')
 
         return policy_logits, feature_layer
-
-        #import tensorflow as tf
-        #import tensorflow.contrib.slim as slim
-        #from ray.rllib.models.model import Model
-        #from ray.rllib.models.misc import normc_initializer, get_activation_fn
-        #from ray.rllib.utils.annotations import override
-
-        #hiddens = options.get("fcnet_hiddens")
-        #activation = get_activation_fn(options.get("fcnet_activation"))
-
-        #with tf.name_scope("fc_net"):
-        #    i = 1
-        #    last_layer = tf.reshape(input_dict["obs"], [-1, 4])
-        #    for size in hiddens:
-        #        label = "fc{}".format(i)
-        #        last_layer = slim.fully_connected(
-        #            last_layer,
-        #            size,
-        #            weights_initializer=normc_initializer(1.0),
-        #            activation_fn=activation,
-        #            scope=label)
-        #        i += 1
-        #    label = "fc_out"
-        #    output = slim.fully_connected(
-        #        last_layer,
-        #        num_outputs,
-        #        weights_initializer=normc_initializer(0.01),
-        #        activation_fn=None,
-        #        scope=label)
-        #    return output, last_layer
 
     def value_function(self):
         """Builds the value function output.
