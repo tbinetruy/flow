@@ -1,0 +1,17 @@
+Resolve the bug below:
+    IndexError: list index out of range
+
+Training with advanced renderers
+    Symbolic obs
+    Realistic obs
+    Featured obs
+
+Training with advanced actuators:
+    2D selector
+    Waypoint finder
+    (expand)
+
+Training with advanced simulators:
+    SUMO w/ sublanes
+    Box2D
+    CARLA

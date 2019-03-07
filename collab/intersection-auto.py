@@ -35,9 +35,9 @@ from tensor2tensor.layers.common_attention import multihead_attention
 # time horizon of a single rollout
 HORIZON = 1000
 # number of rollouts per training iteration
-N_ROLLOUTS = 6*2
+N_ROLLOUTS = 1
 # number of parallel workers
-N_CPUS = 6
+N_CPUS = 1
 
 def residual_block(inputs):
     layer1 = tf.layers.conv2d(
