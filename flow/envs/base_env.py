@@ -10,7 +10,7 @@ import traceback
 import atexit
 import numpy as np
 import random
-from flow.renderer.pyglet_renderer import PygletRenderer as Renderer
+from flow.renderer.opengl_renderer import OpenGLRenderer as Renderer
 
 import traci
 from traci import constants as tc
