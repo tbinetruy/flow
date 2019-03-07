@@ -1,6 +1,5 @@
 """Contains the pyglet renderer class."""
 
-import pyglet
 import matplotlib.cm as cm
 import matplotlib.colors as colors
 import numpy as np
@@ -12,6 +11,40 @@ import time
 import copy
 import warnings
 HOME = expanduser("~")
+
+import os
+
+MAX_BUF = 1024
+myfifo = "/tmp/fifopipe2"
+os.mkfifo(myfifo, 0o666)
+
+def write_message(msg):
+    msg = msg.encode('utf-8');
+    fd = os.open(myfifo, os.O_WRONLY)
+    print("fd ", fd);
+    #msg=b"This is the string to be reversed"
+    os.write(fd, msg)
+    os.close(fd)
+    os.unlink(myfifo)
+
+
+def read_message():
+    myfifo = "/tmp/fifopipe"
+    buf = ""
+    flag = False
+    while not flag:
+        try:
+            fd = os.open(myfifo, os.O_RDONLY | os.O_NONBLOCK)
+            flag = True
+        except FileNotFoundError:
+            pass
+
+    while len(buf) == 0:
+        buf = os.read(fd, MAX_BUF)
+
+    #print("Received:", buf.decode())
+    os.close(fd)
+    return buf.decode()
 
 
 def truncate_colormap(cmap, minval=0.25, maxval=0.75, n=100):
@@ -112,12 +145,8 @@ class OpenGLRenderer(object):
                 color=(0.125, 0.125, 0.125, self.alpha)
             )
             self.enable_alpha()
-            pyglet.gl.glClearColor(0.125, 0.125, 0.125, self.alpha)
             self.clear_window()
-            self.lane_batch = []
             self.add_lane_polys()
-            self.lane_batch.draw()
-            buffer = pyglet.image.get_buffer_manager().get_color_buffer()
             image_data = buffer.get_image_data()
             frame = np.fromstring(image_data.data, dtype=np.uint8, sep='')
             frame = frame.reshape(buffer.height, buffer.width, 4)
@@ -199,15 +228,9 @@ class OpenGLRenderer(object):
         time.sleep(sleep)
 
         self.enable_alpha()
-        pyglet.gl.glClearColor(0.125, 0.125, 0.125, self.alpha)
-        self.window.clear()
-        self.window.switch_to()
-        self.window.dispatch_events()
+        self.clear_window()
 
-        self.lane_batch = pyglet.graphics.Batch()
         self.add_lane_polys()
-        self.lane_batch.draw()
-        self.vehicle_batch = pyglet.graphics.Batch()
         if "drgb" in self.mode:
             human_cmap = truncate_colormap(cm.Greens, 0.2, 0.8)
             machine_cmap = truncate_colormap(cm.Blues, 0.2, 0.8)
@@ -414,3 +437,45 @@ class OpenGLRenderer(object):
     def enable_alpha(self, enable=True):
         """Enable alpha channel for coloring."""
         return False
+
+
+    def clear_window(self):
+        # handshake
+        write_message("1!")  # 1 means clear window
+        read_message()
+
+    def create_window(self, width, height, color):
+        # handshake
+        write_message("2!") # 2 means create window
+        read_message()
+
+        # send Parameters
+        data = [width, height] + color
+        write_message(",".join(data) + "!")
+        read_message()
+
+    def draw_line(self, shape, color):
+        # handshake
+        write_message("3!")
+        read_message()
+
+        for i, point in enumerate(shape):
+            status = "1" if i == len(shape)-1 else "0"
+            write_message(",".join(point) + "," + status + "!")
+            read_message()
+
+        write_message(",".join(color) + "!")
+        read_message()
+
+    def draw_polygon(self, shape, color):
+        # handshake
+        write_message("4!")
+        read_message()
+
+        for i, point in enumerate(shape):
+            status = "1" if i == len(shape)-1 else "0"
+            write_message(",".join(point) + "," + status + "!")
+            read_message()
+
+        write_message(",".join(color) + "!")
+        read_message()
