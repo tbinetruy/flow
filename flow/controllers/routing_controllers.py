@@ -88,7 +88,7 @@ class IntersectionRouter(MinicityRouter):
 class IntersectionRandomRouter(MinicityRouter):
 
     def choose_route(self, env):
-        np.random.seed(env.seed)
+        np.random.seed(env.seed)  # Fix seed to choose going straight
         type_id = env.vehicles.get_state(self.veh_id, 'type')
         cur_route = env.vehicles.get_route(self.veh_id)
         cur_edge = env.vehicles.get_edge(self.veh_id)
@@ -119,7 +119,6 @@ class IntersectionRandomRouter(MinicityRouter):
                 all_routes_dict[route[0]] += [route]
             else:
                 all_routes_dict[route[0]] = [route]
-
         if len(cur_route) == 1:
             options = all_routes_dict[cur_edge]
             route = options[np.random.choice(len(options))]

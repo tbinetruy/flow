@@ -17,7 +17,7 @@ from flow.core.vehicles import Vehicles
 from flow.controllers import IDMController, ContinuousRouter,\
     SumoCarFollowingController, SumoLaneChangeController
 from flow.controllers.routing_controllers import IntersectionRouter
-from flow.envs.intersection_env import IntersectionEnv, \
+from flow.envs.intersection_env import IntersectionEnv, IntersectionSoftEnv,\
     ADDITIONAL_ENV_PARAMS
 from flow.scenarios.intersection import \
     IntersectionScenario, ADDITIONAL_NET_PARAMS
@@ -35,7 +35,7 @@ from tensor2tensor.layers.common_attention import multihead_attention
 # time horizon of a single rollout
 HORIZON = 1500
 # number of parallel workers
-N_CPUS = 8
+N_CPUS = 2
 # number of rollouts per training iteration
 N_ROLLOUTS = N_CPUS*1
 
@@ -113,7 +113,7 @@ def relational_network(inputs, num_outputs):
     _height = int(inputs.get_shape().as_list()[1])
     _width = int(inputs.get_shape().as_list()[2])
     channel = int(inputs.get_shape().as_list()[-1]/2)
-    inputs = tf.log(inputs + 1)
+    #inputs = tf.log(inputs + 1)
     inputs, prev_inputs = tf.split(inputs, [channel, channel], axis=-1)
     curr_residual_outputs = residual_block(inputs)
     prev_residual_outputs = residual_block(prev_inputs)
@@ -336,10 +336,10 @@ for type in ['autonomous']:#['manned', 'autonomous']:
 
 flow_params = dict(
     # name of the experiment
-    exp_tag='intersection-apdp',
+    exp_tag='intersection-axdp',
 
     # name of the flow environment the experiment is running on
-    env_name='IntersectionEnv',
+    env_name='IntersectionSoftEnv',
 
     # name of the scenario class the experiment is running on
     scenario='IntersectionScenario',

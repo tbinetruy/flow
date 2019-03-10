@@ -78,11 +78,20 @@ class IntersectionEnv(Env):
         self.occupancy_table = np.zeros((16, 5))
         self.speed_table = np.zeros((16, 5))
         self.action_table = np.zeros((16, 5))
-        self.index_table = np.zeros((16, 5))
+        self.index_table = {}
+        self.index_table['east'] = None
+        self.index_table['west'] = None
+        self.index_table['north'] = None
+        self.index_table['south'] = None
+
         self.prev_occupancy_table = np.zeros((16, 5))
         self.prev_speed_table = np.zeros((16, 5))
         self.prev_action_table = np.zeros((16, 5))
-        self.prev_index_table = np.zeros((16, 5))
+        self.prev_index_table = {}
+        self.prev_index_table['east'] = None
+        self.prev_index_table['west'] = None
+        self.prev_index_table['north'] = None
+        self.prev_index_table['south'] = None
 
         self.vehicle_index = {}
         self.vehicle_orient = []
@@ -251,11 +260,11 @@ class IntersectionEnv(Env):
         self.occupancy_table = np.zeros((16, 5))
         self.speed_table = np.zeros((16, 5))
         self.action_table = np.zeros((16, 5))
-        self.index_table = np.zeros((16, 5))
-        for row in range(self.index_table.shape[0]):
-            for col in range(self.index_table.shape[1]):
-                self.index_table[row, col] = \
-                    row*self.index_table.shape[1] + col
+        self.index_table = {}
+        self.index_table['east'] = None
+        self.index_table['west'] = None
+        self.index_table['north'] = None
+        self.index_table['south'] = None
 
         self.vehicle_index = {}
         self.vehicle_orient = []
@@ -286,6 +295,20 @@ class IntersectionEnv(Env):
                 self.occupancy_table[row_idx, col_idx] += 1
                 self.speed_table[row_idx, col_idx] += \
                     self.vehicles.get_speed(veh_id)
+                if row_idx//4 == 0:
+                    bound = 'east'
+                elif row_idx//4 == 1:
+                    bound = 'south'
+                if row_idx//4 == 2:
+                    bound = 'west'
+                elif row_idx//4 == 3:
+                    bound = 'north'
+                vehicle = (veh_id, col_idx)
+                if self.index_table[bound] is None:
+                    self.index_table[bound] = vehicle
+                elif self.vehicles.get_position(self.index_table[bound][0]) < \
+                    self.vehicles.get_position(veh_id):
+                    self.index_table[bound] = vehicle
                 agent_idx = int(edge_idx*5 + col_idx)
                 if veh_type == 'manned':
                     pass
@@ -426,3 +449,126 @@ class IntersectionEnv(Env):
 
     def compute_reward(self, actions, **kwargs):
         return self.get_reward(**kwargs)
+
+class IntersectionSoftEnv(IntersectionEnv):
+    # Override action, reward
+    # ACTION GOES HERE
+    @property
+    def action_space(self):
+        action = Box(
+            low=0,
+            high=self.scenario.max_speed,
+            shape=(4,),
+            dtype=np.float32,
+        )
+        return action
+
+    def set_action(self, action):
+        #east_speed = action[0]
+        #south_speed = action[1]
+        #west_speed = action[2]
+        #north_speed = action[3]
+        if self.index_table['east'] is not None:
+            east_veh_id = self.index_table['east'][0]
+        else:
+            east_veh_id = None
+        if self.index_table['south'] is not None:
+            south_veh_id = self.index_table['south'][0]
+        else:
+            south_veh_id = None
+        if self.index_table['west'] is not None:
+            west_veh_id = self.index_table['west'][0]
+        else:
+            west_veh_id = None
+        if self.index_table['north'] is not None:
+            north_veh_id = self.index_table['north'][0]
+        else:
+            north_veh_id = None
+        veh_ids = [east_veh_id, south_veh_id, west_veh_id, north_veh_id]
+        for veh_id, next_veh_speed in zip(veh_ids, action):
+            if veh_id is None:
+                pass
+            else:
+                self.traci_connection.vehicle.setSpeed(
+                    veh_id, next_veh_speed
+                )
+
+    # OBSERVATION GOES HERE
+    @property
+    def observation_space(self):
+        observation = Box(
+            low=-np.inf,
+            high=np.inf,
+            shape=(4, 5, 4),
+            dtype=np.float32,)
+        return observation
+
+    def get_observation(self, **kwargs):
+        occupancy_table = self.occupancy_table[1::4,:]
+        speed_table = self.speed_table[1::4,:]
+        prev_occupancy_table = self.prev_occupancy_table[1::4,:]
+        prev_speed_table = self.prev_speed_table[1::4,:]
+        observation =  np.dstack((
+            occupancy_table,
+            speed_table,
+            prev_occupancy_table,
+            prev_speed_table,
+        ))
+        debug_mode = False
+        if debug_mode:
+            fig = plt.figure(figsize=(5,5))
+            ax = fig.add_subplot(111)
+            divider = make_axes_locatable(ax)
+            cax = divider.append_axes('right', size='5%', pad=0.05)
+            im = ax.imshow(speed_table,
+                           cmap='jet', vmin=0, vmax=3*self.scenario.max_speed)
+            ax.tick_params(axis='both', which='major', labelsize=12)
+            ax.tick_params(axis='both', which='minor',
+                           labelsize=0)
+            ax.set_xticks(np.arange(0,5))
+            ax.set_yticks(np.arange(0,4))
+            ax.grid(True, which='major')
+            ax.set_title('time: %d' % self.step_counter)
+            fig.colorbar(im, cax=cax, orientation='vertical')
+            plt.show()
+        return observation
+
+    # REWARD FUNCTION GOES HERE
+    def get_reward(self, **kwargs):
+        # safety reward
+        _sum_collisions = self.sum_collisions * -1000
+        _pseudo_headway = self.pseudo_headway * 0.01
+        _safety = 0.8 * _sum_collisions + 0.2 * _pseudo_headway
+        self.reward_stats[0] += self.sum_collisions
+        self.reward_stats[1] += self.pseudo_headway
+
+        # performance reward
+        _avg_speed = self.avg_speed * 1
+        _std_speed = self.std_speed * -1
+        _performance = 0.5 * _avg_speed + 0.5 * _std_speed
+        self.reward_stats[2] += \
+            0 if np.isnan(self.avg_speed) else self.avg_speed
+        self.reward_stats[3] += \
+            0 if np.isnan(self.std_speed) else self.std_speed
+
+        # consumption reward
+        #_avg_fuel = self.avg_fuel / self.avg_speed
+        #_avg_co2 = self.avg_co2 / self.avg_speed
+        #if np.isnan(_avg_fuel) or np.isinf(_avg_fuel):
+        #    _avg_fuel = 0
+        #if np.isnan(_avg_co2) or np.isinf(_avg_co2):
+        #    _avg_co2 = 0
+        #_cost = 0.5 * _avg_fuel + 0.5 * _avg_co2
+        #self.reward_stats[4] += _avg_fuel
+        #self.reward_stats[5] += _avg_co2
+
+        # total reward
+        #reward = 0.5 * _safety + 0.4 * _performance + 0.1 * _cost
+        reward = 0.4 * _safety + 0.6 * _performance + 0.1
+        reward = 0 if np.isnan(reward) else reward
+
+        return reward
+
+    def additional_command(self):
+        super().additional_command()
+        self.set_action(np.asarray([1, 2, 3, 4]))

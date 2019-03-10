@@ -3,7 +3,7 @@ rm -rf ray_results
 rm -rf ray
 git clone https://github.com/eugenevinitsky/ray.git
 cd ray/python
-python setup.py develop
+pip install -e .
 cd ~
 sudo apt-get install -y \
     xorg-dev \
