@@ -140,4 +140,4 @@ if __name__ == "__main__":
                                show_radius=False)
 
     # run for a set number of rollouts / time steps
-    exp.run(1, 2000)
+    exp.run(1, 1500)

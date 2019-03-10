@@ -41,6 +41,255 @@ Here the arguments are:
 1 - the number of the checkpoint
 """
 
+from ray.rllib.models import ModelCatalog, Model
+from ray.rllib.models.misc import linear, normc_initializer
+import tensorflow as tf
+from tensor2tensor.layers.common_attention import multihead_attention
+
+VERBOSE = False
+
+def residual_block(inputs):
+    layer1 = tf.layers.conv2d(
+        inputs=inputs,
+        filters=8,
+        kernel_size=[1, 2],
+        strides=[1, 1],
+        padding='valid',
+        activation=tf.nn.relu,
+    )
+    layer2 = tf.layers.batch_normalization(layer1)
+    layer3 = tf.layers.conv2d(
+        inputs=layer2,
+        filters=8,
+        kernel_size=[2, 2],
+        strides=[1, 1],
+        padding='same',
+        activation=None,
+    )
+    layer4 = tf.layers.batch_normalization(layer3)
+    layer5 = tf.layers.conv2d(
+        inputs=layer4,
+        filters=8,
+        kernel_size=[2, 2],
+        strides=[1, 1],
+        padding='same',
+        activation=None,
+    )
+    outputs = tf.nn.relu(layer2 + tf.layers.batch_normalization(layer5))
+    return outputs
+
+def conv2dlstm_block(inputs, prev_inputs):
+    rnn_cell = tf.contrib.rnn.Conv2DLSTMCell(
+        input_shape=inputs.get_shape().as_list()[1:],
+        output_channels=32,
+        kernel_shape=[3, 3],
+    )
+    #initial_state = rnn_cell.zero_state(
+    #    batch_size=inputs.get_shape().as_list()[0],
+    #    dtype=tf.float32,
+    #)
+    inputs = tf.expand_dims(inputs, axis=1)
+    prev_inputs = tf.expand_dims(prev_inputs, axis=1)
+    outputs, _ = tf.nn.dynamic_rnn(
+        cell=rnn_cell,
+        inputs=tf.concat([inputs, prev_inputs], 1),
+        #initial_state=initial_state,
+        dtype=tf.float32,
+    )
+    return outputs
+
+def mhdpa_block(inputs):
+    outputs = multihead_attention(
+        query_antecedent=inputs,
+        memory_antecedent=None,
+        bias=None,
+        total_key_depth=inputs.get_shape().as_list()[1],
+        total_value_depth=inputs.get_shape().as_list()[1],
+        output_depth=32,
+        num_heads=4,
+        dropout_rate=0,
+    )
+    return outputs
+
+def relational_network(inputs, num_outputs):
+    print('INPUT//////////////////////////////////////////')
+    print(inputs)
+    print('//////////////////////////////////////////INPUT')
+
+    # Residual block for spatial processing
+    _height = int(inputs.get_shape().as_list()[1])
+    _width = int(inputs.get_shape().as_list()[2])
+    channel = int(inputs.get_shape().as_list()[-1]/2)
+    inputs = tf.log(inputs + 1)
+    inputs, prev_inputs = tf.split(inputs, [channel, channel], axis=-1)
+    curr_residual_outputs = residual_block(inputs)
+    prev_residual_outputs = residual_block(prev_inputs)
+
+    # Conv2DLSTM block for memeory processing
+    conv2dlstm_outputs = conv2dlstm_block(
+        curr_residual_outputs, prev_residual_outputs)
+
+    # Flatten the conv2dlstm outputs
+    conv2dlstm_outputs = tf.concat(
+        [conv2dlstm_outputs[:,0,...], conv2dlstm_outputs[:,1,...]], -1)
+    height = conv2dlstm_outputs.get_shape().as_list()[1]
+    width = conv2dlstm_outputs.get_shape().as_list()[2]
+    channel = conv2dlstm_outputs.get_shape().as_list()[3]
+    flat_conv2dlstm_outputs = tf.reshape(
+        conv2dlstm_outputs, [-1, height*width, channel])
+
+    # MHDPA block for relational processing
+    mhdpa_outputs = mhdpa_block(flat_conv2dlstm_outputs)
+    channel = mhdpa_outputs.get_shape().as_list()[-1]
+
+    # Optional: add additional mhdpa blocks
+    #mhdpa_outputs = mhdpa_block(mhdpa_outputs)
+    #mhdpa_outputs = mhdpa_block(mhdpa_outputs)
+
+    # Flatten the mhdpa outputs
+    flat_mhdpa_outputs = tf.layers.flatten(mhdpa_outputs)
+    reshaped_mhdpa_outputs = tf.reshape(
+        mhdpa_outputs, [-1, height, width, channel])
+
+    # Feature layer to compute value function and policy logits
+    feature_layer = flat_mhdpa_outputs
+    logit_layer = tf.layers.conv2d_transpose(
+        inputs=reshaped_mhdpa_outputs,
+        filters=4,
+        kernel_size=[1, 2],
+        strides=[1, 1],
+    )
+    logit_layer = tf.layers.conv2d(
+        inputs=logit_layer,
+        filters=1,
+        kernel_size=[1, 1],
+    )
+    flat_logit_layer = tf.layers.flatten(logit_layer)
+    policy_logits = tf.layers.dense(flat_logit_layer, num_outputs)
+    # Optional: use auto-regressive RNN
+
+    print('OUTPUT/////////////////////////////////////////')
+    print(policy_logits)
+    print('/////////////////////////////////////////OUTPUT')
+    return policy_logits, feature_layer
+
+def perceptron_network(inputs, num_outputs):
+    if VERBOSE:
+        print('INPUT//////////////////////////////////////////')
+        print(inputs)
+        print('//////////////////////////////////////////INPUT')
+
+    layer = tf.layers.flatten(inputs)
+    if VERBOSE:
+        print('LAYER1//////////////////////////////////////////')
+        print(layer)
+        print('//////////////////////////////////////////LAYER1')
+
+    layer = tf.layers.dense(layer, 64)
+    if VERBOSE:
+        print('LAYER2//////////////////////////////////////////')
+        print(layer)
+        print('//////////////////////////////////////////LAYER2')
+
+    feature_layer = tf.layers.dense(layer, 64)
+    policy_logits = tf.layers.dense(feature_layer, num_outputs)
+    if VERBOSE:
+        print('OUTPUT/////////////////////////////////////////')
+        print(feature_layer)
+        print(policy_logits)
+        print('/////////////////////////////////////////OUTPUT')
+
+    return policy_logits, feature_layer
+
+class RelationalModelClass(Model):
+    def _build_layers_v2(self, input_dict, num_outputs, options):
+        """Define the layers of a custom model.
+
+        Arguments:
+            input_dict (dict): Dictionary of input tensors, including "obs",
+                "prev_action", "prev_reward", "is_training".
+            num_outputs (int): Output tensor must be of size
+                [BATCH_SIZE, num_outputs].
+            options (dict): Model options.
+
+        Returns:
+            (outputs, feature_layer): Tensors of size [BATCH_SIZE, num_outputs]
+                and [BATCH_SIZE, desired_feature_size].
+
+        When using dict or tuple observation spaces, you can access
+        the nested sub-observation batches here as well:
+
+        Examples:
+            >>> print(input_dict)
+            {'prev_actions': <tf.Tensor shape=(?,) dtype=int64>,
+             'prev_rewards': <tf.Tensor shape=(?,) dtype=float32>,
+             'is_training': <tf.Tensor shape=(), dtype=bool>,
+             'obs': OrderedDict([
+                ('sensors', OrderedDict([
+                    ('front_cam', [
+                        <tf.Tensor shape=(?, 10, 10, 3) dtype=float32>,
+                        <tf.Tensor shape=(?, 10, 10, 3) dtype=float32>]),
+                    ('position', <tf.Tensor shape=(?, 3) dtype=float32>),
+                    ('velocity', <tf.Tensor shape=(?, 3) dtype=float32>)]))])}
+        """
+
+        #layer1 = slim.fully_connected(input_dict["obs"], 64, ...)
+        #layer2 = slim.fully_connected(layer1, 64, ...)
+        #...
+
+        policy_logits, feature_layer = relational_network(
+            input_dict['obs'], num_outputs)
+        return policy_logits, feature_layer
+
+    def value_function(self):
+        """Builds the value function output.
+
+        This method can be overridden to customize the implementation of the
+        value function (e.g., not sharing hidden layers).
+
+        Returns:
+            Tensor of size [BATCH_SIZE] for the value function.
+        """
+        return tf.reshape(
+            linear(self.last_layer, 1, "value", normc_initializer(1.0)), [-1])
+
+    def custom_loss(self, policy_loss, loss_inputs):
+        """Override to customize the loss function used to optimize this model.
+
+        This can be used to incorporate self-supervised losses (by defining
+        a loss over existing input and output tensors of this model), and
+        supervised losses (by defining losses over a variable-sharing copy of
+        this model's layers).
+
+        You can find an runnable example in examples/custom_loss.py.
+
+        Arguments:
+            policy_loss (Tensor): scalar policy loss from the policy graph.
+            loss_inputs (dict): map of input placeholders for rollout data.
+
+        Returns:
+            Scalar tensor for the customized loss for this model.
+        """
+        return policy_loss
+
+    def custom_stats(self):
+        """Override to return custom metrics from your model.
+
+        The stats will be reported as part of the learner stats, i.e.,
+            info:
+                learner:
+                    model:
+                        key1: metric1
+                        key2: metric2
+
+        Returns:
+            Dict of string keys to scalar tensors.
+        """
+        return {}
+
+ModelCatalog.register_custom_model('relational_model', RelationalModelClass)
+
+
 class _RLlibPreprocessorWrapper(gym.ObservationWrapper):
     """Adapts a RLlib preprocessor for use as an observation wrapper."""
 

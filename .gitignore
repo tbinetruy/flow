@@ -99,3 +99,4 @@ data/
 debug/
 flow/core/config.py
 .vs/**
+relational_model

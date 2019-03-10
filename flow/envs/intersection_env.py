@@ -77,9 +77,11 @@ class IntersectionEnv(Env):
         # setup observation-related variables
         self.occupancy_table = np.zeros((16, 5))
         self.speed_table = np.zeros((16, 5))
+        self.action_table = np.zeros((16, 5))
         self.index_table = np.zeros((16, 5))
         self.prev_occupancy_table = np.zeros((16, 5))
         self.prev_speed_table = np.zeros((16, 5))
+        self.prev_action_table = np.zeros((16, 5))
         self.prev_index_table = np.zeros((16, 5))
 
         self.vehicle_index = {}
@@ -144,6 +146,9 @@ class IntersectionEnv(Env):
                         pass
                     veh_speed = self.vehicles.get_speed(veh_id)
                     next_veh_speed = action[1]*self.scenario.max_speed
+                    row_idx = agent_idx // 5
+                    col_idx = agent_idx % 5
+                    self.action_table[row_idx, col_idx] = next_veh_speed
                     if verbose_mode:
                         print(
                             'Setting vehicle %s from %f m/s to %f m/s.' %
@@ -163,22 +168,24 @@ class IntersectionEnv(Env):
         observation = Box(
             low=-np.inf,
             high=np.inf,
-            shape=(16, 5, 3*2),
+            shape=(4, 5, 6),
             dtype=np.float32,)
         return observation
 
     def get_observation(self, **kwargs):
-        #tls_phase = [self.tls_phase]
-        #occupancy_table = self.occupancy_table.flatten().tolist()
-        #observation = tls_phase + occupancy_table
-        #speed_table = self.speed_table.flatten().tolist()
-        #observation = tls_phase + speed_table
-        return np.dstack((self.occupancy_table,
-                          self.speed_table,
-                          self.index_table,
-                          self.prev_occupancy_table,
-                          self.prev_speed_table,
-                          self.prev_index_table,))
+        occupancy_table = self.occupancy_table[0::4,:]
+        speed_table = self.speed_table[0::4,:]
+        action_table = self.action_table[0::4,:]
+        prev_occupancy_table = self.prev_occupancy_table[0::4,:]
+        prev_speed_table = self.prev_speed_table[0::4,:]
+        prev_action_table = self.prev_action_table[0::4,:]
+        return np.dstack((occupancy_table,
+                          speed_table,
+                          action_table,
+                          prev_occupancy_table,
+                          prev_speed_table,
+                          prev_action_table,))
+        #return self.occupancy_table
 
     # REWARD FUNCTION GOES HERE
     def get_reward(self, **kwargs):
@@ -212,14 +219,16 @@ class IntersectionEnv(Env):
         # operation reward
         _operation = 0
         if self.is_idle:
-            _operation -= 2
+            _operation -= 3
         if self.miss_pin:
             _operation -= 5
+        else:
+            _operation += 5
 
         # total reward
         #reward = 0.5 * _safety + 0.4 * _performance + 0.1 * _cost
         # reward = 0.5 * _performance + 0.5 * _cost
-        reward = 0.5 * _safety + 0.5 * _performance + _operation
+        reward = 0.3 * _safety + 0.6 * _performance + 0.1 * _operation
         reward = 0 if np.isnan(reward) else reward
 
         debug_mode = False
@@ -237,9 +246,11 @@ class IntersectionEnv(Env):
     def additional_command(self):
         self.prev_occupancy_table = self.occupancy_table.copy()
         self.prev_speed_table = self.speed_table.copy()
+        self.prev_action_table = self.action_table.copy()
         self.prev_index_table = self.index_table.copy()
         self.occupancy_table = np.zeros((16, 5))
         self.speed_table = np.zeros((16, 5))
+        self.action_table = np.zeros((16, 5))
         self.index_table = np.zeros((16, 5))
         for row in range(self.index_table.shape[0]):
             for col in range(self.index_table.shape[1]):

@@ -33,18 +33,20 @@ import tensorflow as tf
 from tensor2tensor.layers.common_attention import multihead_attention
 
 # time horizon of a single rollout
-HORIZON = 1000
-# number of rollouts per training iteration
-N_ROLLOUTS = 1
+HORIZON = 1500
 # number of parallel workers
-N_CPUS = 1
+N_CPUS = 8
+# number of rollouts per training iteration
+N_ROLLOUTS = N_CPUS*1
+
+VERBOSE = False
 
 def residual_block(inputs):
     layer1 = tf.layers.conv2d(
         inputs=inputs,
         filters=8,
-        kernel_size=[4, 2],
-        strides=[4, 1],
+        kernel_size=[1, 2],
+        strides=[1, 1],
         padding='valid',
         activation=tf.nn.relu,
     )
@@ -102,6 +104,96 @@ def mhdpa_block(inputs):
     )
     return outputs
 
+def relational_network(inputs, num_outputs):
+    print('INPUT//////////////////////////////////////////')
+    print(inputs)
+    print('//////////////////////////////////////////INPUT')
+
+    # Residual block for spatial processing
+    _height = int(inputs.get_shape().as_list()[1])
+    _width = int(inputs.get_shape().as_list()[2])
+    channel = int(inputs.get_shape().as_list()[-1]/2)
+    inputs = tf.log(inputs + 1)
+    inputs, prev_inputs = tf.split(inputs, [channel, channel], axis=-1)
+    curr_residual_outputs = residual_block(inputs)
+    prev_residual_outputs = residual_block(prev_inputs)
+
+    # Conv2DLSTM block for memeory processing
+    conv2dlstm_outputs = conv2dlstm_block(
+        curr_residual_outputs, prev_residual_outputs)
+
+    # Flatten the conv2dlstm outputs
+    conv2dlstm_outputs = tf.concat(
+        [conv2dlstm_outputs[:,0,...], conv2dlstm_outputs[:,1,...]], -1)
+    height = conv2dlstm_outputs.get_shape().as_list()[1]
+    width = conv2dlstm_outputs.get_shape().as_list()[2]
+    channel = conv2dlstm_outputs.get_shape().as_list()[3]
+    flat_conv2dlstm_outputs = tf.reshape(
+        conv2dlstm_outputs, [-1, height*width, channel])
+
+    # MHDPA block for relational processing
+    mhdpa_outputs = mhdpa_block(flat_conv2dlstm_outputs)
+    channel = mhdpa_outputs.get_shape().as_list()[-1]
+
+    # Optional: add additional mhdpa blocks
+    #mhdpa_outputs = mhdpa_block(mhdpa_outputs)
+    #mhdpa_outputs = mhdpa_block(mhdpa_outputs)
+
+    # Flatten the mhdpa outputs
+    flat_mhdpa_outputs = tf.layers.flatten(mhdpa_outputs)
+    reshaped_mhdpa_outputs = tf.reshape(
+        mhdpa_outputs, [-1, height, width, channel])
+
+    # Feature layer to compute value function and policy logits
+    feature_layer = flat_mhdpa_outputs
+    logit_layer = tf.layers.conv2d_transpose(
+        inputs=reshaped_mhdpa_outputs,
+        filters=4,
+        kernel_size=[1, 2],
+        strides=[1, 1],
+    )
+    logit_layer = tf.layers.conv2d(
+        inputs=logit_layer,
+        filters=1,
+        kernel_size=[1, 1],
+    )
+    flat_logit_layer = tf.layers.flatten(logit_layer)
+    policy_logits = tf.layers.dense(flat_logit_layer, num_outputs)
+    # Optional: use auto-regressive RNN
+
+    print('OUTPUT/////////////////////////////////////////')
+    print(policy_logits)
+    print('/////////////////////////////////////////OUTPUT')
+    return policy_logits, feature_layer
+
+def perceptron_network(inputs, num_outputs):
+    if VERBOSE:
+        print('INPUT//////////////////////////////////////////')
+        print(inputs)
+        print('//////////////////////////////////////////INPUT')
+
+    layer = tf.layers.flatten(inputs)
+    if VERBOSE:
+        print('LAYER1//////////////////////////////////////////')
+        print(layer)
+        print('//////////////////////////////////////////LAYER1')
+
+    layer = tf.layers.dense(layer, 64)
+    if VERBOSE:
+        print('LAYER2//////////////////////////////////////////')
+        print(layer)
+        print('//////////////////////////////////////////LAYER2')
+
+    feature_layer = tf.layers.dense(layer, 64)
+    policy_logits = tf.layers.dense(feature_layer, num_outputs)
+    if VERBOSE:
+        print('OUTPUT/////////////////////////////////////////')
+        print(feature_layer)
+        print(policy_logits)
+        print('/////////////////////////////////////////OUTPUT')
+
+    return policy_logits, feature_layer
+
 class RelationalModelClass(Model):
     def _build_layers_v2(self, input_dict, num_outputs, options):
         """Define the layers of a custom model.
@@ -138,60 +230,8 @@ class RelationalModelClass(Model):
         #layer2 = slim.fully_connected(layer1, 64, ...)
         #...
 
-        # Set inputs
-        inputs = input_dict['obs']
-        print('INPUT//////////////////////////////////////////')
-        print(input_dict['obs'])
-        print(input_dict['obs'].get_shape().as_list())
-        print('//////////////////////////////////////////INPUT')
-
-        # Residual block for spatial processing
-        channel = int(input_dict['obs'].get_shape().as_list()[-1]/2)
-        inputs, prev_inputs = tf.split(
-            input_dict['obs'], [channel, channel], axis=-1)
-        residual_outputs = residual_block(inputs)
-        prev_residual_outputs = residual_block(prev_inputs)
-
-        # Conv2DLSTM block for memeory processing
-        conv2dlstm_outputs = conv2dlstm_block(
-            residual_outputs, prev_residual_outputs)
-
-        # Flatten the conv2dlstm outputs
-        conv2dlstm_outputs = tf.concat(
-            [conv2dlstm_outputs[:,0,...], conv2dlstm_outputs[:,1,...]], -1)
-        batch = conv2dlstm_outputs.get_shape().as_list()[0]
-        height = conv2dlstm_outputs.get_shape().as_list()[1]
-        width = conv2dlstm_outputs.get_shape().as_list()[2]
-        channel = conv2dlstm_outputs.get_shape().as_list()[3]
-        flat_conv2dlstm_outputs = tf.reshape(
-            conv2dlstm_outputs, [-1, height*width, channel])
-
-        # MHDPA block for relational processing
-        mhdpa_outputs = mhdpa_block(flat_conv2dlstm_outputs)
-        print(mhdpa_outputs)
-
-        ## Optional: add additional mhdpa blocks
-        ##mhdpa_outputs = mhdpa_block(mhdpa_outputs)
-        ##mhdpa_outputs = mhdpa_block(mhdpa_outputs)
-
-        # Flatten the mhdpa outputs
-        length = mhdpa_outputs.get_shape().as_list()[1]
-        channel = mhdpa_outputs.get_shape().as_list()[1]
-        flat_mhdpa_outputs = tf.reshape(mhdpa_outputs, [-1, length*channel])
-
-        # Feature layer to compute value function and policy logits
-        feature_layer = flat_mhdpa_outputs
-        policy_logits = tf.layers.dense(
-            feature_layer,
-            4
-        )
-        # Optional: use auto-regressive RNN
-
-        print('OUTPUT/////////////////////////////////////////')
-        print(policy_logits)
-        print(policy_logits.get_shape().as_list())
-        print('/////////////////////////////////////////OUTPUT')
-
+        policy_logits, feature_layer = relational_network(
+            input_dict['obs'], num_outputs)
         return policy_logits, feature_layer
 
     def value_function(self):
@@ -258,8 +298,8 @@ inflow = InFlows()
 for type in ['autonomous']:#['manned', 'autonomous']:
     vehicles.add(
         veh_id=type,
-        speed_mode=0b11111,
-        lane_change_mode=0b011001010101,
+        speed_mode=0,#0b11111,
+        lane_change_mode=0,#0b011001010101,
         acceleration_controller=(SumoCarFollowingController, {}),
         lane_change_controller=(SumoLaneChangeController, {}),
         routing_controller=(IntersectionRandomRouter, {}),
@@ -296,7 +336,7 @@ for type in ['autonomous']:#['manned', 'autonomous']:
 
 flow_params = dict(
     # name of the experiment
-    exp_tag='intersection',
+    exp_tag='intersection-apdp',
 
     # name of the flow environment the experiment is running on
     env_name='IntersectionEnv',
@@ -342,7 +382,7 @@ flow_params = dict(
 )
 
 def setup_exps():
-    grad_free = False
+    grad_free = True
     if grad_free:
         alg_run = 'ES'
     else:
@@ -373,12 +413,11 @@ def setup_exps():
         # config["num_sgd_iter"] = 10
         # #config["model"]["fcnet_hiddens"] = [100, 50, 25]
         config["observation_filter"] = "NoFilter"
-
-        if use_custom_model:
-            config['model'] = {
-                'custom_model': 'relational_model',
-                'custom_options': {},
-            }
+    if use_custom_model:
+        config['model'] = {
+            'custom_model': 'relational_model',
+            'custom_options': {},
+        }
 
     # save the flow params for replay
     flow_json = json.dumps(
@@ -403,13 +442,13 @@ if __name__ == '__main__':
             'config': {
                 **config
             },
-            'checkpoint_freq': 50,
+            'checkpoint_freq': 25,
             'max_failures': 999,
             'stop': {
-                'training_iteration': 10000,
+                'training_iteration': 1000,
             },
             #'local_dir': '/mnt/d/Overflow/ray_results/',
-            'num_samples': 1,
+            'num_samples': 3,
         },
     },
     resume='prompt',
