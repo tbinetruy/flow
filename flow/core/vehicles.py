@@ -356,11 +356,15 @@ class Vehicles:
         for veh_id in self.__ids:
             _position = vehicle_obs[veh_id][tc.VAR_POSITION]
             _angle = vehicle_obs[veh_id][tc.VAR_ANGLE]
+            _fuel = vehicle_obs[veh_id][tc.VAR_FUELCONSUMPTION]
+            _co2 = vehicle_obs[veh_id][tc.VAR_CO2EMISSION]
             _time_step = sim_obs[tc.VAR_TIME_STEP]
             _time_delta = sim_obs[tc.VAR_DELTA_T]
             self.__vehicles[veh_id]["orientation"] = list(_position) + [_angle]
             self.__vehicles[veh_id]["timestep"] = _time_step
             self.__vehicles[veh_id]["timedelta"] = _time_delta
+            self.__vehicles[veh_id]["fuel"] = _fuel
+            self.__vehicles[veh_id]["co2"] = _co2
             headway = vehicle_obs.get(veh_id, {}).get(tc.VAR_LEADER, None)
             # check for a collided vehicle or a vehicle with no leader
             if headway is None:
@@ -448,7 +452,8 @@ class Vehicles:
         env.traci_connection.vehicle.subscribe(veh_id, [
             tc.VAR_LANE_INDEX, tc.VAR_LANEPOSITION, tc.VAR_ROAD_ID,
             tc.VAR_SPEED, tc.VAR_EDGES, tc.VAR_POSITION, tc.VAR_ANGLE,
-            tc.VAR_SPEED_WITHOUT_TRACI
+            tc.VAR_SPEED_WITHOUT_TRACI, tc.VAR_FUELCONSUMPTION,
+            tc.VAR_CO2EMISSION
         ])
         env.traci_connection.vehicle.subscribeLeader(veh_id, 2000)
 
@@ -550,6 +555,14 @@ class Vehicles:
     def get_timedelta(self, veh_id):
         """Return the simulation time delta of the vehicle of veh_id."""
         return self.__vehicles[veh_id]["timedelta"]
+
+    def get_fuel(self, veh_id):
+        """Return the fuel consumption of the vehicle of veh_id."""
+        return self.__vehicles[veh_id]["fuel"]
+
+    def get_co2(self, veh_id):
+        """Return the CO2 emission of the vehicle of veh_id."""
+        return self.__vehicles[veh_id]["co2"]
 
     def get_ids(self):
         """Return the names of all vehicles currently in the network."""
