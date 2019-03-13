@@ -389,7 +389,7 @@ flow_params = dict(
     sumo=SumoParams(
         sim_step=1,
         render=RENDERER,
-        restart_instance=True
+        restart_instance=True,
         pxpm = 1
     ),
 
@@ -429,7 +429,7 @@ def setup_exps():
     config["grad_norm_clipping"] = 40  # TODO: hp tune
     config["schedule_max_timesteps"] = 100000  # TODO: maybe try 5e5, 1e6
     config["buffer_size"] = 50000  # TODO: maybe try 1e5, 5e5
-    config["target_network_update_freq"] = 500  # TODO: this is too small
+    config["target_network_update_freq"] = 75000  # TODO: this is too small
     config['model']['custom_model'] = "my_model"
     config['model']['custom_options'] = {}
 
