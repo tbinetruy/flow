@@ -5,7 +5,11 @@ using namespace std;
 
 void clearWindow(float width, float height,
                 float r, float g, float b, float a) {
+<<<<<<< Updated upstream
     
+=======
+
+>>>>>>> Stashed changes
 }
 
 
