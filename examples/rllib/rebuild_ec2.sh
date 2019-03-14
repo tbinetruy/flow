@@ -1,8 +1,9 @@
 # Install system dependencies
-sudo apt-get install openjdk-8-jdk
+sudo apt-get -y -f install
+sudo apt-get install -y openjdk-8-jdk
 echo "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8" | sudo tee /etc/apt/sources.list.d/bazel.list
 curl https://bazel.build/bazel-release.pub.gpg | sudo apt-key add -
-sudo apt-get update && sudo apt-get install bazel
+sudo apt-get update && sudo apt-get install -y bazel
 sudo apt-get install -y \
     xorg-dev \
     libglu1-mesa \
@@ -36,13 +37,13 @@ pip install -e . --verbose
 cd ~
 
 # Install flow meng-master branch
-cd ~
-pip uninstall flow
-rm -rf flow
-git clone https://github.com/flow-project/flow.git
-cd flow
-git checkout meng_master
-pip install -e .
+#cd ~
+#pip uninstall flow
+#rm -rf flow
+#git clone https://github.com/flow-project/flow.git
+#cd flow
+#git checkout meng_master
+#pip install -e .
 
 # Run script.py in the background.
 #nohup xvfb-run -a -s  "-screen 0 1400x900x24 +extension RANDR" -- python script.py > script.log 2>&1 &
