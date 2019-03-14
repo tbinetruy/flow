@@ -350,10 +350,17 @@ initial_config = InitialConfig(
     edges_distribution=list(SUBROUTE_EDGES[SUBNETWORK.value].keys())
 )
 
-xmin = int(input("What is xmin? 0}"))
-xmax = int(input("What is xmax? 1200"))
-ymin = int(input("What is ymin? 0"))
-ymax = int(input("What is ymax? 1200"))
+print('\n----------------------')
+print('Subnetwork dimensions:\n')
+for s in SubRoute:
+    print(s, '\n', SUBNET_CROP[s.value], '\n')
+
+print('The min and max range is (0, 1202, 0, 1202).')
+xmin = int(input("What is xmin? "))
+xmax = int(input("What is xmax? "))
+ymin = int(input("What is ymin? "))
+ymax = int(input("What is ymax? "))
+
 additional_env_params = {
     'target_velocity': 11,
     'switch_time': 7,
