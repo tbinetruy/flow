@@ -30,9 +30,9 @@ from ray.tune.registry import register_env
 # time horizon of a single rollout
 HORIZON = 50
 # number of rollouts per training iteration
-N_ROLLOUTS = 6*12
+N_ROLLOUTS = 3*12
 # number of parallel workers
-N_CPUS = 6
+N_CPUS = 12
 
 
 np.random.seed(204)
@@ -357,9 +357,9 @@ for s in SubRoute:
 
 print('The min and max range is (0, 1202, 0, 1202).')
 xmin = 0#int(input("What is xmin? "))
-xmax = 588#int(input("What is xmax? "))
+xmax = 100#int(input("What is xmax? "))
 ymin = 0#int(input("What is ymin? "))
-ymax = 588#int(input("What is ymax? "))
+ymax = 100#int(input("What is ymax? "))
 
 additional_env_params = {
     'target_velocity': 11,
