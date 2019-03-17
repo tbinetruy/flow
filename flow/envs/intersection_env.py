@@ -34,7 +34,7 @@ ADDITIONAL_ENV_PARAMS = {
 
 class IntersectionEnv(Env):
     def __init__(self, env_params, sumo_params, scenario):
-        print("Starting SoftIntersectionEnv...")
+        print("Starting IntersectionEnv...")
         for p in ADDITIONAL_ENV_PARAMS.keys():
             if p not in env_params.additional_params:
                 raise KeyError(
@@ -451,6 +451,16 @@ class IntersectionEnv(Env):
         return self.get_reward(**kwargs)
 
 class IntersectionSoftEnv(IntersectionEnv):
+    def __init__(self, env_params, sumo_params, scenario):
+        print("Starting IntersectionSoftEnv...")
+        for p in ADDITIONAL_ENV_PARAMS.keys():
+            if p not in env_params.additional_params:
+                raise KeyError(
+                    'Environment parameter "{}" not supplied'.format(p))
+
+        super().__init__(env_params, sumo_params, scenario)
+        self.trajectory_table = {}
+
     # Override action, reward
     # ACTION GOES HERE
     @property
@@ -571,4 +581,35 @@ class IntersectionSoftEnv(IntersectionEnv):
 
     def additional_command(self):
         super().additional_command()
-        self.set_action(np.asarray([1, 2, 3, 4]))
+        # Enforce constant 8 m/s velocity
+        self.set_action(np.asarray([8, 8, 8, 8]))
+        for veh_id in self.vehicles.get_ids():
+            position = self.traci_connection.vehicle.getPosition(veh_id)
+            if veh_id in self.trajectory_table:
+                self.trajectory_table[veh_id].append(
+                    [self.time_counter, position])
+            else:
+                self.trajectory_table[veh_id] = \
+                    [[self.time_counter, position]]
+        #print(self.trajectory_table)
+
+    def terminate(self):
+        import pickle
+        name = 'trajectory_dict'
+        with open(name + '.pkl', 'wb') as f:
+            pickle.dump(
+                self.trajectory_table, f, pickle.HIGHEST_PROTOCOL)
+        try:
+            print(
+                "Closing connection to TraCI and stopping simulation.\n"
+                "Note, this may print an error message when it closes."
+            )
+            self.traci_connection.close()
+            self.scenario.close()
+
+            # close pyglet renderer
+            if self.sumo_params.render in ['gray', 'dgray', 'rgb', 'drgb']:
+                self.renderer.close()
+        except FileNotFoundError:
+            print("Skip automatic termination. "
+                  "Connection is probably already closed.")

@@ -59,7 +59,7 @@ def intersection_example(render=None,
     vehicles = Vehicles()
 
     # Add mixed-autonomy traffic
-    insertion_prob = 0.1
+    insertion_prob = 0.2
     autonomy_percent = 1.0#0.5
     prob_table = {
         'manned': (1 - autonomy_percent)*insertion_prob,
@@ -69,8 +69,8 @@ def intersection_example(render=None,
     for type in ['autonomous']:#['manned', 'autonomous']:
         vehicles.add(
             veh_id=type,
-            speed_mode=0b11111,
-            lane_change_mode=0b011001010101,
+            speed_mode=0,#0b11111,
+            lane_change_mode=0,#0b011001010101,
             acceleration_controller=(SumoCarFollowingController, {}),
             lane_change_controller=(SumoLaneChangeController, {}),
             routing_controller=(IntersectionRandomRouter, {}),
