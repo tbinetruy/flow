@@ -49,18 +49,33 @@ def add_trajectory(value, trajectories):
     #trajectories.append(MultiLineString(multidata))
     trajectories.append(LineString(data))
 
-def check_intersections(trajectories_A, trajectories_B):
-    intersects = []
+def check_cross(trajectories_A, trajectories_B):
+    crosses = []
     for trajectory_a in trajectories_A:
         for trajectory_b in trajectories_B:
             if trajectory_a != trajectory_b:
                 #print(trajectory_a)
                 #print(trajectory_b)
-                intersect = trajectory_a.intersection(trajectory_b)
-                if not intersect.is_empty:
-                    print(intersect)
-                    intersects.append(intersect)
-    return intersects
+                cross = trajectory_a.intersection(trajectory_b)
+                if not cross.is_empty:
+                    print(cross)
+                    crosses.append(cross)
+    return crosses
+
+def get_intervals(entries, exits):
+    intervals = []
+    for entry, exit in zip(entries, exits):
+        intervals.append([entry.x, exit.x])
+    return intervals
+
+def check_overlap(intervals_A, intervals_B):
+    overlaps = []
+    for interval_a in intervals_A:
+        for interval_b in intervals_B:
+            if max([interval_a[0], interval_b[0]]) < \
+               min([interval_a[1], interval_b[1]]):
+                overlaps.append([interval_a, interval_b])
+    return overlaps
 
 name = 'trajectory_dict'
 with open(name + '.pkl', 'rb') as f:
@@ -138,17 +153,63 @@ for key, value in trajectory_dict.items():
     else:
         raise ValueError
 
-# Check if a vehicle runs through another vehicle
-conflicts = []
-conflicts.append(check_intersections(
-    eastbound_trajectories, eastbound_trajectories))
-conflicts.append(check_intersections(
-    westbound_trajectories, westbound_trajectories))
-conflicts.append(check_intersections(
-    southbound_trajectories, southbound_trajectories))
-conflicts.append(check_intersections(
-    northbound_trajectories, northbound_trajectories))
-print(conflicts)
+# Check illegal pass (a vehicle runs through another vehicle)
+conflicts_pass = []
+conflicts_pass.append(
+    check_cross(eastbound_trajectories, eastbound_trajectories))
+conflicts_pass.append(
+    check_cross(westbound_trajectories, westbound_trajectories))
+conflicts_pass.append(
+    check_cross(southbound_trajectories, southbound_trajectories))
+conflicts_pass.append(
+    check_cross(northbound_trajectories, northbound_trajectories))
+
+entry_line = [LineString([(0, 112.5), (150, 112.5)])]
+exit_line = [LineString([(0, 127.5), (150, 127.5)])]
+eastbound_entries = []
+eastbound_exits = []
+southbound_entries = []
+southbound_exits = []
+westbound_entries = []
+westbound_exits = []
+northbound_entries = []
+northbound_exits = []
+eastbound_entries = check_cross(entry_line, eastbound_trajectories)
+eastbound_exits = check_cross(exit_line, eastbound_trajectories)
+southbound_entries = check_cross(entry_line, southbound_trajectories)
+southbound_exits = check_cross(exit_line, southbound_trajectories)
+westbound_entries = check_cross(entry_line, westbound_trajectories)
+westbound_exits = check_cross(exit_line, westbound_trajectories)
+northbound_entries = check_cross(entry_line, northbound_trajectories)
+northbound_exits = check_cross(exit_line, northbound_trajectories)
+
+eastbound_intervals = get_intervals(eastbound_entries, eastbound_exits)
+southbound_intervals = get_intervals(southbound_entries, southbound_exits)
+westbound_intervals = get_intervals(westbound_entries, westbound_exits)
+northbound_intervals = get_intervals(northbound_entries, northbound_exits)
+conflicts_cross = []
+conflicts_cross.append(
+    check_overlap(eastbound_intervals, southbound_intervals))
+conflicts_cross.append(
+    check_overlap(eastbound_intervals, northbound_intervals))
+conflicts_cross.append(
+    check_overlap(westbound_intervals, southbound_intervals))
+conflicts_cross.append(
+    check_overlap(westbound_intervals, northbound_intervals))
+conflicts_cross.append(
+    check_overlap(southbound_intervals, westbound_intervals))
+conflicts_cross.append(
+    check_overlap(southbound_intervals, eastbound_intervals))
+conflicts_cross.append(
+    check_overlap(northbound_intervals, westbound_intervals))
+conflicts_cross.append(
+    check_overlap(northbound_intervals, eastbound_intervals))
+for conflicts in conflicts_cross:
+    for conflict in conflicts:
+        ax4.axvline(x=conflict[0][0], color='k')
+        ax4.axvline(x=conflict[0][1], color='k')
+        ax4.axvline(x=conflict[1][0], color='k')
+        ax4.axvline(x=conflict[1][1], color='k')
 
 plt.tight_layout()
 plt.show()
