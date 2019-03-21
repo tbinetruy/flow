@@ -594,11 +594,11 @@ class IntersectionSoftEnv(IntersectionEnv):
         #print(self.trajectory_table)
 
     def terminate(self):
-        import pickle
-        name = 'trajectory_dict'
-        with open(name + '.pkl', 'wb') as f:
-            pickle.dump(
-                self.trajectory_table, f, pickle.HIGHEST_PROTOCOL)
+        #import pickle
+        #name = 'trajectory_dict'
+        #with open(name + '.pkl', 'wb') as f:
+        #    pickle.dump(
+        #        self.trajectory_table, f, pickle.HIGHEST_PROTOCOL)
         try:
             print(
                 "Closing connection to TraCI and stopping simulation.\n"

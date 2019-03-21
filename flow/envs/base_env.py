@@ -142,8 +142,10 @@ class Env(gym.Env, Serializable):
             show_radius = self.sumo_params.show_radius
 
             # get network polygons
+            self.lane_id_list = []
             network = []
             for lane_id in self.traci_connection.lane.getIDList():
+                self.lane_id_list.append(lane_id)
                 _lane_poly = self.traci_connection.lane.getShape(lane_id)
                 lane_poly = [i for pt in _lane_poly for i in pt]
                 network.append(lane_poly)
@@ -1018,7 +1020,13 @@ class Env(gym.Env, Serializable):
         machine_logs = []
         machine_orientations = []
         machine_dynamics = []
+        lane_dynamics = []
         max_speed = self.scenario.max_speed
+        # This assumes the topology is fixed.
+        for lane_id in self.lane_id_list:
+            _lane_speed = \
+                self.traci_connection.lane.getLastStepMeanSpeed(lane_id)
+            lane_dynamics.append(_lane_speed / max_speed)
         for id in human_idlist:
             # Force tracking human vehicles by adding "track" in vehicle id.
             # The tracked human vehicles will be treated as machine vehicles.
@@ -1056,7 +1064,8 @@ class Env(gym.Env, Serializable):
                                           human_dynamics,
                                           machine_dynamics,
                                           human_logs,
-                                          machine_logs)
+                                          machine_logs,
+                                          lane_dynamics)
 
         # get local observation of RL vehicles
         self.sights = []

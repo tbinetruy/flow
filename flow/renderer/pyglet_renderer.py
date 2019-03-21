@@ -111,11 +111,12 @@ class PygletRenderer():
                                                height=self.height)
             self.enable_alpha()
             pyglet.gl.glClearColor(0.125, 0.125, 0.125, self.alpha)
+            pyglet.gl.glLineWidth(0.5*self.pxpm)  # Variable line width
             self.window.clear()
             self.window.switch_to()
             self.window.dispatch_events()
             self.lane_batch = pyglet.graphics.Batch()
-            self.add_lane_polys()
+            self.add_lane_polys(self.lane_colors)
             self.lane_batch.draw()
             buffer = pyglet.image.get_buffer_manager().get_color_buffer()
             image_data = buffer.get_image_data()
@@ -137,6 +138,7 @@ class PygletRenderer():
                machine_dynamics,
                human_logs,
                machine_logs,
+               lane_dynamics=None,
                save_render=None,
                sight_radius=None,
                show_radius=None,
@@ -205,9 +207,22 @@ class PygletRenderer():
         self.window.dispatch_events()
 
         self.lane_batch = pyglet.graphics.Batch()
-        self.add_lane_polys()
+        if lane_dynamics is None:
+            self.add_lane_polys(self.lane_colors)
+        else:
+            lane_cmap = truncate_colormap(cm.RdYlGn, 0.2, 0.8)
+            lane_conditions = []
+            for lane_poly, d in zip(self.lane_polys, lane_dynamics):
+                _color = \
+                    (255*np.array(lane_cmap(d)[:3]\
+                    +(self.alpha,))).astype(np.uint8).tolist()
+                color = [
+                    c for _ in range(int(len(lane_poly)/2)) for c in _color]
+                lane_conditions.append(color)
+            self.add_lane_polys(lane_conditions)
         self.lane_batch.draw()
         self.vehicle_batch = pyglet.graphics.Batch()
+
         if "drgb" in self.mode:
             human_cmap = truncate_colormap(cm.Greens, 0.2, 0.8)
             machine_cmap = truncate_colormap(cm.Blues, 0.2, 0.8)
@@ -329,10 +344,10 @@ class PygletRenderer():
             np.save("%s/data_%06d.npy" % (self.path, self.time), self.data)
         self.window.close()
 
-    def add_lane_polys(self):
+    def add_lane_polys(self, lane_colors):
         """Render road network polygons.
         """
-        for lane_poly, lane_color in zip(self.lane_polys, self.lane_colors):
+        for lane_poly, lane_color in zip(self.lane_polys, lane_colors):
             self._add_lane_poly(lane_poly, lane_color)
 
     def _add_lane_poly(self, lane_poly, lane_color):
