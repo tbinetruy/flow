@@ -43,22 +43,18 @@ def add_trajectory(value, trajectories):
             data.append((point[0]/10.0, 240.0 - point[1][idx]))
         else:
             data.append((point[0]/10.0, point[1][idx]))
-    #multidata = []
-    #for idx in range(len(data)-1):
-    #    multidata.append((data[idx], data[idx+1]))
-    #trajectories.append(MultiLineString(multidata))
-    trajectories.append(LineString(data))
+
+    if len(data) > 1:
+        trajectories.append(LineString(data))
 
 def check_cross(trajectories_A, trajectories_B):
     crosses = []
     for trajectory_a in trajectories_A:
         for trajectory_b in trajectories_B:
             if trajectory_a != trajectory_b:
-                #print(trajectory_a)
-                #print(trajectory_b)
                 cross = trajectory_a.intersection(trajectory_b)
                 if not cross.is_empty:
-                    print(cross)
+                    #print(cross)
                     crosses.append(cross)
     return crosses
 
@@ -111,7 +107,7 @@ fig = plt.figure()
 ax4 = fig.add_subplot(1,1,1)
 ax4.axhline(y=112.5)
 ax4.axhline(y=127.5)
-ax4.set_title('Eastbound')
+ax4.set_title('All Directions')
 ax4.set_xlabel('Time (s)')
 ax4.set_ylabel('Distance (m)')
 ax4.set_xlim([25, 125])
