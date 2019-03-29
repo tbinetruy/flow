@@ -7,7 +7,7 @@ import numpy as np
 from numpy import linspace, pi, sin, cos
 
 ADDITIONAL_NET_PARAMS = {}
-SCALING = 40
+SCALING = 50
 
 
 class MiniCityScenario(Scenario):
@@ -55,15 +55,15 @@ class MiniCityScenario(Scenario):
 
     def specify_nodes(self, net_params):
         """See parent class."""
-        nodes = [{'id': 'n_i1', 'x': 0.65, 'y': 2.75},
-                 {'id': 'n_i2', 'x': 0.65, 'y': 4.90},
-                 {'id': 'n_i3', 'x': 3.05, 'y': 2.75},
-                 {'id': 'n_i4', 'x': 3.05, 'y': 4.90},
-                 {'id': 'n_i5', 'x': 3.05, 'y': 5.75},
-                 {'id': 'n_i6', 'x': 5.08, 'y': 2.75},
-                 {'id': 'n_i7', 'x': 5.08, 'y': 3.75},
-                 {'id': 'n_i8', 'x': 5.08, 'y': 4.90},
-                 {'id': 'n_i9', 'x': 5.08, 'y': 5.75},
+        nodes = [{'id': 'n_i1', 'x': 0.65, 'y': 2.75, 'type': 'traffic_light'},
+                 {'id': 'n_i2', 'x': 0.65, 'y': 4.90, 'type': 'traffic_light'},
+                 {'id': 'n_i3', 'x': 3.05, 'y': 2.75, 'type': 'traffic_light'},
+                 {'id': 'n_i4', 'x': 3.05, 'y': 4.90, 'type': 'traffic_light'},
+                 {'id': 'n_i5', 'x': 3.05, 'y': 5.75, 'type': 'traffic_light'},
+                 {'id': 'n_i6', 'x': 5.08, 'y': 2.75, 'type': 'traffic_light'},
+                 {'id': 'n_i7', 'x': 5.08, 'y': 3.75, 'type': 'traffic_light'},
+                 {'id': 'n_i8', 'x': 5.08, 'y': 4.90, 'type': 'traffic_light'},
+                 {'id': 'n_i9', 'x': 5.08, 'y': 5.75, 'type': 'traffic_light'},
                  {'id': 'n_r1', 'x': 0.30, 'y': 1.15},
                  {'id': 'n_r2', 'x': 0.90, 'y': 0.40},
                  {'id': 'n_r3', 'x': 0.95, 'y': 1.45},
@@ -84,8 +84,8 @@ class MiniCityScenario(Scenario):
                  {'id': 'n_m1_b', 'x': 1.83, 'y': 0.40},
                  {'id': 'n_m2', 'x': 1.96, 'y': 2.75},
                  {'id': 'n_m3', 'x': 2.18, 'y': 4.90},
-                 {'id': 'n_m4', 'x': 2.50, 'y': 0.40},
-                 {'id': 'n_m5', 'x': 4.20, 'y': 4.90},
+                 {'id': 'n_m4', 'x': 2.50, 'y': 0.40, 'type': 'traffic_light'},
+                 {'id': 'n_m5', 'x': 4.20, 'y': 4.90, 'type': 'traffic_light'},
                  {'id': 'n_s1', 'x': 0.65, 'y': 1.80},
                  {'id': 'n_s2', 'x': 1.35, 'y': 4.07},
                  {'id': 'n_s3', 'x': 1.67, 'y': 4.52},
@@ -440,6 +440,7 @@ class MiniCityScenario(Scenario):
                          'e_63': 26,
                          'e_65': 5,
                          'e_66': 30,
+                         'e_67': 21,
                          'e_32': 12,
                          'e_51': 8,
                          'e_37': 5,
@@ -449,7 +450,8 @@ class MiniCityScenario(Scenario):
                          'e_13': 10,
                          'e_4': 10,
                          'e_36': 8,
-                         'e_53': 49
+                         'e_53': 49,
+                         'e_11': 35,
                          }
             if edge['id'] in junctions:
                 edge['length'] = str(junctions[edge['id']])
@@ -507,7 +509,7 @@ class MiniCityScenario(Scenario):
 
     def specify_types(self, net_params):
         """See parent class."""
-        types = [{'id': 'edgeType', 'speed': repr(30)}]
+        types = [{'id': 'edgeType', 'speed': repr(11.18)}]
         return types
 
     def specify_routes(self, net_params):

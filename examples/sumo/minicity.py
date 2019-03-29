@@ -1,6 +1,6 @@
 """Example of modified minicity network with human-driven vehicles."""
-from flow.controllers import IDMController
-from flow.controllers import RLController
+from flow.controllers import SumoCarFollowingController
+from flow.controllers import SumoLaneChangeController
 from flow.core.experiment import SumoExperiment
 from flow.core.params import SumoParams, EnvParams, NetParams, InitialConfig
 from flow.core.vehicles import Vehicles
@@ -51,20 +51,14 @@ def minicity_example(render=None,
 
     vehicles = Vehicles()
     vehicles.add(
-        veh_id="idm",
-        acceleration_controller=(IDMController, {}),
+        veh_id="manned",
+        speed_mode=0b11111,
+        lane_change_mode=0b011001010101,
+        acceleration_controller=(SumoCarFollowingController, {}),
+        lane_change_controller=(SumoLaneChangeController, {}),
         routing_controller=(MinicityRouter, {}),
-        speed_mode=1,
-        lane_change_mode="no_lat_collide",
         initial_speed=0,
-        num_vehicles=20)
-    vehicles.add(
-        veh_id="rl",
-        acceleration_controller=(RLController, {}),
-        routing_controller=(MinicityRouter, {}),
-        speed_mode="no_collide",
-        initial_speed=0,
-        num_vehicles=5)
+        num_vehicles=100)
 
     env_params = EnvParams(additional_params=ADDITIONAL_ENV_PARAMS)
 
@@ -74,7 +68,7 @@ def minicity_example(render=None,
 
     initial_config = InitialConfig(
         spacing="random",
-        min_gap=5
+        min_gap=2.5
     )
     scenario = MiniCityScenario(
         name="minicity",
@@ -88,19 +82,9 @@ def minicity_example(render=None,
 
 
 if __name__ == "__main__":
-    # import the experiment variable
-    # There are six modes of pyglet rendering:
-    # No rendering: minicity_example(render=False)
-    # SUMO-GUI rendering: minicity_example(render=True)
-    # Static grayscale rendering: minicity_example(render="gray")
-    # Dynamic grayscale rendering: minicity_example(render="dgray")
-    # Static RGB rendering: minicity_example(render="rgb")
-    # Dynamic RGB rendering: minicity_example(render="drgb")
     exp = minicity_example(render='drgb',
                            save_render=False,
                            sight_radius=50,
                            pxpm=3,
-                           show_radius=True)
-
-    # run for a set number of rollouts / time steps
-    exp.run(1, 750)
+                           show_radius=False)
+    exp.run(1, 6000)
