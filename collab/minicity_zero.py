@@ -1,23 +1,38 @@
 """Example of modified minicity network with human-driven vehicles."""
-from flow.controllers import IDMController
-from flow.controllers import RLController
+from flow.controllers import SumoCarFollowingController
+from flow.controllers import SumoLaneChangeController
 from flow.core.experiment import SumoExperiment
 from flow.core.params import SumoParams, EnvParams, NetParams, InitialConfig
 from flow.core.vehicles import Vehicles
 from flow.envs.loop.loop_accel import AccelEnv, ADDITIONAL_ENV_PARAMS
-from flow.scenarios.loopy_eight import LoopyEightScenario, ADDITIONAL_NET_PARAMS
-from flow.controllers.routing_controllers import LoopyEightRouter
+from flow.scenarios.minicity import MiniCityScenario, ADDITIONAL_NET_PARAMS
+from flow.controllers.routing_controllers import MinicityRouter
 import numpy as np
-seed=204
-np.random.seed(seed)
 
-def loopy_eight_example(render=None,
+np.random.seed(204)
+
+
+def minicity_example(render=None,
                      save_render=None,
                      sight_radius=None,
                      pxpm=None,
                      show_radius=None):
+    """
+    Perform a simulation of vehicles on modified minicity of University of
+    Delaware.
 
-    sumo_params = SumoParams(render=False,seed=seed)
+    Parameters
+    ----------
+    render: bool, optional
+        specifies whether to use sumo's gui during execution
+
+    Returns
+    -------
+    exp: flow.core.SumoExperiment type
+        A non-rl experiment demonstrating the performance of human-driven
+        vehicles on the minicity scenario.
+    """
+    sumo_params = SumoParams(render=False)
 
     if render is not None:
         sumo_params.render = render
@@ -34,17 +49,16 @@ def loopy_eight_example(render=None,
     if show_radius is not None:
         sumo_params.show_radius = show_radius
 
-    # sumo_params.sim_step = 0.2
-
     vehicles = Vehicles()
-
     vehicles.add(
-        veh_id = 'rl',
-        acceleration_controller = (RLController, {}),
-        routing_controller = (LoopyEightRouter, {}),
-        speed_mode = 23,#'no_collide',
-        lane_change_mode = 'strategic',
-        num_vehicles = 50)
+        veh_id="manned",
+        speed_mode=0b11111,
+        lane_change_mode=0b011001010101,
+        acceleration_controller=(SumoCarFollowingController, {}),
+        lane_change_controller=(SumoLaneChangeController, {}),
+        routing_controller=(MinicityRouter, {}),
+        initial_speed=0,
+        num_vehicles=50)
 
     env_params = EnvParams(additional_params=ADDITIONAL_ENV_PARAMS)
 
@@ -53,13 +67,11 @@ def loopy_eight_example(render=None,
         no_internal_links=False, additional_params=additional_net_params)
 
     initial_config = InitialConfig(
-        spacing='random',
-        edges_distribution='all',
-        min_gap=5
+        spacing="random",
+        min_gap=2.5
     )
-
-    scenario = LoopyEightScenario(
-        name='loopy_eight',
+    scenario = MiniCityScenario(
+        name="minicity",
         vehicles=vehicles,
         initial_config=initial_config,
         net_params=net_params)
@@ -70,11 +82,9 @@ def loopy_eight_example(render=None,
 
 
 if __name__ == "__main__":
-    exp = loopy_eight_example(render='drgb',
+    exp = minicity_example(render=True,
                            save_render=False,
-                           sight_radius=20,
+                           sight_radius=50,
                            pxpm=3,
                            show_radius=False)
-
-    # run for a set number of rollouts / time steps
-    exp.run(1, 3000)
+    exp.run(1, 6000)
