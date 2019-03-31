@@ -16,6 +16,7 @@ from flow.envs.loop.wave_attenuation import WaveAttenuationEnv, \
     WaveAttenuationCNNIDMEnv
 from flow.envs.merge import WaveAttenuationMergePOEnv
 from flow.envs.intersection_env import IntersectionEnv, IntersectionSoftEnv
+from flow.envs.minicity_env import MinicityEnv
 from flow.envs.test import TestEnv
 
 __all__ = [
@@ -26,5 +27,6 @@ __all__ = [
     "PO_TrafficLightGridEnv", "DesiredVelocityEnv", "TestEnv", "BayBridgeEnv",
     "AccelCNNDebugEnv", "AccelCNNEnv", "AccelCNNIDMEnv",
     "WaveAttenuationCNNDebugEnv", "WaveAttenuationCNNEnv",
-    "WaveAttenuationCNNIDMEnv", "IntersectionEnv", "IntersectionSoftEnv"
+    "WaveAttenuationCNNIDMEnv", "IntersectionEnv", "IntersectionSoftEnv",
+    "MinicityEnv",
 ]

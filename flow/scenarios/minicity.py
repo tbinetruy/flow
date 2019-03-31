@@ -10,7 +10,7 @@ ADDITIONAL_NET_PARAMS = {}
 SCALING = 50
 
 
-class MiniCityScenario(Scenario):
+class MinicityScenario(Scenario):
     """Scenario class for bottleneck simulations."""
 
     def __init__(self,
@@ -430,6 +430,7 @@ class MiniCityScenario(Scenario):
                                                     self.nodes[edge['from']]))
 
             # fix junction overlapping issue
+            # this may not be our fault, I think...
             junctions = {
                 'e_1': 9.9,
                 'e_4': 10,
