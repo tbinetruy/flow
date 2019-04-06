@@ -12,13 +12,54 @@ class MinicityEnv(Env):
             if p not in env_params.additional_params:
                 raise KeyError(
                     'Environment parameter "{}" not supplied'.format(p))
-
         super().__init__(env_params, sumo_params, scenario)
+
         self.lane_id_list = []
+        self.lane_id_dict = {}
+        self.lane_idx_dict = {}
+        lane_idx = 0
         for lane_id in self.traci_connection.lane.getIDList():
-            self.lane_id_list.append(lane_id)
+            if 'e' in lane_id:
+                self.lane_id_list.append(lane_id)
+                self.lane_id_dict[lane_id] = lane_idx
+                self.lane_idx_dict[lane_idx] = lane_id
+                lane_idx += 1
         self.num_lanes = len(self.lane_id_list)
         self.lane_dynamics = np.zeros((self.num_lanes,))
+        self.adjacency_matrix = np.zeros((self.num_lanes, self.num_lanes))
+        for lane_id in self.lane_id_list:
+            current_idx = self.lane_id_dict[lane_id]
+            #adjacency_matrix[current_idx, current_idx] = 1
+            for link in self.traci_connection.lane.getLinks(lane_id):
+                next_lane_id = link[0]
+                next_idx = self.lane_id_dict[next_lane_id]
+                self.adjacency_matrix[current_idx, next_idx] = 1
+        self.transition_matrix = self.adjacency_matrix.copy()
+        for row in range(self.num_lanes):
+            self.transition_matrix[row, :] /= \
+                np.sum(self.adjacency_matrix[row, :])
+
+        debug_mode = False
+        if debug_mode:
+            flat_trans_prob = self.transition_matrix.flatten()
+            pos_flat_trans_prob = flat_trans_prob[flat_trans_prob!=0]
+            print(pos_flat_trans_prob)
+            print(len(pos_flat_trans_prob))
+
+            import matplotlib.pyplot as plt
+            from mpl_toolkits.axes_grid1 import make_axes_locatable
+            fig = plt.figure()
+            ax = fig.add_subplot(1, 1, 1)
+            divider = make_axes_locatable(ax)
+            cax = divider.append_axes('right', size='5%', pad=0.1)
+            im = ax.imshow(
+                self.transition_matrix, cmap='plasma', vmin=0.0, vmax=1.0)
+            fig.colorbar(im, cax=cax, orientation='vertical')
+            #ax.set_xticks(np.arange(self.num_lanes))
+            #ax.set_xticklabels(self.lane_id_list)
+            #ax.set_yticks(np.arange(self.num_lanes))
+            #ax.set_yticklabels(self.lane_id_list)
+            plt.show()
 
     # ACTION GOES HERE
     @property
@@ -48,19 +89,21 @@ class MinicityEnv(Env):
         return observation
 
     def get_observation(self, **kwargs):
-        lane_dynamics = []
-        for lane_id in self.lane_id_list:
-            _lane_speed = \
-                self.traci_connection.lane.getLastStepMeanSpeed(lane_id)
-            lane_dynamics.append(_lane_speed)
-        self.lane_dynamics = np.asarray(lane_dynamics)
-        return self.lane_dynamics
+        #lane_dynamics = []
+        #for lane_id in self.lane_id_list:
+        #    _lane_speed = \
+        #        self.traci_connection.lane.getLastStepMeanSpeed(lane_id)
+        #    lane_dynamics.append(_lane_speed)
+        #self.lane_dynamics = np.asarray(lane_dynamics)
+        #return self.lane_dynamics
+        return None
 
     # REWARD FUNCTION GOES HERE
     def get_reward(self, **kwargs):
-        self.reward = \
-            0.8 * self.lane_dynamics.mean() - 0.2 * self.lane_dynamics.std()
-        return self.reward
+        #self.reward = \
+        #    0.8 * self.lane_dynamics.mean() - 0.2 * self.lane_dynamics.std()
+        #return self.reward
+        return 0
 
     # UTILITY FUNCTION GOES HERE
     def additional_command(self):

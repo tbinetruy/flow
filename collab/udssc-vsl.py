@@ -25,9 +25,9 @@ seed=204
 np.random.seed(seed)
 
 # time horizon of a single rollout
-HORIZON = 6000
+HORIZON = 1000
 # number of parallel workers
-N_CPUS = 2
+N_CPUS = 6
 # number of rollouts per training iteration
 N_ROLLOUTS = N_CPUS*1
 
@@ -87,7 +87,7 @@ flow_params = dict(
 )
 
 def setup_exps():
-    alg_run = 'ES'
+    alg_run = 'DDPG'
 
     agent_cls = get_agent_class(alg_run)
     config = agent_cls._default_config.copy()
@@ -95,11 +95,6 @@ def setup_exps():
     config['num_workers'] = min(N_CPUS, N_ROLLOUTS)
     config['train_batch_size'] = HORIZON * N_ROLLOUTS
     config['horizon'] = HORIZON
-    config['episodes_per_batch'] = N_ROLLOUTS
-    config['eval_prob'] = 0.05
-    config['noise_stdev'] = 0.05
-    config['stepsize'] = 0.02
-    config['clip_actions'] = False
     config['observation_filter'] = 'NoFilter'
 
     # save the flow params for replay
@@ -128,10 +123,10 @@ if __name__ == '__main__':
             'checkpoint_freq': 25,
             'max_failures': 999,
             'stop': {
-                'training_iteration': 10,
+                'training_iteration': 1000,
             },
             'num_samples': 3,
         },
     },
-    resume='prompt',
-    verbose=1,)
+    resume=False,
+    )

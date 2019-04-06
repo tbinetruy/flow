@@ -5,7 +5,7 @@ from flow.core.experiment import SumoExperiment
 from flow.core.params import SumoParams, EnvParams, NetParams, InitialConfig
 from flow.core.vehicles import Vehicles
 from flow.envs.loop.loop_accel import AccelEnv, ADDITIONAL_ENV_PARAMS
-from flow.scenarios.minicity import MiniCityScenario, ADDITIONAL_NET_PARAMS
+from flow.scenarios.minicity import MinicityScenario, ADDITIONAL_NET_PARAMS
 from flow.controllers.routing_controllers import MinicityRouter
 import numpy as np
 
@@ -70,7 +70,7 @@ def minicity_example(render=None,
         spacing="random",
         min_gap=2.5
     )
-    scenario = MiniCityScenario(
+    scenario = MinicityScenario(
         name="minicity",
         vehicles=vehicles,
         initial_config=initial_config,
@@ -83,7 +83,7 @@ def minicity_example(render=None,
 
 if __name__ == "__main__":
     exp = minicity_example(render='drgb',
-                           save_render=False,
+                           save_render=True,
                            sight_radius=50,
                            pxpm=3,
                            show_radius=False)

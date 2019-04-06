@@ -523,7 +523,7 @@ class MinicityScenario(Scenario):
 
     def specify_types(self, net_params):
         """See parent class."""
-        types = [{'id': 'edgeType', 'speed': repr(11.18)}]
+        types = [{'id': 'edgeType', 'speed': str(11.18)}]
         return types
 
     def specify_routes(self, net_params):

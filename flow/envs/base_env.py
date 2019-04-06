@@ -273,7 +273,7 @@ class Env(gym.Env, Serializable):
 
                 # tolerate collisions
                 sumo_call.append("--collision.action")
-                sumo_call.append("none")
+                sumo_call.append("warn")
 
                 # check for collisions at junctions
                 sumo_call.append("--collision.check-junctions")

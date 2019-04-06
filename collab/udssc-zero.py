@@ -5,8 +5,9 @@ from flow.core.experiment import SumoExperiment
 from flow.core.params import SumoParams, EnvParams, NetParams, InitialConfig
 from flow.core.vehicles import Vehicles
 from flow.envs.loop.loop_accel import AccelEnv, ADDITIONAL_ENV_PARAMS
-from flow.scenarios.minicity import MiniCityScenario, ADDITIONAL_NET_PARAMS
-from flow.controllers.routing_controllers import MinicityRouter
+from flow.envs.minicity_env import MinicityEnv
+from flow.scenarios.minicity import MinicityScenario, ADDITIONAL_NET_PARAMS
+from flow.controllers.routing_controllers import MinicityRouter, MinicityMatrixRouter
 import numpy as np
 
 np.random.seed(204)
@@ -56,9 +57,9 @@ def minicity_example(render=None,
         lane_change_mode=0b011001010101,
         acceleration_controller=(SumoCarFollowingController, {}),
         lane_change_controller=(SumoLaneChangeController, {}),
-        routing_controller=(MinicityRouter, {}),
+        routing_controller=(MinicityMatrixRouter, {}),
         initial_speed=0,
-        num_vehicles=50)
+        num_vehicles=1)
 
     env_params = EnvParams(additional_params=ADDITIONAL_ENV_PARAMS)
 
@@ -70,13 +71,14 @@ def minicity_example(render=None,
         spacing="random",
         min_gap=2.5
     )
-    scenario = MiniCityScenario(
+    scenario = MinicityScenario(
         name="minicity",
         vehicles=vehicles,
         initial_config=initial_config,
-        net_params=net_params)
+        net_params=net_params
+    )
 
-    env = AccelEnv(env_params, sumo_params, scenario)
+    env = MinicityEnv(env_params, sumo_params, scenario)
 
     return SumoExperiment(env, scenario)
 
@@ -87,4 +89,4 @@ if __name__ == "__main__":
                            sight_radius=50,
                            pxpm=3,
                            show_radius=False)
-    exp.run(1, 6000)
+    exp.run(1, 10000)

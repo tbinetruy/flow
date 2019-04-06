@@ -25,13 +25,11 @@ class ContinuousRouter(BaseRouter):
         else:
             return None
 
-
 class MinicityRouter(BaseRouter):
     """A router used to continuously re-route vehicles in minicity scenario.
 
     This class allows the vehicle to pick a random route at junctions.
     """
-
     def choose_route(self, env):
         """See parent class."""
         vehicles = env.vehicles
@@ -58,6 +56,44 @@ class MinicityRouter(BaseRouter):
         if veh_edge in ['e_37', 'e_51']:
             next_route = [veh_edge, 'e_29_u', 'e_21']
 
+        return next_route
+
+
+class MinicityMatrixRouter(BaseRouter):
+    def choose_route(self, env):
+        veh_id = self.veh_id
+        veh_edge = env.vehicles.get_edge(veh_id)
+        veh_lane_id = env.traci_connection.vehicle.getLaneID(veh_id)
+        #print('Lane ID: ', veh_lane_id)
+        veh_route = env.vehicles.get_route(veh_id)
+
+        if veh_route[-1] != veh_edge or ':' in veh_lane_id:
+            next_route = None
+        else:
+            veh_lane_idx = env.lane_id_dict[veh_lane_id]
+            #print('Lane Index: ', veh_lane_idx)
+            next_lane_vec = env.transition_matrix[veh_lane_idx]
+            #print(next_lane_vec)
+            next_lane_options = [
+                [idx, prob] 
+                 for idx, prob in enumerate(next_lane_vec) 
+                 if prob != 0
+            ]
+            for idx in range(len(next_lane_options)-1):
+                next_lane_options[idx+1][1] += next_lane_options[idx][1]
+            #print(next_lane_options)
+            prob = np.random.random()
+            for option in next_lane_options:
+                if option[1] > prob:
+                    next_lane_idx = option[0]
+                    next_lane_id = env.lane_idx_dict[next_lane_idx]
+                    next_edge = env.traci_connection.lane.getEdgeID(next_lane_id)
+                    next_route = [veh_edge, next_edge]
+
+        if veh_edge in ['e_37', 'e_51']:
+            next_route = [veh_edge, 'e_29_u', 'e_21']
+
+        #print(next_route)
         return next_route
 
 class IntersectionRouter(MinicityRouter):
@@ -181,7 +217,6 @@ class MinicityTrainingRouter_9(MinicityRouter):
             route = None
 
         return route
-
 
 class MinicityTrainingRouter_4(MinicityRouter):
 
@@ -321,7 +356,6 @@ class LoopyEightRouter(BaseRouter):
 
         return route
 
-
 class GridRouter(BaseRouter):
     """A router used to re-route a vehicle within a grid environment."""
 
@@ -335,7 +369,6 @@ class GridRouter(BaseRouter):
             return [env.vehicles.get_edge(self.veh_id)]
         else:
             return None
-
 
 class BayBridgeRouter(ContinuousRouter):
     """Assists in choosing routes in select cases for the Bay Bridge scenario.
