@@ -59,7 +59,7 @@ def minicity_example(render=None,
         lane_change_controller=(SumoLaneChangeController, {}),
         routing_controller=(MinicityMatrixRouter, {}),
         initial_speed=0,
-        num_vehicles=1)
+        num_vehicles=50)
 
     env_params = EnvParams(additional_params=ADDITIONAL_ENV_PARAMS)
 

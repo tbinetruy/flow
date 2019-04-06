@@ -64,16 +64,14 @@ class MinicityMatrixRouter(BaseRouter):
         veh_id = self.veh_id
         veh_edge = env.vehicles.get_edge(veh_id)
         veh_lane_id = env.traci_connection.vehicle.getLaneID(veh_id)
-        #print('Lane ID: ', veh_lane_id)
         veh_route = env.vehicles.get_route(veh_id)
 
+        debug_mode = False
         if veh_route[-1] != veh_edge or ':' in veh_lane_id:
             next_route = None
         else:
             veh_lane_idx = env.lane_id_dict[veh_lane_id]
-            #print('Lane Index: ', veh_lane_idx)
-            next_lane_vec = env.transition_matrix[veh_lane_idx]
-            #print(next_lane_vec)
+            next_lane_vec = env.transition_matrix[veh_lane_idx, :]
             next_lane_options = [
                 [idx, prob] 
                  for idx, prob in enumerate(next_lane_vec) 
@@ -81,7 +79,6 @@ class MinicityMatrixRouter(BaseRouter):
             ]
             for idx in range(len(next_lane_options)-1):
                 next_lane_options[idx+1][1] += next_lane_options[idx][1]
-            #print(next_lane_options)
             prob = np.random.random()
             for option in next_lane_options:
                 if option[1] > prob:
@@ -89,11 +86,28 @@ class MinicityMatrixRouter(BaseRouter):
                     next_lane_id = env.lane_idx_dict[next_lane_idx]
                     next_edge = env.traci_connection.lane.getEdgeID(next_lane_id)
                     next_route = [veh_edge, next_edge]
+                    break
+
+            if debug_mode:
+                next_lane_options_debug = [
+                    [env.lane_idx_dict[idx], prob] 
+                     for idx, prob in enumerate(next_lane_vec) 
+                     if prob != 0
+                ]
+                for idx in range(len(next_lane_options_debug)-1):
+                    next_lane_options_debug[idx+1][1] += \
+                        next_lane_options_debug[idx][1]
+                print('Lane Index: ', veh_lane_idx)
+                print('Lane ID: ', veh_lane_id)
+                print(next_lane_vec)
+                print(next_lane_options_debug)
+                print('Probability:', prob)
 
         if veh_edge in ['e_37', 'e_51']:
             next_route = [veh_edge, 'e_29_u', 'e_21']
 
-        #print(next_route)
+        if debug_mode:
+            print(next_route)
         return next_route
 
 class IntersectionRouter(MinicityRouter):
