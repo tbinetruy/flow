@@ -100,3 +100,9 @@ debug/
 flow/core/config.py
 .vs/**
 relational_model
+data_demo/
+data_baseline_demo/
+data.npy
+data_baseline.npy
+network.npy
+*mp4
