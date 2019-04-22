@@ -3,6 +3,7 @@ import sys
 import os
 sys.path.append("/Users/nathan/projects/flow/")
 import flow.config as config
+from flow.utils.exceptions import FatalFlowError
 
 SITEPACKAGES = os.path.join(config.AIMSUN_SITEPACKAGES,
                             "lib/python2.7/site-packages")
@@ -11,16 +12,11 @@ sys.path.append(SITEPACKAGES)
 sys.path.append(os.path.join(config.AIMSUN_NEXT_PATH,
                              'programming/Aimsun Next API/AAPIPython/Micro'))
 
-from flow.core.params import InFlows
-from flow.core.params import TrafficLightParams
-
-from copy import deepcopy
 import json
-import numpy as np
 
 
-# Loads the whole network into a dictionary and returns it
 def load_network():
+    """Load the whole network into a dictionary and return it."""
     # get all relevant objects in network
     section_type = model.getType("GKSection")
     node_type = model.getType("GKNode")
@@ -30,14 +26,27 @@ def load_network():
     sections = model.getCatalog().getObjectsByType(section_type).values()
     nodes = model.getCatalog().getObjectsByType(node_type).values()
     turnings = model.getCatalog().getObjectsByType(turning_type).values()
-    cen_connections = model.getCatalog().getObjectsByType(cen_connection_type).values()
+    cen_connections = model.getCatalog().getObjectsByType(
+        cen_connection_type).values()
 
-    scenario_data = get_dict_from_objects(sections, nodes, turnings, cen_connections)
-    return scenario_data
+    return get_dict_from_objects(sections, nodes, turnings, cen_connections)
 
 
-# Loads subnetwork into a dictionary and returns it
 def load_subnetwork(subnetwork, scenario):
+    """Load subnetwork into a dictionary and return it.
+
+    Parameters
+    ----------
+    subnetwork : TODO
+        TODO
+    scenario : TODO
+        TODO
+
+    Returns
+    -------
+    TODO
+        TODO
+    """
     # get all objects in subnetwork
     objs = list(subnetwork.classifyObjects(scenario.getId()))
 
@@ -46,12 +55,28 @@ def load_subnetwork(subnetwork, scenario):
     turnings = [o for o in objs if o.getTypeName() == 'GKTurning']
     cen_connections = [o for o in objs if o.getTypeName() == 'GKCenConnection']
 
-    scenario_data = get_dict_from_objects(sections, nodes, turnings, cen_connections)
-    return scenario_data
+    return get_dict_from_objects(sections, nodes, turnings, cen_connections)
 
 
-# Loads all the data into dictionaries
 def get_dict_from_objects(sections, nodes, turnings, cen_connections):
+    """Load all the data into dictionaries.
+
+    Parameters
+    ----------
+    sections : TODO
+        TODO
+    nodes : TODO
+        TODO
+    turnings : TODO
+        TODO
+    cen_connections : TODO
+        TODO
+
+    Returns
+    -------
+    TODO
+        TODO
+    """
     scenario_data = {
         'sections': {},
         'nodes': {},
@@ -100,7 +125,8 @@ def get_dict_from_objects(sections, nodes, turnings, cen_connections):
     for t in turnings:
         scenario_data['turnings'][t.getId()] = {
             'name': t.getName(),
-            'length': t.getPolygon().length2D() / 2, # FIXME not totally accurate
+            # FIXME length not totally accurate
+            'length': t.getPolygon().length2D() / 2,
             'origin_section_name': t.getOrigin().getName(),
             'origin_section_id': t.getOrigin().getId(),
             'dest_section_name': t.getDestination().getName(),
@@ -135,74 +161,79 @@ def get_dict_from_objects(sections, nodes, turnings, cen_connections):
     return scenario_data
 
 
-# collect template path
-file_path = os.path.join(config.PROJECT_PATH,
-                         "flow/utils/aimsun/aimsun_template_path")
-with open(file_path, 'r') as f:
-    template_path = f.readline()
+if __name__ == "__main__":
+    # collect template path
+    file_path = os.path.join(config.PROJECT_PATH,
+                             "flow/utils/aimsun/aimsun_template_path")
+    with open(file_path, 'r') as f:
+        template_path = f.readline()
 
-# open template in Aimsun
-print("[load.py] Loading template " + template_path)
-gui = GKGUISystem.getGUISystem().getActiveGui()
-gui.loadNetwork(template_path)
-model = gui.getActiveModel()
+    # open template in Aimsun
+    print("[load.py] Loading template " + template_path)
+    gui = GKGUISystem.getGUISystem().getActiveGui()
+    gui.loadNetwork(template_path)
+    model = gui.getActiveModel()
 
-# collect the simulation parameters
-params_file = 'flow/core/kernel/scenario/data.json'
-params_path = os.path.join(config.PROJECT_PATH, params_file)
-with open(params_path) as f:
-    data = json.load(f)
+    # collect the simulation parameters
+    params_file = 'flow/core/kernel/scenario/data.json'
+    params_path = os.path.join(config.PROJECT_PATH, params_file)
+    with open(params_path) as f:
+        data = json.load(f)
 
-# retrieve replication by name
-replication_name = data["replication_name"]
-replication = model.getCatalog().findByName(
-    replication_name, model.getType("GKReplication"))
+    # retrieve replication by name
+    replication_name = data["replication_name"]
+    replication = model.getCatalog().findByName(
+        replication_name, model.getType("GKReplication"))
 
-if not replication:
-    print("[load.py] ERROR: Replication " + replication_name + " does not exist.")
+    if not replication:
+        raise FatalFlowError(
+            "[load.py] ERROR: Replication {}  does not exist."
+            .format(replication_name))
 
-# retrieve experiment and scenario
-experiment = replication.getExperiment()
-scenario = experiment.getScenario()
-scenario_data = scenario.getInputData()
-scenario_data.addExtension(os.path.join(
-    config.PROJECT_PATH, "flow/utils/aimsun/run.py"), True)
+    # retrieve experiment and scenario
+    experiment = replication.getExperiment()
+    scenario = experiment.getScenario()
+    scenario_data = scenario.getInputData()
+    scenario_data.addExtension(os.path.join(
+        config.PROJECT_PATH, "flow/utils/aimsun/run.py"), True)
 
-# if subnetwork_name was specified in the Aimsun params,
-# try to only load subnetwork; it not specified or if
-# subnetwork is not found, load the whole network
-subnetwork_name = data['subnetwork_name']
-if subnetwork_name is not None:
-    subnetwork = model.getCatalog().findByName(
-        subnetwork_name, model.getType("GKProblemNet"))
-    if subnetwork:
-        scenario_data = load_subnetwork(subnetwork, scenario)
+    # if subnetwork_name was specified in the Aimsun params,
+    # try to only load subnetwork; it not specified or if
+    # subnetwork is not found, load the whole network
+    subnetwork_name = data['subnetwork_name']
+    if subnetwork_name is not None:
+        subnetwork = model.getCatalog().findByName(
+            subnetwork_name, model.getType("GKProblemNet"))
+        if subnetwork:
+            scenario_data = load_subnetwork(subnetwork, scenario)
+        else:
+            print("[load.py] WARNING: Subnetwork {} could not be found. "
+                  "Loading the whole network.".format(subnetwork_name))
+            scenario_data = load_network()
     else:
-        print("[load.py] ERROR: Subnetwork " + subnetwork_name
-              + " could not be found. Loading the whole network.")
         scenario_data = load_network()
-else:
-    scenario_data = load_network()
 
-# save template's scenario into a file to be loaded into Flow's scenario
-scenario_data_file = "flow/core/kernel/scenario/scenario_data.json"
-scenario_data_path = os.path.join(config.PROJECT_PATH, scenario_data_file)
-with open(scenario_data_path, "w") as f:
-    json.dump(scenario_data, f, sort_keys=True, indent=4) 
-    print("[load.py] Template's scenario data written into "
-          + scenario_data_path)
+    # save template's scenario into a file to be loaded into Flow's scenario
+    scenario_data_file = "flow/core/kernel/scenario/scenario_data.json"
+    scenario_data_path = os.path.join(config.PROJECT_PATH, scenario_data_file)
+    with open(scenario_data_path, "w") as f:
+        json.dump(scenario_data, f, sort_keys=True, indent=4)
+        print("[load.py] Template's scenario data written into {}".format(
+            scenario_data_path))
 
-# create a check file to announce that we are done
-# writing all the scenario data into the .json file
-check_file = "flow/core/kernel/scenario/scenario_data_check"
-check_file_path = os.path.join(config.PROJECT_PATH, check_file)
-open(check_file_path, 'a').close()
+    # create a check file to announce that we are done
+    # writing all the scenario data into the .json file
+    check_file = "flow/core/kernel/scenario/scenario_data_check"
+    check_file_path = os.path.join(config.PROJECT_PATH, check_file)
+    open(check_file_path, 'a').close()
 
-# get simulation step attribute column
-col_sim = model.getColumn('GKExperiment::simStepAtt')
-# set new simulation step value
-experiment.setDataValue(col_sim, data["sim_step"])
-# run the simulation
-# execute, "play": run with GUI, "execute": run in batch mode
-mode = 'play' if data['render'] is True else 'execute'
-GKSystem.getSystem().executeAction(mode, replication, [], "")
+    # get simulation step attribute column
+    col_sim = model.getColumn('GKExperiment::simStepAtt')
+
+    # set new simulation step value
+    experiment.setDataValue(col_sim, data["sim_step"])
+
+    # run the simulation
+    # execute, "play": run with GUI, "execute": run in batch mode
+    mode = 'play' if data['render'] is True else 'execute'
+    GKSystem.getSystem().executeAction(mode, replication, [], "")

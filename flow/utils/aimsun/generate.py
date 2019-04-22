@@ -18,15 +18,12 @@ import json
 import numpy as np
 
 
-# Load an empty template
-gui = GKGUISystem.getGUISystem().getActiveGui()
-gui.newDoc(os.path.join(config.PROJECT_PATH,
-                        "flow/utils/aimsun/Aimsun_Flow.ang"),
-           "EPSG:32601")
-model = gui.getActiveModel()
-
-
-def generate_net(nodes, edges, connections, inflows, veh_types, traffic_lights):
+def generate_net(nodes,
+                 edges,
+                 connections,
+                 inflows,
+                 veh_types,
+                 traffic_lights):
     inflows = inflows.get()
     lane_width = 3.6  # TODO additional params??
     type_section = model.getType("GKSection")
@@ -226,7 +223,6 @@ def generate_net(nodes, edges, connections, inflows, veh_types, traffic_lights):
     #     res = cmd.createdObject();
     #     res.setName(centroid["id"])
     #     print("done", res.getName())
-
 
     # get traffic demand
     demand = model.getCatalog().findByName(
@@ -622,75 +618,84 @@ def set_sim_step(experiment, sim_step):
     experiment.setDataValue(col_sim, sim_step)
 
 
-# collect the scenario-specific data
-data_file = 'flow/core/kernel/scenario/data.json'
-with open(os.path.join(config.PROJECT_PATH, data_file)) as f:
-    data = json.load(f)
+if __name__ == "__main__":
+    # Load an empty template
+    gui = GKGUISystem.getGUISystem().getActiveGui()
+    gui.newDoc(os.path.join(config.PROJECT_PATH,
+                            "flow/utils/aimsun/Aimsun_Flow.ang"),
+               "EPSG:32601")
+    model = gui.getActiveModel()
 
-# export the data from the dictionary
-veh_types = data['vehicle_types']
-osm_path = data['osm_path']
+    # collect the scenario-specific data
+    data_file = 'flow/core/kernel/scenario/data.json'
+    with open(os.path.join(config.PROJECT_PATH, data_file)) as f:
+        data = json.load(f)
 
-if data['inflows'] is not None:
-    inflows = InFlows()
-    inflows.__dict__ = data['inflows'].copy()
-else:
-    inflows = None
+    # export the data from the dictionary
+    veh_types = data['vehicle_types']
+    osm_path = data['osm_path']
 
-if data['traffic_lights'] is not None:
-    traffic_lights = TrafficLightParams()
-    traffic_lights.__dict__ = data['traffic_lights'].copy()
-else:
-    traffic_lights = None
+    if data['inflows'] is not None:
+        inflows = InFlows()
+        inflows.__dict__ = data['inflows'].copy()
+    else:
+        inflows = None
 
-# generate the network
-if osm_path is not None:
-    generate_net_osm(osm_path, inflows, veh_types)
-    edge_osm = {}
+    if data['traffic_lights'] is not None:
+        traffic_lights = TrafficLightParams()
+        traffic_lights.__dict__ = data['traffic_lights'].copy()
+    else:
+        traffic_lights = None
 
-    section_type = model.getType("GKSection")
-    for types in model.getCatalog().getUsedSubTypesFromType(section_type):
-        for s in types.itervalues():
-            s_id = s.getId()
-            num_lanes = s.getNbFullLanes()
-            length = s.getLanesLength2D()
-            speed = s.getSpeed()
-            edge_osm[s_id] = {"speed": speed,
-                              "length": length,
-                              "numLanes": num_lanes}
-    with open(os.path.join(config.PROJECT_PATH,
-                           'flow/utils/aimsun/osm_edges.json'), 'w') \
-            as outfile:
-        json.dump(edge_osm, outfile, sort_keys=True, indent=4)
+    # generate the network
+    if osm_path is not None:
+        generate_net_osm(osm_path, inflows, veh_types)
+        edge_osm = {}
 
-else:
-    nodes = data['nodes']
-    edges = data['edges']
-    types = data['types']
-    connections = data['connections']
+        section_type = model.getType("GKSection")
+        for types in model.getCatalog().getUsedSubTypesFromType(section_type):
+            for s in types.itervalues():
+                s_id = s.getId()
+                num_lanes = s.getNbFullLanes()
+                length = s.getLanesLength2D()
+                speed = s.getSpeed()
+                edge_osm[s_id] = {"speed": speed,
+                                  "length": length,
+                                  "numLanes": num_lanes}
+        with open(os.path.join(config.PROJECT_PATH,
+                               'flow/utils/aimsun/osm_edges.json'), 'w') \
+                as outfile:
+            json.dump(edge_osm, outfile, sort_keys=True, indent=4)
 
-    for i in range(len(edges)):
-        if 'type' in edges[i]:
-            for typ in types:
-                if typ['id'] == edges[i]['type']:
-                    new_dict = deepcopy(typ)
-                    new_dict.pop("id")
-                    edges[i].update(new_dict)
-                    break
-    generate_net(nodes, edges, connections, inflows, veh_types, traffic_lights)
+    else:
+        nodes = data['nodes']
+        edges = data['edges']
+        types = data['types']
+        connections = data['connections']
 
-# set sim step
-sim_step = data["sim_step"]
-# retrieve experiment by name
-experiment_name = data["experiment_name"]
-experiment = model.getCatalog().findByName(
-    experiment_name, model.getType("GKTExperiment"))
-set_sim_step(experiment, sim_step)
+        for i in range(len(edges)):
+            if 'type' in edges[i]:
+                for typ in types:
+                    if typ['id'] == edges[i]['type']:
+                        new_dict = deepcopy(typ)
+                        new_dict.pop("id")
+                        edges[i].update(new_dict)
+                        break
+        generate_net(nodes, edges, connections, inflows, veh_types,
+                     traffic_lights)
 
-# run the simulation
-# find the replication
-replication_name = data["replication_name"]
-replication = model.getCatalog().findByName(replication_name)
-# execute, "play": run with GUI, "execute": run in batch mode
-mode = 'play' if data['render'] is True else 'execute'
-GKSystem.getSystem().executeAction(mode, replication, [], "")
+    # set sim step
+    sim_step = data["sim_step"]
+    # retrieve experiment by name
+    experiment_name = data["experiment_name"]
+    experiment = model.getCatalog().findByName(
+        experiment_name, model.getType("GKTExperiment"))
+    set_sim_step(experiment, sim_step)
+
+    # run the simulation
+    # find the replication
+    replication_name = data["replication_name"]
+    replication = model.getCatalog().findByName(replication_name)
+    # execute, "play": run with GUI, "execute": run in batch mode
+    mode = 'play' if data['render'] is True else 'execute'
+    GKSystem.getSystem().executeAction(mode, replication, [], "")
