@@ -87,7 +87,7 @@ class TraCISimulation(KernelSimulation):
                 sumo_call = [
                     sumo_binary, "-c", scenario.cfg,
                     "--remote-port", str(sim_params.port),
-                    "--num-clients", str(sim_params.num_clients),
+                    # "--num-clients", str(sim_params.num_clients),
                     "--step-length", str(sim_params.sim_step)
                 ]
 
@@ -151,7 +151,7 @@ class TraCISimulation(KernelSimulation):
                     time.sleep(config.SUMO_SLEEP)
 
                 traci_connection = traci.connect(port, numRetries=100)
-                traci_connection.setOrder(0)
+                # traci_connection.setOrder(0)
                 traci_connection.simulationStep()
 
                 return traci_connection
